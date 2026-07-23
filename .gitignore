@@ -1,0 +1,32 @@
+# Сборочные каталоги
+**/target/
+
+# Собранные архивы и исполняемые файлы
+*.jar
+*.zip
+
+# Логи
+logs/
+**/logs/
+*.log
+
+# Локальные файлы проекта/IDE
+RGSCenter.ppr
+
+# NetBeans private settings
+**/nbproject/private/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# VS Code local settings
+.vscode/
+
+# Системные файлы
+.DS_Store
+Thumbs.db
+
+# Исключение: Maven Wrapper JAR нужен для сборки
+!.mvn/wrapper/maven-wrapper.jar
+!**/.mvn/wrapper/maven-wrapper.jar

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ru"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Устройства RGSCenter</title>
+</head>
+
+<body>
+
+<h1>Устройства лаборатории</h1>
+
+<table border="1">
+    <thead>
+    <tr>
+        <th>Устройство</th>
+        <th>Статус</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    <tr th:each="device : ${devices}">
+        <td th:text="${device.name}">Device</td>
+        <td th:text="${device.status}">UNKNOWN</td>
+    </tr>
+    </tbody>
+</table>
+
+<p>
+    <a th:href="@{/}">На главную</a>
+</p>
+<div th:replace="~{fragments/menu :: menu}"></div>
+</body>
+</html>
