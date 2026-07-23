@@ -1,35 +1,58 @@
 <!DOCTYPE html>
-<html lang="ru"
-      xmlns:th="http://www.thymeleaf.org">
-
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Устройства RGSCenter</title>
-</head>
+    <title>RGSCenter — Camera</title>
+    <meta http-equiv="refresh" content="10">
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 900px;
+        }
 
+        th, td {
+            padding: 10px;
+            border: 1px solid #cccccc;
+            text-align: left;
+        }
+
+        .ONLINE {
+            color: green;
+            font-weight: bold;
+        }
+
+        .OFFLINE {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
 <body>
 
-<h1>Устройства лаборатории</h1>
+<h1>Camera status</h1>
 
-<table border="1">
+<table>
     <thead>
     <tr>
-        <th>Устройство</th>
-        <th>Статус</th>
+        <th>Name</th>
+        <th>IP address</th>
+        <th>Status</th>
+        <th>Last check</th>
     </tr>
     </thead>
-
     <tbody>
-    <tr th:each="device : ${devices}">
-        <td th:text="${device.name}">Device</td>
-        <td th:text="${device.status}">UNKNOWN</td>
+    <tr>
+        <td th:text="${camera.name}">Camera</td>
+        <td th:text="${camera.ipAddress}">192.168.1.13</td>
+        <td th:text="${camera.status}"
+            th:class="${camera.status}">
+            OFFLINE
+        </td>
+        <td th:text="${camera.lastCheck}">-</td>
     </tr>
     </tbody>
 </table>
 
-<p>
-    <a th:href="@{/}">На главную</a>
-</p>
-<div th:replace="~{fragments/menu :: menu}"></div>
 </body>
 </html>

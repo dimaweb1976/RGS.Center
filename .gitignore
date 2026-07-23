@@ -15,6 +15,7 @@ RGSCenter.ppr
 
 # NetBeans private settings
 **/nbproject/private/
+/backup_camera*
 
 # IntelliJ IDEA
 .idea/

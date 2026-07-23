@@ -1,28 +1,42 @@
 package com.rgs.center.objects;
 
+import java.time.LocalDateTime;
+
 public class Device {
 
-    private String name;
-    private String status;
+    private final String name;
+    private final String ipAddress;
 
-    public Device(String name, String status) {
+    private volatile DeviceStatus status;
+    private volatile LocalDateTime lastCheck;
+
+    public Device(String name, String ipAddress) {
         this.name = name;
-        this.status = status;
+        this.ipAddress = ipAddress;
+        this.status = DeviceStatus.OFFLINE;
     }
 
     public String getName() {
         return name;
     }
 
-    public String getStatus() {
+    public String getIpAddress() {
+        return ipAddress;
+    }
+
+    public DeviceStatus getStatus() {
         return status;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setStatus(DeviceStatus status) {
+        this.status = status;
     }
 
-    public void setStatus(String status) {
-        this.status = status;
+    public LocalDateTime getLastCheck() {
+        return lastCheck;
+    }
+
+    public void setLastCheck(LocalDateTime lastCheck) {
+        this.lastCheck = lastCheck;
     }
 }
