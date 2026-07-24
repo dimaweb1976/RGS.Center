@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<table th:fragment="status">
+    <thead>
+    <tr>
+        <th>Name</th>
+        <th>IP address</th>
+        <th>Status</th>
+        <th>Last check</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td th:text="${camera.name}">Camera</td>
+        <td th:text="${camera.ipAddress}">192.168.1.13</td>
+        <td th:text="${camera.status}"
+            th:class="${camera.status}">
+            OFFLINE
+        </td>
+        <td th:text="${camera.lastCheck}">-</td>
+    </tr>
+    </tbody>
+</table>
+
+</body>
+</html>

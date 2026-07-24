@@ -24,4 +24,10 @@ public class HomeController {
         model.addAttribute("camera", cameraService.getCamera());
         return "devices";
     }
+
+    @GetMapping("/devices/status")
+    public String deviceStatus(Model model) {
+        model.addAttribute("camera", cameraService.getCamera());
+        return "fragments/device-status :: status";
+    }
 }

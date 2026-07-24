@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>RGSCenter — Camera</title>
-    <meta http-equiv="refresh" content="10">
     <style>
         table {
             border-collapse: collapse;
@@ -27,32 +26,34 @@
             font-weight: bold;
         }
     </style>
+    <script>
+        async function loadStatus() {
+            try {
+                const response = await fetch("/devices/status", {
+                    cache: "no-store"
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                document.getElementById("device-status").innerHTML =
+                    await response.text();
+            } catch (error) {
+                console.error("Failed to update device status", error);
+            }
+        }
+
+        setInterval(loadStatus, 10000);
+    </script>
 </head>
 <body>
 
 <h1>Camera status</h1>
 
-<table>
-    <thead>
-    <tr>
-        <th>Name</th>
-        <th>IP address</th>
-        <th>Status</th>
-        <th>Last check</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr>
-        <td th:text="${camera.name}">Camera</td>
-        <td th:text="${camera.ipAddress}">192.168.1.13</td>
-        <td th:text="${camera.status}"
-            th:class="${camera.status}">
-            OFFLINE
-        </td>
-        <td th:text="${camera.lastCheck}">-</td>
-    </tr>
-    </tbody>
-</table>
+<div id="device-status">
+    <table th:replace="~{fragments/device-status :: status}"></table>
+</div>
 
 </body>
 </html>
