@@ -12,14 +12,14 @@
     </tr>
     </thead>
     <tbody>
-    <tr>
-        <td th:text="${camera.name}">Camera</td>
-        <td th:text="${camera.ipAddress}">192.168.1.13</td>
-        <td th:text="${camera.status}"
-            th:class="${camera.status}">
+    <tr th:each="device : ${devices}">
+        <td th:text="${device.name}">Camera</td>
+        <td th:text="${device.ipAddress}">192.168.1.13</td>
+        <td th:text="${device.status}"
+            th:class="${device.status}">
             OFFLINE
         </td>
-        <td th:text="${camera.lastCheck}">-</td>
+        <td th:text="${device.lastCheck}">-</td>
     </tr>
     </tbody>
 </table>

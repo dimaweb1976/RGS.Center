@@ -1,40 +1,39 @@
 package com.rgs.center.service;
 
 import com.rgs.center.objects.Device;
-import com.rgs.center.objects.DeviceStatus;
+import com.rgs.center.objects.DeviceCode;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.net.InetAddress;
-import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class CameraService {
 
-    private static final String CAMERA_IP = "192.168.1.13";
-    private static final int PING_TIMEOUT_MILLIS = 3000;
+    private final DeviceViewService deviceViewService;
+    private final DevicePingService pingService;
 
-    private final Device camera = new Device("Camera", CAMERA_IP);
+    public CameraService(
+            DeviceViewService deviceViewService,
+            DevicePingService pingService
+    ) {
+        this.deviceViewService = deviceViewService;
+        this.pingService = pingService;
+    }
 
-    @Scheduled(fixedDelay = 10000, initialDelay = 0)
-    public void checkCamera() {
-        boolean reachable = false;
-
-        try {
-            reachable = InetAddress
-                    .getByName(CAMERA_IP)
-                    .isReachable(PING_TIMEOUT_MILLIS);
-        } catch (Exception ignored) {
-            reachable = false;
-        }
-
-        camera.setStatus(
-                reachable ? DeviceStatus.ONLINE : DeviceStatus.OFFLINE
-        );
-        camera.setLastCheck(LocalDateTime.now());
+    @Scheduled(
+            fixedDelayString = "${rgs.device.camera.poll-interval-millis:10000}",
+            initialDelayString = "${rgs.device.camera.poll-initial-delay-millis:0}"
+    )
+    public void poll() {
+        pingService.pingDevice(DeviceCode.CAMERA);
     }
 
     public Device getCamera() {
-        return camera;
+        return deviceViewService.getDevice(DeviceCode.CAMERA);
+    }
+
+    public List<Device> getCameras() {
+        return List.of(getCamera());
     }
 }
