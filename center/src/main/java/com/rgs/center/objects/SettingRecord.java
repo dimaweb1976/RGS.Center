@@ -1,5 +1,15 @@
 package com.rgs.center.objects;
 
+/**
+ * Представление одной настройки в форме строки будущей таблицы БД.
+ *
+ * @param stringId строковый идентификатор
+ * @param type числовой тип
+ * @param booleanValue значение BOOLEAN
+ * @param longValue значение LONG
+ * @param doubleValue значение DOUBLE
+ * @param stringValue значение STRING
+ */
 public record SettingRecord(
         String stringId,
         int type,
@@ -9,6 +19,9 @@ public record SettingRecord(
         String stringValue
 ) {
 
+    /**
+     * @return значение из колонки, соответствующей полю {@link #type()}
+     */
     public Object value() {
         return switch (SettingType.fromCode(type)) {
             case BOOLEAN -> booleanValue;
@@ -18,6 +31,14 @@ public record SettingRecord(
         };
     }
 
+    /**
+     * Создаёт запись, заполняя только колонку объявленного типа.
+     *
+     * @param stringId идентификатор настройки
+     * @param type тип настройки
+     * @param value значение
+     * @return запись для сохранения
+     */
     public static SettingRecord from(String stringId, SettingType type, Object value) {
         return new SettingRecord(
                 stringId,

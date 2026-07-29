@@ -3,6 +3,8 @@ package com.rgs.center.service;
 import com.rgs.center.objects.SettingRecord;
 import com.rgs.center.objects.SettingType;
 import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -12,8 +14,18 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Потокобезопасное хранилище типов и текущих значений настроек.
+ *
+ * <p>Начальные значения загружаются из application.properties. Методы
+ * {@link #load(Collection)} и {@link #dump()} являются границей для будущего
+ * постоянного хранилища.</p>
+ */
 @Service
 public class SettingsService {
+
+    private static final Logger log =
+            LoggerFactory.getLogger(SettingsService.class);
 
     public static final String CAMERA_IP = "device.camera.ip";
     public static final String ROBOPLC_IP = "device.roboplc.ip";
@@ -26,6 +38,8 @@ public class SettingsService {
             "device.barcode-scanner.read-timeout-millis";
     public static final String BARCODE_SCANNER_MAX_CODE_LENGTH =
             "device.barcode-scanner.max-code-length";
+    public static final String SCALES_PORT = "device.scales.port";
+    public static final String SHP_PORT = "device.shp.port";
     public static final String PING_TIMEOUT_MILLIS = "ping.timeout.millis";
 
     private final Map<String, Integer> settingTypes = new ConcurrentHashMap<>();
@@ -55,6 +69,13 @@ public class SettingsService {
     @Value("${rgs.device.barcode-scanner.max-code-length:4096}")
     private long barcodeScannerMaxCodeLength = 4096L;
 
+    @Value("${rgs.device.scales.port:}")
+    private String scalesPort = "";
+
+    @Value("${rgs.device.shp.port:}")
+    private String shpPort = "";
+
+    /** Регистрирует начальные значения после внедрения Spring properties. */
     @PostConstruct
     void initializeDefaults() {
         registerDefault(CAMERA_IP, SettingType.STRING, cameraIp);
@@ -81,15 +102,29 @@ public class SettingsService {
                 SettingType.LONG,
                 barcodeScannerMaxCodeLength
         );
+        registerDefault(SCALES_PORT, SettingType.STRING, scalesPort);
+        registerDefault(SHP_PORT, SettingType.STRING, shpPort);
         registerDefault(PING_TIMEOUT_MILLIS, SettingType.LONG, 3000L);
+        log.info("Initialized {} application settings", settingValues.size());
     }
 
+    /**
+     * Добавляет настройку, не перезаписывая уже загруженное значение.
+     *
+     * @param code строковый идентификатор
+     * @param type допустимый тип значения
+     * @param value начальное значение
+     */
     public void registerDefault(String code, SettingType type, Object value) {
         validate(code, type, value);
         settingTypes.putIfAbsent(code, type.getCode());
         settingValues.putIfAbsent(code, value);
     }
 
+    /**
+     * @param code идентификатор настройки
+     * @return числовой код типа
+     */
     public int getType(String code) {
         Integer type = settingTypes.get(code);
         if (type == null) {
@@ -98,6 +133,10 @@ public class SettingsService {
         return type;
     }
 
+    /**
+     * @param code идентификатор настройки
+     * @return текущее значение
+     */
     public Object getValue(String code) {
         Object value = settingValues.get(code);
         if (value == null) {
@@ -106,16 +145,36 @@ public class SettingsService {
         return value;
     }
 
+    /**
+     * Возвращает значение с проверяемым приведением типа.
+     *
+     * @param code идентификатор настройки
+     * @param valueClass ожидаемый Java-класс
+     * @param <T> тип результата
+     * @return текущее значение
+     */
     public <T> T getValue(String code, Class<T> valueClass) {
         return valueClass.cast(getValue(code));
     }
 
+    /**
+     * Изменяет существующую настройку после проверки её зарегистрированного типа.
+     *
+     * @param code идентификатор настройки
+     * @param value новое значение
+     */
     public void setValue(String code, Object value) {
         SettingType type = SettingType.fromCode(getType(code));
         validate(code, type, value);
         settingValues.put(code, value);
+        log.info("Setting {} updated (type={})", code, type);
     }
 
+    /**
+     * Загружает записи в формате будущей таблицы БД.
+     *
+     * @param records записи настроек
+     */
     public void load(Collection<SettingRecord> records) {
         for (SettingRecord record : records) {
             SettingType type = SettingType.fromCode(record.type());
@@ -124,8 +183,14 @@ public class SettingsService {
             settingTypes.put(record.stringId(), type.getCode());
             settingValues.put(record.stringId(), value);
         }
+        log.info("Loaded {} settings from persistent storage", records.size());
     }
 
+    /**
+     * Формирует отсортированный снимок для сохранения в БД.
+     *
+     * @return записи с отдельными типизированными колонками
+     */
     public List<SettingRecord> dump() {
         return settingTypes.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
@@ -140,6 +205,13 @@ public class SettingsService {
                 .toList();
     }
 
+    /**
+     * Проверяет идентификатор и соответствие значения объявленному типу.
+     *
+     * @param code идентификатор настройки
+     * @param type ожидаемый тип
+     * @param value проверяемое значение
+     */
     private void validate(String code, SettingType type, Object value) {
         if (code == null || code.isBlank()) {
             throw new IllegalArgumentException("Setting code must not be blank");

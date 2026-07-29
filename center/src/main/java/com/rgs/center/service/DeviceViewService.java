@@ -9,12 +9,19 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
+/**
+ * Преобразует настройки и витрину в модель, пригодную для web-страницы.
+ */
 @Service
 public class DeviceViewService {
 
     private final SettingsService settingsService;
     private final CurrentDataService currentDataService;
 
+    /**
+     * @param settingsService источник адресов устройств
+     * @param currentDataService витрина статусов
+     */
     public DeviceViewService(
             SettingsService settingsService,
             CurrentDataService currentDataService
@@ -23,6 +30,10 @@ public class DeviceViewService {
         this.currentDataService = currentDataService;
     }
 
+    /**
+     * @param deviceCode код устройства
+     * @return новый снимок модели отображения
+     */
     public Device getDevice(DeviceCode deviceCode) {
         String address = settingsService.getValue(
                 deviceCode.getIpSettingCode(),

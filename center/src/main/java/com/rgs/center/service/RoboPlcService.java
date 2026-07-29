@@ -5,29 +5,48 @@ import com.rgs.center.objects.DeviceCode;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+/**
+ * Самостоятельный сервис контроля доступности контроллера RoboPLC.
+ *
+ * <p>Периодический опрос выполняется планировщиком независимо от опросов
+ * остальных устройств. Результат сохраняется в общей витрине текущих данных.</p>
+ */
 @Service
-public class RoboPlcService {
+public class RoboPlcService extends AbstractNetworkDeviceService {
 
-    private final DeviceViewService deviceViewService;
-    private final DevicePingService pingService;
-
+    /**
+     * Создаёт сервис RoboPLC.
+     *
+     * @param deviceViewService витрина текущего состояния устройств
+     * @param pingService сервис выполнения ping-проверки
+     */
     public RoboPlcService(
             DeviceViewService deviceViewService,
             DevicePingService pingService
     ) {
-        this.deviceViewService = deviceViewService;
-        this.pingService = pingService;
+        super(DeviceCode.ROBOPLC, deviceViewService, pingService);
     }
 
     @Scheduled(
             fixedDelayString = "${rgs.device.roboplc.poll-interval-millis:10000}",
             initialDelayString = "${rgs.device.roboplc.poll-initial-delay-millis:0}"
     )
+    /**
+     * Проверяет доступность RoboPLC.
+     *
+     * <p>{@code fixedDelay} отсчитывается после завершения предыдущей проверки,
+     * поэтому два опроса одного устройства не выполняются одновременно.</p>
+     */
     public void poll() {
-        pingService.pingDevice(DeviceCode.ROBOPLC);
+        pollQueued();
     }
 
+    /**
+     * Возвращает последнее состояние RoboPLC из витрины.
+     *
+     * @return снимок текущего состояния устройства
+     */
     public Device getRoboPlc() {
-        return deviceViewService.getDevice(DeviceCode.ROBOPLC);
+        return currentDevice();
     }
 }

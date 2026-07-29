@@ -7,32 +7,57 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * Самостоятельный сервис контроля доступности камеры машинного зрения.
+ *
+ * <p>Сейчас сконфигурирована одна камера. Методы сервиса уже отделяют одиночное
+ * устройство от списка камер, чтобы позднее расширить конфигурацию без изменения
+ * MVC-контроллера.</p>
+ */
 @Service
-public class CameraService {
+public class CameraService extends AbstractNetworkDeviceService {
 
-    private final DeviceViewService deviceViewService;
-    private final DevicePingService pingService;
-
+    /**
+     * Создаёт сервис камеры.
+     *
+     * @param deviceViewService витрина текущего состояния устройств
+     * @param pingService сервис выполнения ping-проверки
+     */
     public CameraService(
             DeviceViewService deviceViewService,
             DevicePingService pingService
     ) {
-        this.deviceViewService = deviceViewService;
-        this.pingService = pingService;
+        super(DeviceCode.CAMERA, deviceViewService, pingService);
     }
 
     @Scheduled(
             fixedDelayString = "${rgs.device.camera.poll-interval-millis:10000}",
             initialDelayString = "${rgs.device.camera.poll-initial-delay-millis:0}"
     )
+    /**
+     * Проверяет доступность камеры и обновляет её запись в витрине.
+     */
     public void poll() {
-        pingService.pingDevice(DeviceCode.CAMERA);
+        pollQueued();
     }
 
+    /**
+     * Возвращает последнее состояние настроенной камеры.
+     *
+     * @return снимок текущего состояния камеры
+     */
     public Device getCamera() {
-        return deviceViewService.getDevice(DeviceCode.CAMERA);
+        return currentDevice();
     }
 
+    /**
+     * Возвращает камеры, которые должны отображаться в интерфейсе.
+     *
+     * <p>На текущем этапе список содержит одну камеру. Этот метод является точкой
+     * расширения для будущей поддержки нескольких камер.</p>
+     *
+     * @return неизменяемый список камер
+     */
     public List<Device> getCameras() {
         return List.of(getCamera());
     }

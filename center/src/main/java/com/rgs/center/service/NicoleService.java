@@ -5,29 +5,45 @@ import com.rgs.center.objects.DeviceCode;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+/**
+ * Самостоятельный сервис контроля доступности устройства Nicole.
+ *
+ * <p>Плановый опрос Nicole не зависит от времени выполнения опросов камеры,
+ * Boson и RoboPLC. Полученный результат публикуется в витрине.</p>
+ */
 @Service
-public class NicoleService {
+public class NicoleService extends AbstractNetworkDeviceService {
 
-    private final DeviceViewService deviceViewService;
-    private final DevicePingService pingService;
-
+    /**
+     * Создаёт сервис Nicole.
+     *
+     * @param deviceViewService витрина текущего состояния устройств
+     * @param pingService сервис выполнения ping-проверки
+     */
     public NicoleService(
             DeviceViewService deviceViewService,
             DevicePingService pingService
     ) {
-        this.deviceViewService = deviceViewService;
-        this.pingService = pingService;
+        super(DeviceCode.NICOLE, deviceViewService, pingService);
     }
 
     @Scheduled(
             fixedDelayString = "${rgs.device.nicole.poll-interval-millis:10000}",
             initialDelayString = "${rgs.device.nicole.poll-initial-delay-millis:0}"
     )
+    /**
+     * Проверяет доступность Nicole и обновляет запись устройства в витрине.
+     */
     public void poll() {
-        pingService.pingDevice(DeviceCode.NICOLE);
+        pollQueued();
     }
 
+    /**
+     * Возвращает последнее состояние Nicole из витрины.
+     *
+     * @return снимок текущего состояния устройства
+     */
     public Device getNicole() {
-        return deviceViewService.getDevice(DeviceCode.NICOLE);
+        return currentDevice();
     }
 }

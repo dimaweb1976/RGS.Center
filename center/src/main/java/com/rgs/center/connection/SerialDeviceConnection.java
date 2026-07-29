@@ -1,21 +1,45 @@
 package com.rgs.center.connection;
 
 import com.fazecast.jSerialComm.SerialPort;
-import com.rgs.center.service.BarcodeScannerException;
+import com.rgs.center.peripheral.PeripheralCommunicationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
 
-public final class SerialDeviceConnection implements DeviceConnection {
+/**
+ * COM-транспорт на базе jSerialComm.
+ *
+ * <p>Один экземпляр соответствует одному имени COM-порта и может обслуживаться
+ * одним RX-потоком и одним TX-потоком. Параметры порта неизменяемы в пределах
+ * одного сеанса.</p>
+ */
+public final class SerialDeviceConnection extends AbstractDeviceConnection {
 
+    private static final Logger log =
+            LoggerFactory.getLogger(SerialDeviceConnection.class);
+
+    /** Низкоуровневый объект jSerialComm. */
     private final SerialPort port;
+
+    /** Имя порта для диагностики, например COM7. */
     private final String portName;
 
+    /** Поток чтения создаётся после успешного открытия порта. */
+    private InputStream inputStream;
+
+    /**
+     * @param portName системное имя COM-порта
+     * @param baudRate скорость обмена
+     * @param timeoutMillis тайм-аут блокирующего чтения
+     */
     public SerialDeviceConnection(
             String portName,
             int baudRate,
             int timeoutMillis
     ) {
+        super("serial:" + portName);
         this.portName = portName;
         port = SerialPort.getCommPort(portName);
         port.setComPortParameters(
@@ -31,61 +55,120 @@ public final class SerialDeviceConnection implements DeviceConnection {
         );
     }
 
+    /** Открывает COM-порт и создаёт поток чтения. */
     @Override
-    public void open() {
+    protected void doOpen() {
+        log.debug("Opening serial port {}", portName);
         if (!port.openPort()) {
-            throw new BarcodeScannerException(
+            log.error("Cannot open serial port {}", portName);
+            throw new PeripheralCommunicationException(
                     "Cannot open serial port " + portName
+            );
+        }
+        inputStream = port.getInputStream();
+        log.info("Serial port {} opened", portName);
+    }
+
+    /** Очищает накопленные входящие и исходящие данные драйвера. */
+    @Override
+    public void clearInput() {
+        requireOpen();
+        if (!port.flushIOBuffers()) {
+            log.error("Cannot clear serial port buffers {}", portName);
+            throw new PeripheralCommunicationException(
+                    "Cannot clear serial port buffers " + portName
+            );
+        }
+        log.debug("Serial port {} buffers cleared", portName);
+    }
+
+    /**
+     * Предоставляет поток чтения низкоуровневому reader.
+     *
+     * @return поток открытого COM-порта
+     */
+    public InputStream inputStream() {
+        requireOpen();
+        return inputStream;
+    }
+
+    /**
+     * Блокирующе читает следующую порцию данных.
+     *
+     * @param buffer буфер назначения
+     * @return число прочитанных байтов либо значение {@code <= 0} по тайм-ауту
+     */
+    @Override
+    public int read(byte[] buffer) {
+        requireOpen();
+        try {
+            int read = inputStream.read(buffer);
+            if (read > 0) {
+                log.trace("Read {} bytes from serial port {}", read, portName);
+            }
+            return read;
+        } catch (IOException exception) {
+            log.error("Cannot read data from serial port {}", portName, exception);
+            throw new PeripheralCommunicationException(
+                    "Cannot read data from serial port " + portName,
+                    exception
             );
         }
     }
 
+    /**
+     * Передаёт весь массив и проверяет фактическое число записанных байтов.
+     *
+     * @param value команда или данные для устройства
+     */
     @Override
-    public boolean isOpen() {
-        return port.isOpen();
-    }
-
-    public void clearInput() {
-        requireOpen();
-        port.flushIOBuffers();
-    }
-
-    public InputStream inputStream() {
-        requireOpen();
-        return port.getInputStream();
-    }
-
     public void write(byte[] value) {
         requireOpen();
         int written = port.writeBytes(value, value.length);
         if (written != value.length) {
-            throw new BarcodeScannerException(
+            log.error(
+                    "Incomplete write to serial port {}: expected={}, written={}",
+                    portName,
+                    value.length,
+                    written
+            );
+            throw new PeripheralCommunicationException(
                     "Cannot write all data to serial port " + portName
             );
         }
+        log.trace("Wrote {} bytes to serial port {}", written, portName);
     }
 
+    /**
+     * @return системное имя COM-порта
+     */
     public String portName() {
         return portName;
     }
 
+    /** Закрывает поток и COM-порт. Повторный вызов безопасен. */
     @Override
-    public void close() {
+    protected void doClose() {
         if (port.isOpen()) {
             try {
-                port.getInputStream().close();
-            } catch (IOException ignored) {
+                if (inputStream != null) {
+                    inputStream.close();
+                }
+            } catch (IOException exception) {
                 // The port still has to be closed.
+                log.warn(
+                        "Cannot close input stream for serial port {}",
+                        portName,
+                        exception
+                );
             }
-            port.closePort();
+            if (!port.closePort()) {
+                log.warn("Serial port {} did not confirm closing", portName);
+            } else {
+                log.info("Serial port {} closed", portName);
+            }
         }
+        inputStream = null;
     }
 
-    private void requireOpen() {
-        if (!isOpen()) {
-            throw new IllegalStateException(
-                    "Serial port " + portName + " is not open"
-            );
-        }
-    }
 }
