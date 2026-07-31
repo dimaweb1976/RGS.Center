@@ -7,6 +7,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 /**
  * Точка запуска серверного приложения RGS.Center.
  * test gitea push email notification
+ * test gitea push email notification. try #2
  */
 @SpringBootApplication
 @EnableScheduling
