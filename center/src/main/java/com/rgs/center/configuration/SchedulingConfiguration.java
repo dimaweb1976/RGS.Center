@@ -17,7 +17,7 @@ public class SchedulingConfiguration {
             LoggerFactory.getLogger(SchedulingConfiguration.class);
 
     /**
-     * Создаёт по одному доступному потоку для четырёх сетевых устройств.
+     * Создаёт отдельные потоки для сетевых устройств и COM-прибора GDRM.
      *
      * @return планировщик фоновых задач
      */
@@ -25,13 +25,13 @@ public class SchedulingConfiguration {
     public TaskScheduler taskScheduler() {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
         // Долгий ping одного устройства не должен блокировать остальные.
-        scheduler.setPoolSize(4);
+        scheduler.setPoolSize(5);
         scheduler.setThreadNamePrefix("device-poll-");
         scheduler.setWaitForTasksToCompleteOnShutdown(true);
         scheduler.setAwaitTerminationSeconds(5);
         log.info(
                 "Device polling scheduler configured: poolSize={}, shutdownWait={} seconds",
-                4,
+                5,
                 5
         );
         return scheduler;

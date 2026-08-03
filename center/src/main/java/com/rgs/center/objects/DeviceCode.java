@@ -16,6 +16,11 @@ public enum DeviceCode {
             "Barcode scanner",
             "device.barcode-scanner.port"
     ),
+    GDRM(
+            "gdrm",
+            "GDRM",
+            "device.gdrm.port"
+    ),
     SCALES(
             "scales",
             "Scales",

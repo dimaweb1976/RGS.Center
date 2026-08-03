@@ -1,6 +1,7 @@
 package com.rgs.center.connection;
 
 import com.fazecast.jSerialComm.SerialPort;
+import com.fazecast.jSerialComm.SerialPortTimeoutException;
 import com.rgs.center.peripheral.PeripheralCommunicationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,8 +13,8 @@ import java.io.InputStream;
  * COM-транспорт на базе jSerialComm.
  *
  * <p>Один экземпляр соответствует одному имени COM-порта и может обслуживаться
- * одним RX-потоком и одним TX-потоком. Параметры порта неизменяемы в пределах
- * одного сеанса.</p>
+ * одним RX-потоком и одним TX-потоком. Скорость можно изменить между обменами,
+ * что требуется для автоматического определения baud rate у GDRM.</p>
  */
 public final class SerialDeviceConnection extends AbstractDeviceConnection {
 
@@ -25,6 +26,9 @@ public final class SerialDeviceConnection extends AbstractDeviceConnection {
 
     /** Имя порта для диагностики, например COM7. */
     private final String portName;
+
+    /** Текущая скорость обмена; изменяется только через {@link #setBaudRate(int)}. */
+    private volatile int baudRate;
 
     /** Поток чтения создаётся после успешного открытия порта. */
     private InputStream inputStream;
@@ -41,6 +45,7 @@ public final class SerialDeviceConnection extends AbstractDeviceConnection {
     ) {
         super("serial:" + portName);
         this.portName = portName;
+        this.baudRate = baudRate;
         port = SerialPort.getCommPort(portName);
         port.setComPortParameters(
                 baudRate,
@@ -58,7 +63,13 @@ public final class SerialDeviceConnection extends AbstractDeviceConnection {
     /** Открывает COM-порт и создаёт поток чтения. */
     @Override
     protected void doOpen() {
-        log.debug("Opening serial port {}", portName);
+        log.debug("Opening serial port {} at {} baud", portName, baudRate);
+        port.setComPortParameters(
+                baudRate,
+                8,
+                SerialPort.ONE_STOP_BIT,
+                SerialPort.NO_PARITY
+        );
         if (!port.openPort()) {
             log.error("Cannot open serial port {}", portName);
             throw new PeripheralCommunicationException(
@@ -66,7 +77,7 @@ public final class SerialDeviceConnection extends AbstractDeviceConnection {
             );
         }
         inputStream = port.getInputStream();
-        log.info("Serial port {} opened", portName);
+        log.info("Serial port {} opened at {} baud", portName, baudRate);
     }
 
     /** Очищает накопленные входящие и исходящие данные драйвера. */
@@ -107,6 +118,10 @@ public final class SerialDeviceConnection extends AbstractDeviceConnection {
                 log.trace("Read {} bytes from serial port {}", read, portName);
             }
             return read;
+        } catch (SerialPortTimeoutException exception) {
+            // Для semi-blocking режима отсутствие байтов до тайм-аута штатно:
+            // RX-поток продолжит ожидание следующей порции данных.
+            return 0;
         } catch (IOException exception) {
             log.error("Cannot read data from serial port {}", portName, exception);
             throw new PeripheralCommunicationException(
@@ -144,6 +159,34 @@ public final class SerialDeviceConnection extends AbstractDeviceConnection {
      */
     public String portName() {
         return portName;
+    }
+
+    /**
+     * Меняет скорость COM-порта. Вызывающий код должен предварительно остановить
+     * обслуживающий worker, чтобы в момент перенастройки не выполнялось чтение.
+     *
+     * @param value новая положительная скорость обмена
+     */
+    public synchronized void setBaudRate(int value) {
+        if (value <= 0) {
+            throw new IllegalArgumentException("Baud rate must be positive");
+        }
+        baudRate = value;
+        port.setComPortParameters(
+                value,
+                8,
+                SerialPort.ONE_STOP_BIT,
+                SerialPort.NO_PARITY
+        );
+        if (port.isOpen()) {
+            port.flushIOBuffers();
+        }
+        log.info("Serial port {} configured for {} baud", portName, value);
+    }
+
+    /** @return текущая настроенная скорость COM-порта */
+    public int baudRate() {
+        return baudRate;
     }
 
     /** Закрывает поток и COM-порт. Повторный вызов безопасен. */

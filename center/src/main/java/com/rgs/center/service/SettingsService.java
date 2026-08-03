@@ -38,6 +38,13 @@ public class SettingsService {
             "device.barcode-scanner.read-timeout-millis";
     public static final String BARCODE_SCANNER_MAX_CODE_LENGTH =
             "device.barcode-scanner.max-code-length";
+    public static final String GDRM_PORT = "device.gdrm.port";
+    public static final String GDRM_INITIAL_BAUD_RATE =
+            "device.gdrm.initial-baud-rate";
+    public static final String GDRM_READ_TIMEOUT_MILLIS =
+            "device.gdrm.read-timeout-millis";
+    public static final String GDRM_RESPONSE_TIMEOUT_MILLIS =
+            "device.gdrm.response-timeout-millis";
     public static final String SCALES_PORT = "device.scales.port";
     public static final String SHP_PORT = "device.shp.port";
     public static final String PING_TIMEOUT_MILLIS = "ping.timeout.millis";
@@ -68,6 +75,18 @@ public class SettingsService {
 
     @Value("${rgs.device.barcode-scanner.max-code-length:4096}")
     private long barcodeScannerMaxCodeLength = 4096L;
+
+    @Value("${rgs.device.gdrm.port:COM3}")
+    private String gdrmPort = "COM3";
+
+    @Value("${rgs.device.gdrm.initial-baud-rate:9600}")
+    private long gdrmInitialBaudRate = 9600L;
+
+    @Value("${rgs.device.gdrm.read-timeout-millis:250}")
+    private long gdrmReadTimeoutMillis = 250L;
+
+    @Value("${rgs.device.gdrm.response-timeout-millis:1200}")
+    private long gdrmResponseTimeoutMillis = 1200L;
 
     @Value("${rgs.device.scales.port:}")
     private String scalesPort = "";
@@ -101,6 +120,22 @@ public class SettingsService {
                 BARCODE_SCANNER_MAX_CODE_LENGTH,
                 SettingType.LONG,
                 barcodeScannerMaxCodeLength
+        );
+        registerDefault(GDRM_PORT, SettingType.STRING, gdrmPort);
+        registerDefault(
+                GDRM_INITIAL_BAUD_RATE,
+                SettingType.LONG,
+                gdrmInitialBaudRate
+        );
+        registerDefault(
+                GDRM_READ_TIMEOUT_MILLIS,
+                SettingType.LONG,
+                gdrmReadTimeoutMillis
+        );
+        registerDefault(
+                GDRM_RESPONSE_TIMEOUT_MILLIS,
+                SettingType.LONG,
+                gdrmResponseTimeoutMillis
         );
         registerDefault(SCALES_PORT, SettingType.STRING, scalesPort);
         registerDefault(SHP_PORT, SettingType.STRING, shpPort);
