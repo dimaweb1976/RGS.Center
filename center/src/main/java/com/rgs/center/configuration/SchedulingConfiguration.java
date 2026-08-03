@@ -25,13 +25,13 @@ public class SchedulingConfiguration {
     public TaskScheduler taskScheduler() {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
         // Долгий ping одного устройства не должен блокировать остальные.
-        scheduler.setPoolSize(7);
+        scheduler.setPoolSize(8);
         scheduler.setThreadNamePrefix("device-poll-");
         scheduler.setWaitForTasksToCompleteOnShutdown(true);
         scheduler.setAwaitTerminationSeconds(5);
         log.info(
                 "Device polling scheduler configured: poolSize={}, shutdownWait={} seconds",
-                7,
+                8,
                 5
         );
         return scheduler;

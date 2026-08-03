@@ -52,11 +52,17 @@ public class DeviceViewService {
                 CurrentDataService.PINGED,
                 Boolean.class
         );
-        long lastCheck = currentDataService.getValue(
+        long lastRequest = currentDataService.getValue(
                 deviceCode,
                 CurrentDataService.INTERACTION_LASTDATE_IN,
                 Long.class
         );
+        long lastResponse = currentDataService.getValue(
+                deviceCode,
+                CurrentDataService.INTERACTION_LASTDATE_OUT,
+                Long.class
+        );
+        long lastCheck = Math.max(lastRequest, lastResponse);
 
         device.setStatus(pinged ? DeviceStatus.ONLINE : DeviceStatus.OFFLINE);
         if (lastCheck > 0) {

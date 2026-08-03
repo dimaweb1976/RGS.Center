@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>RGSCenter — эмулятор измерения</title>
+    <style>
+        :root { font-family: Inter, Arial, sans-serif; color: #17212b; background: #eef2f6; }
+        * { box-sizing: border-box; }
+        body { margin: 0; }
+        header { padding: 22px 30px; color: #fff; background: linear-gradient(120deg, #172b3a, #245d71); }
+        header h1 { margin: 0; font-size: 26px; }
+        header p { margin: 7px 0 0; color: #d9edf2; }
+        nav { margin-top: 12px; }
+        nav a { color: #fff; margin-right: 18px; }
+        main { max-width: 1400px; margin: 22px auto; padding: 0 20px 36px; }
+        .note { color: #657481; font-size: 13px; }
+        .loading { opacity: .62; }
+        button { border: 0; border-radius: 6px; padding: 9px 14px; cursor: pointer; font-weight: 700; }
+        button:disabled { cursor: not-allowed; opacity: .42; }
+        .primary { color: white; background: #087f5b; }
+        .secondary { color: #243340; background: #dce5eb; }
+    </style>
+    <script>
+        async function loadEmulatorStatus() {
+            const panel = document.getElementById("emulator-status");
+            panel.classList.add("loading");
+            try {
+                const response = await fetch("/measurement-emulator/status", {cache: "no-store"});
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                panel.innerHTML = await response.text();
+            } catch (error) {
+                console.error("Failed to update measurement emulator", error);
+            } finally {
+                panel.classList.remove("loading");
+            }
+        }
+
+        async function emulatorAction(path) {
+            const response = await fetch(`/measurement-emulator/${path}`, {method: "POST"});
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            document.getElementById("emulator-status").innerHTML = await response.text();
+        }
+
+        setInterval(loadEmulatorStatus, 1000);
+    </script>
+</head>
+<body>
+<header>
+    <h1>Эмулятор алгоритма измерения</h1>
+    <p>Безопасная модель сценария — команды физическим устройствам не отправляются</p>
+    <nav><a href="/">Главная</a><a href="/devices">Приборы</a></nav>
+</header>
+<main>
+    <p class="note">Состояние обновляется каждую секунду. Нажатие на проверку имитирует отказ или восстановление.</p>
+    <div id="emulator-status"
+         th:insert="~{fragments/measurement-emulator-status :: status}"></div>
+</main>
+</body>
+</html>

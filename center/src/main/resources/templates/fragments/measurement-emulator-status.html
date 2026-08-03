@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"></head>
+<body>
+<section th:fragment="status" class="emulator-panel">
+    <style>
+        .topbar, .grid, .parallel, .lower { display: grid; gap: 14px; }
+        .topbar { grid-template-columns: 1fr auto; align-items: center; margin-bottom: 14px; }
+        .grid { grid-template-columns: repeat(3, 1fr); }
+        .parallel { grid-template-columns: 1fr 1fr; margin-top: 14px; }
+        .lower { grid-template-columns: 1.1fr .9fr; margin-top: 14px; }
+        .card { background: #fff; border: 1px solid #dce4e9; border-radius: 9px; padding: 16px; box-shadow: 0 2px 7px rgba(30, 54, 70, .06); }
+        .card h2 { margin: 0 0 12px; font-size: 17px; }
+        .phase { display: inline-block; padding: 7px 11px; border-radius: 999px; color: #fff; background: #376b83; font-weight: 700; }
+        .alert { margin: 0 0 14px; padding: 13px; color: #8f1d1d; background: #ffe3e3; border: 1px solid #ffb5b5; border-radius: 7px; font-weight: 700; }
+        .check { display: grid; grid-template-columns: 26px 1fr; gap: 8px; width: 100%; margin: 6px 0; padding: 8px; text-align: left; border: 1px solid #dce4e9; border-radius: 6px; background: #f7f9fa; cursor: pointer; }
+        .check strong { display: block; }
+        .check small { color: #6b7780; }
+        .check .lamp { width: 13px; height: 13px; margin-top: 4px; border-radius: 50%; background: #d23939; box-shadow: 0 0 0 4px #f8dada; }
+        .check.ready .lamp { background: #169b62; box-shadow: 0 0 0 4px #d9f2e8; }
+        .camera { min-height: 128px; display: grid; place-items: center; border-radius: 7px; color: #b9dfe9; background: repeating-linear-gradient(135deg, #173746, #173746 12px, #1b4152 12px, #1b4152 24px); font-size: 22px; }
+        .metric { font-size: 25px; font-weight: 800; }
+        .metric.ok { color: #087f5b; }
+        .metric.bad { color: #c92a2a; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 8px; border-bottom: 1px solid #e3e8eb; text-align: left; }
+        th { font-size: 12px; color: #61707c; text-transform: uppercase; }
+        .steps { margin: 0; padding: 0; list-style: none; }
+        .steps li { display: grid; grid-template-columns: 28px 1fr auto; gap: 8px; padding: 7px 0; border-bottom: 1px solid #edf0f2; }
+        .steps .number { color: #637784; font-weight: 700; }
+        .steps .state { font-size: 11px; font-weight: 800; color: #637784; }
+        .steps li.active { color: #087f5b; font-weight: 700; }
+        .steps li.done { color: #66737b; }
+        .events { max-height: 255px; overflow: auto; margin: 0; padding-left: 20px; font-family: Consolas, monospace; font-size: 12px; }
+        .events li { margin-bottom: 5px; }
+        .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        @media (max-width: 950px) { .grid, .parallel, .lower { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="topbar">
+        <div><span class="phase" th:text="${emulator.phaseLabel}">Проверка</span>
+            <span th:if="${emulator.activeObjectNumber > 0}"
+                  th:text="'Объект ' + ${emulator.activeObjectNumber}"></span></div>
+        <div class="actions">
+            <button class="secondary" onclick="emulatorAction('reset')">СБРОС</button>
+            <button class="secondary" onclick="emulatorAction('detect-objects')">ОПРЕДЕЛИТЬ ОБЪЕКТЫ</button>
+            <button class="primary" th:disabled="${!emulator.startEnabled}"
+                    onclick="emulatorAction('start')">START</button>
+        </div>
+    </div>
+
+    <div class="alert" th:if="${!#strings.isEmpty(emulator.alert)}"
+         th:text="${emulator.alert}">Оповещение</div>
+
+    <div class="grid">
+        <article class="card">
+            <h2>1. Связь с устройствами</h2>
+            <button th:each="check : ${emulator.deviceChecks}" class="check"
+                    th:classappend="${check.ready} ? ' ready' : ''"
+                    th:attr="data-path=|checks/${check.code}/toggle|"
+                    onclick="emulatorAction(this.dataset.path)">
+                <span class="lamp"></span><span><strong th:text="${check.label}"></strong><small th:text="${check.details}"></small></span>
+            </button>
+        </article>
+        <article class="card">
+            <h2>2. Начальное состояние</h2>
+            <button th:each="check : ${emulator.initialStateChecks}" class="check"
+                    th:classappend="${check.ready} ? ' ready' : ''"
+                    th:attr="data-path=|checks/${check.code}/toggle|"
+                    onclick="emulatorAction(this.dataset.path)">
+                <span class="lamp"></span><span><strong th:text="${check.label}"></strong><small th:text="${check.details}"></small></span>
+            </button>
+        </article>
+        <article class="card">
+            <h2>3. Контрольные параметры</h2>
+            <button th:each="check : ${emulator.controlParameterChecks}" class="check"
+                    th:classappend="${check.ready} ? ' ready' : ''"
+                    th:attr="data-path=|checks/${check.code}/toggle|"
+                    onclick="emulatorAction(this.dataset.path)">
+                <span class="lamp"></span><span><strong th:text="${check.label}"></strong><small th:text="${check.details}"></small></span>
+            </button>
+        </article>
+    </div>
+
+    <div class="parallel">
+        <article class="card">
+            <h2>Высокое напряжение и ток утечки</h2>
+            <p><strong th:text="${emulator.highVoltageState}">ВЫКЛЮЧЕНО</strong></p>
+            <p class="metric"
+               th:classappend="${emulator.leakageCurrentMicroamps <= emulator.leakageLimitMicroamps} ? ' ok' : ' bad'"
+               th:text="${#numbers.formatDecimal(emulator.leakageCurrentMicroamps, 1, 2)} + ' мкА'">0.18 мкА</p>
+            <p th:text="'Допуск: не более ' + ${emulator.leakageLimitMicroamps} + ' мкА'"></p>
+            <button class="secondary" onclick="emulatorAction('leakage/toggle')">ИМИТИРОВАТЬ ТОК</button>
+        </article>
+        <article class="card">
+            <h2>Изображение камеры</h2>
+            <div class="camera" th:if="${emulator.cameraImageVisible}">CAMERA · LIVE · EMULATOR</div>
+            <div class="camera" th:unless="${emulator.cameraImageVisible}">КАМЕРА ОЖИДАЕТ</div>
+        </article>
+    </div>
+
+    <div class="lower">
+        <div>
+            <article class="card">
+                <h2>Список объектов</h2>
+                <p th:if="${#lists.isEmpty(emulator.objects)}">Объекты ещё не определены.</p>
+                <table th:unless="${#lists.isEmpty(emulator.objects)}">
+                    <thead><tr><th>№</th><th>Штрих-код</th><th>Масса, г</th><th>Статус</th></tr></thead>
+                    <tbody><tr th:each="object : ${emulator.objects}">
+                        <td th:text="${object.number}"></td><td th:text="${object.barcode}"></td>
+                        <td th:text="${#numbers.formatDecimal(object.estimatedMassGrams, 1, 1)}"></td>
+                        <td th:text="${object.status}"></td>
+                    </tr></tbody>
+                </table>
+            </article>
+            <article class="card" style="margin-top:14px">
+                <h2>Тело цикла</h2>
+                <ol class="steps">
+                    <li th:each="step : ${emulator.cycleSteps}"
+                        th:classappend="${step.state == 'ВЫПОЛНЯЕТСЯ'} ? ' active' : (${step.state == 'ГОТОВО'} ? ' done' : '')">
+                        <span class="number" th:text="${step.number}"></span>
+                        <span th:text="${step.name}"></span><span class="state" th:text="${step.state}"></span>
+                    </li>
+                </ol>
+            </article>
+        </div>
+        <article class="card">
+            <h2>Журнал событий</h2>
+            <ul class="events"><li th:each="event : ${emulator.events}" th:text="${event}"></li></ul>
+        </article>
+    </div>
+</section>
+</body>
+</html>

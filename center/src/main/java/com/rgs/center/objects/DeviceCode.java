@@ -11,6 +11,12 @@ public enum DeviceCode {
     ROBOPLC("roboplc", "RoboPLC", "device.roboplc.ip"),
     NICOLE("nicole", "Nicole", "device.nicole.ip"),
     BOSON("boson", "BOSON", "device.boson.ip"),
+    ROBOTIC_MANIPULATOR(
+            "RoboticManipulator",
+            "Robotic manipulator",
+            "device.manipulator.host",
+            "device.manipulator.command-port"
+    ),
     BARCODE_SCANNER(
             "barcode-scanner",
             "Barcode scanner",

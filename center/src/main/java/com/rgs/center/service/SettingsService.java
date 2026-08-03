@@ -31,6 +31,15 @@ public class SettingsService {
     public static final String ROBOPLC_IP = "device.roboplc.ip";
     public static final String NICOLE_IP = "device.nicole.ip";
     public static final String BOSON_IP = "device.boson.ip";
+    public static final String MANIPULATOR_HOST = "device.manipulator.host";
+    public static final String MANIPULATOR_COMMAND_PORT = "device.manipulator.command-port";
+    public static final String MANIPULATOR_FEEDBACK_PORT = "device.manipulator.feedback-port";
+    public static final String MANIPULATOR_CONNECT_TIMEOUT_MILLIS = "device.manipulator.connect-timeout-millis";
+    public static final String MANIPULATOR_READ_TIMEOUT_MILLIS = "device.manipulator.read-timeout-millis";
+    public static final String MANIPULATOR_RESPONSE_TIMEOUT_MILLIS = "device.manipulator.response-timeout-millis";
+    public static final String MANIPULATOR_TELEMETRY_STALE_MILLIS = "device.manipulator.telemetry-stale-millis";
+    public static final String MANIPULATOR_HATCH_CLOSED_DI_BIT = "device.manipulator.hatch-closed-di-bit";
+    public static final String MANIPULATOR_HATCH_OPEN_DI_BIT = "device.manipulator.hatch-open-di-bit";
     public static final String BARCODE_SCANNER_PORT = "device.barcode-scanner.port";
     public static final String BARCODE_SCANNER_BAUD_RATE =
             "device.barcode-scanner.baud-rate";
@@ -78,6 +87,33 @@ public class SettingsService {
 
     @Value("${rgs.device.boson.ip:192.168.1.16}")
     private String bosonIp = "192.168.1.16";
+
+    @Value("${rgs.device.manipulator.host:192.168.5.1}")
+    private String manipulatorHost = "192.168.5.1";
+
+    @Value("${rgs.device.manipulator.command-port:29999}")
+    private long manipulatorCommandPort = 29999L;
+
+    @Value("${rgs.device.manipulator.feedback-port:30005}")
+    private long manipulatorFeedbackPort = 30005L;
+
+    @Value("${rgs.device.manipulator.connect-timeout-millis:2000}")
+    private long manipulatorConnectTimeoutMillis = 2000L;
+
+    @Value("${rgs.device.manipulator.read-timeout-millis:250}")
+    private long manipulatorReadTimeoutMillis = 250L;
+
+    @Value("${rgs.device.manipulator.response-timeout-millis:3000}")
+    private long manipulatorResponseTimeoutMillis = 3000L;
+
+    @Value("${rgs.device.manipulator.telemetry-stale-millis:2000}")
+    private long manipulatorTelemetryStaleMillis = 2000L;
+
+    @Value("${rgs.device.manipulator.hatch-closed-di-bit:0}")
+    private long manipulatorHatchClosedDiBit = 0L;
+
+    @Value("${rgs.device.manipulator.hatch-open-di-bit:1}")
+    private long manipulatorHatchOpenDiBit = 1L;
 
     @Value("${rgs.device.barcode-scanner.port:}")
     private String barcodeScannerPort = "";
@@ -143,6 +179,15 @@ public class SettingsService {
         registerDefault(ROBOPLC_IP, SettingType.STRING, roboplcIp);
         registerDefault(NICOLE_IP, SettingType.STRING, nicoleIp);
         registerDefault(BOSON_IP, SettingType.STRING, bosonIp);
+        registerDefault(MANIPULATOR_HOST, SettingType.STRING, manipulatorHost);
+        registerDefault(MANIPULATOR_COMMAND_PORT, SettingType.LONG, manipulatorCommandPort);
+        registerDefault(MANIPULATOR_FEEDBACK_PORT, SettingType.LONG, manipulatorFeedbackPort);
+        registerDefault(MANIPULATOR_CONNECT_TIMEOUT_MILLIS, SettingType.LONG, manipulatorConnectTimeoutMillis);
+        registerDefault(MANIPULATOR_READ_TIMEOUT_MILLIS, SettingType.LONG, manipulatorReadTimeoutMillis);
+        registerDefault(MANIPULATOR_RESPONSE_TIMEOUT_MILLIS, SettingType.LONG, manipulatorResponseTimeoutMillis);
+        registerDefault(MANIPULATOR_TELEMETRY_STALE_MILLIS, SettingType.LONG, manipulatorTelemetryStaleMillis);
+        registerDefault(MANIPULATOR_HATCH_CLOSED_DI_BIT, SettingType.LONG, manipulatorHatchClosedDiBit);
+        registerDefault(MANIPULATOR_HATCH_OPEN_DI_BIT, SettingType.LONG, manipulatorHatchOpenDiBit);
         registerDefault(
                 BARCODE_SCANNER_PORT,
                 SettingType.STRING,

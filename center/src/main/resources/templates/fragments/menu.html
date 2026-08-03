@@ -1,23 +1,14 @@
 <!DOCTYPE html>
-<!--
-Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
-Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this template
--->
-<html>
-    <head>
-        <title>RGSCenter Menu</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body>
-<div th:fragment="menu">
-
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>RGSCenter Menu</title>
+</head>
+<body>
+<nav th:fragment="menu">
     <a href="/">Главная</a>
-
     <a href="/devices">Приборы</a>
-
-    <a href="/measurements">Измерения</a>
-
-</div>
-    </body>
+    <a href="/measurement-emulator">Эмулятор измерения</a>
+</nav>
+</body>
 </html>

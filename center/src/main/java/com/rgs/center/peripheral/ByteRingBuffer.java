@@ -153,6 +153,51 @@ public final class ByteRingBuffer {
     }
 
     /**
+     * Извлекает кадр до однобайтового терминатора включительно.
+     *
+     * <p>Метод предназначен для протоколов наподобие Dobot Dashboard, где
+     * ответ заканчивается {@code ';'}, но не имеет фиксированного стартового
+     * байта. Ведущие пустые терминаторы отбрасываются.</p>
+     *
+     * @param terminator завершающий байт кадра
+     * @param maxLength максимальная длина кадра вместе с терминатором
+     * @return полный кадр либо {@code null}, если терминатор ещё не получен
+     */
+    public byte[] pollTerminated(byte terminator, int maxLength) {
+        if (maxLength <= 0) {
+            throw new IllegalArgumentException(
+                    "Maximum terminated frame length must be positive"
+            );
+        }
+        lock.lock();
+        try {
+            while (size > 0 && valueAt(0) == terminator) {
+                discardOne();
+            }
+            for (int offset = 0; offset < size; offset++) {
+                if (offset + 1 > maxLength) {
+                    throw new PeripheralCommunicationException(
+                            "Received terminated frame exceeds maximum length of "
+                                    + maxLength
+                    );
+                }
+                if (valueAt(offset) == terminator) {
+                    return remove(offset + 1);
+                }
+            }
+            if (size > maxLength) {
+                throw new PeripheralCommunicationException(
+                        "Received terminated frame exceeds maximum length of "
+                                + maxLength
+                );
+            }
+            return null;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
      * Извлекает двоичный кадр вместе с начальным и конечным маркерами.
      * Байты до первого начального маркера считаются шумом и удаляются.
      *
