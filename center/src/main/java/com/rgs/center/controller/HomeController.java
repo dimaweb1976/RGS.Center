@@ -114,6 +114,7 @@ public class HomeController {
         devices.add(nicoleService.getNicole());
         devices.add(bosonService.getBoson());
         devices.add(deviceViewService.getDevice(DeviceCode.SHP));
+        devices.add(deviceViewService.getDevice(DeviceCode.GAMMA_PRO));
         return devices;
     }
 }

@@ -387,7 +387,16 @@ public final class PeripheralDeviceWorker implements AutoCloseable {
         while (running.get()) {
             try {
                 int read = transport.read(chunk);
-                if (read <= 0) {
+                if (read < 0) {
+                    if (!running.get()) {
+                        return;
+                    }
+                    throw new PeripheralCommunicationException(
+                            "Peripheral " + deviceId
+                                    + " closed the input stream"
+                    );
+                }
+                if (read == 0) {
                     continue;
                 }
                 bytesReceived.addAndGet(read);

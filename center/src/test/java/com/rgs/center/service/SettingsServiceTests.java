@@ -53,6 +53,18 @@ class SettingsServiceTests {
     }
 
     @Test
+    void providesGammaProTcpDefaults() {
+        assertEquals(
+                "127.0.0.1",
+                service.getValue(SettingsService.GAMMA_PRO_HOST, String.class)
+        );
+        assertEquals(
+                37569L,
+                service.getValue(SettingsService.GAMMA_PRO_PORT, Long.class)
+        );
+    }
+
+    @Test
     void loadsAndDumpsDatabaseShapedRecords() {
         service.load(List.of(
                 new SettingRecord(

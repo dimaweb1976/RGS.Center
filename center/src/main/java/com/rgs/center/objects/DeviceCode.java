@@ -30,11 +30,18 @@ public enum DeviceCode {
             "shp",
             "SHP",
             "device.shp.port"
+    ),
+    GAMMA_PRO(
+            "gamma-pro",
+            "Gamma-PRO",
+            "device.gamma-pro.host",
+            "device.gamma-pro.port"
     );
 
     private final String code;
     private final String displayName;
     private final String ipSettingCode;
+    private final String portSettingCode;
 
     /**
      * @param code машинный идентификатор для витрины
@@ -42,9 +49,25 @@ public enum DeviceCode {
      * @param ipSettingCode код настройки адреса или COM-порта
      */
     DeviceCode(String code, String displayName, String ipSettingCode) {
+        this(code, displayName, ipSettingCode, null);
+    }
+
+    /**
+     * @param code машинный идентификатор
+     * @param displayName отображаемое имя
+     * @param ipSettingCode настройка адреса
+     * @param portSettingCode отдельная настройка TCP-порта или {@code null}
+     */
+    DeviceCode(
+            String code,
+            String displayName,
+            String ipSettingCode,
+            String portSettingCode
+    ) {
         this.code = code;
         this.displayName = displayName;
         this.ipSettingCode = ipSettingCode;
+        this.portSettingCode = portSettingCode;
     }
 
     /** @return машинный идентификатор */
@@ -60,5 +83,10 @@ public enum DeviceCode {
     /** @return код настройки подключения */
     public String getIpSettingCode() {
         return ipSettingCode;
+    }
+
+    /** @return код отдельной настройки TCP-порта или {@code null} */
+    public String getPortSettingCode() {
+        return portSettingCode;
     }
 }

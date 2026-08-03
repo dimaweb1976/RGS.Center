@@ -39,6 +39,13 @@ public class DeviceViewService {
                 deviceCode.getIpSettingCode(),
                 String.class
         );
+        if (deviceCode.getPortSettingCode() != null) {
+            long port = settingsService.getValue(
+                    deviceCode.getPortSettingCode(),
+                    Long.class
+            );
+            address = address + ":" + port;
+        }
         Device device = new Device(deviceCode.getDisplayName(), address);
         boolean pinged = currentDataService.getValue(
                 deviceCode,

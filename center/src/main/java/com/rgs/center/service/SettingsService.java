@@ -52,6 +52,16 @@ public class SettingsService {
             "device.shp.read-timeout-millis";
     public static final String SHP_RESPONSE_TIMEOUT_MILLIS =
             "device.shp.response-timeout-millis";
+    public static final String GAMMA_PRO_HOST = "device.gamma-pro.host";
+    public static final String GAMMA_PRO_PORT = "device.gamma-pro.port";
+    public static final String GAMMA_PRO_CONNECT_TIMEOUT_MILLIS =
+            "device.gamma-pro.connect-timeout-millis";
+    public static final String GAMMA_PRO_READ_TIMEOUT_MILLIS =
+            "device.gamma-pro.read-timeout-millis";
+    public static final String GAMMA_PRO_RESPONSE_TIMEOUT_MILLIS =
+            "device.gamma-pro.response-timeout-millis";
+    public static final String GAMMA_PRO_CHARSET =
+            "device.gamma-pro.charset";
     public static final String PING_TIMEOUT_MILLIS = "ping.timeout.millis";
 
     private final Map<String, Integer> settingTypes = new ConcurrentHashMap<>();
@@ -108,6 +118,24 @@ public class SettingsService {
     @Value("${rgs.device.shp.response-timeout-millis:1200}")
     private long shpResponseTimeoutMillis = 1200L;
 
+    @Value("${rgs.device.gamma-pro.host:127.0.0.1}")
+    private String gammaProHost = "127.0.0.1";
+
+    @Value("${rgs.device.gamma-pro.port:37569}")
+    private long gammaProPort = 37569L;
+
+    @Value("${rgs.device.gamma-pro.connect-timeout-millis:2000}")
+    private long gammaProConnectTimeoutMillis = 2000L;
+
+    @Value("${rgs.device.gamma-pro.read-timeout-millis:250}")
+    private long gammaProReadTimeoutMillis = 250L;
+
+    @Value("${rgs.device.gamma-pro.response-timeout-millis:3000}")
+    private long gammaProResponseTimeoutMillis = 3000L;
+
+    @Value("${rgs.device.gamma-pro.charset:windows-1251}")
+    private String gammaProCharset = "windows-1251";
+
     /** Регистрирует начальные значения после внедрения Spring properties. */
     @PostConstruct
     void initializeDefaults() {
@@ -163,6 +191,28 @@ public class SettingsService {
                 SHP_RESPONSE_TIMEOUT_MILLIS,
                 SettingType.LONG,
                 shpResponseTimeoutMillis
+        );
+        registerDefault(GAMMA_PRO_HOST, SettingType.STRING, gammaProHost);
+        registerDefault(GAMMA_PRO_PORT, SettingType.LONG, gammaProPort);
+        registerDefault(
+                GAMMA_PRO_CONNECT_TIMEOUT_MILLIS,
+                SettingType.LONG,
+                gammaProConnectTimeoutMillis
+        );
+        registerDefault(
+                GAMMA_PRO_READ_TIMEOUT_MILLIS,
+                SettingType.LONG,
+                gammaProReadTimeoutMillis
+        );
+        registerDefault(
+                GAMMA_PRO_RESPONSE_TIMEOUT_MILLIS,
+                SettingType.LONG,
+                gammaProResponseTimeoutMillis
+        );
+        registerDefault(
+                GAMMA_PRO_CHARSET,
+                SettingType.STRING,
+                gammaProCharset
         );
         registerDefault(PING_TIMEOUT_MILLIS, SettingType.LONG, 3000L);
         log.info("Initialized {} application settings", settingValues.size());
