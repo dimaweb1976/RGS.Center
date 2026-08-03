@@ -347,6 +347,12 @@ public class GammaProService extends AbstractQueuedDeviceService {
     }
 
     private void publishSuccess() {
+        boolean wasConnected = currentDataService.getValue(
+                DeviceCode.GAMMA_PRO,
+                CurrentDataService.PINGED,
+                Boolean.class
+        );
+        String previousError = lastError;
         lastError = "";
         currentDataService.setValue(
                 DeviceCode.GAMMA_PRO,
@@ -357,9 +363,18 @@ public class GammaProService extends AbstractQueuedDeviceService {
                 DeviceCode.GAMMA_PRO,
                 snapshot()
         );
+        if (!wasConnected && !previousError.isBlank()) {
+            log.info("Gamma-PRO communication restored");
+        }
     }
 
     private void recordFailure(RuntimeException exception) {
+        boolean wasConnected = currentDataService.getValue(
+                DeviceCode.GAMMA_PRO,
+                CurrentDataService.PINGED,
+                Boolean.class
+        );
+        String previousError = lastError;
         lastError = exception.getMessage() == null
                 ? exception.getClass().getSimpleName()
                 : exception.getMessage();
@@ -372,7 +387,11 @@ public class GammaProService extends AbstractQueuedDeviceService {
                 DeviceCode.GAMMA_PRO,
                 lastError
         );
-        log.warn("Gamma-PRO communication failed: {}", lastError);
+        if (wasConnected || previousError.isBlank()) {
+            log.warn("Gamma-PRO communication failed: {}", lastError);
+        } else {
+            log.debug("Gamma-PRO communication still unavailable: {}", lastError);
+        }
     }
 
     private Duration responseTimeout() {

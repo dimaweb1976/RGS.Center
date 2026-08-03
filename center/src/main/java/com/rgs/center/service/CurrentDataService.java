@@ -142,7 +142,9 @@ public class CurrentDataService {
         Map<String, Object> parameters = deviceData(device);
         parameters.put(DATA_AVAILABLE, false);
         parameters.put(LAST_ERROR, error == null ? "" : error);
-        log.warn(
+        // Device services own transition-based WARN/ERROR logging. This
+        // low-level update may be called on every scheduled retry.
+        log.debug(
                 "Current data update failed for device {}: {}",
                 device,
                 error == null || error.isBlank() ? "<no details>" : error

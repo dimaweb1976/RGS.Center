@@ -55,7 +55,7 @@ public abstract class AbstractDeviceConnection
                 log.debug("Connection {} is already open", connectionId);
                 return;
             }
-            log.info("Opening device connection {}", connectionId);
+            log.debug("Opening device connection {}", connectionId);
             doOpen();
             open = true;
             log.info("Device connection {} opened", connectionId);
@@ -66,7 +66,9 @@ public abstract class AbstractDeviceConnection
                 exception.addSuppressed(closeException);
             }
             open = false;
-            log.error(
+            // The owning service decides whether this failure is a first
+            // outage, a repeated retry or a terminal error.
+            log.debug(
                     "Cannot open device connection {}",
                     connectionId,
                     exception

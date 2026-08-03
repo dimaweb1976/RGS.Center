@@ -140,7 +140,7 @@ public final class PeripheralDeviceWorker implements AutoCloseable {
      */
     public synchronized void start() {
         if (state.get() != PeripheralWorkerState.STOPPED) {
-            log.warn(
+            log.debug(
                     "Cannot start peripheral worker {} from state {}",
                     deviceId,
                     state.get()
@@ -150,7 +150,7 @@ public final class PeripheralDeviceWorker implements AutoCloseable {
             );
         }
 
-        log.info("Starting peripheral worker {}", deviceId);
+        log.debug("Starting peripheral worker {}", deviceId);
         state.set(PeripheralWorkerState.STARTING);
         lastError.set("");
         receiveBuffer.clear();
@@ -322,11 +322,21 @@ public final class PeripheralDeviceWorker implements AutoCloseable {
             log.debug("Peripheral worker {} is already stopped", deviceId);
             return;
         }
-        log.info(
-                "Stopping peripheral worker {} from state {}",
-                deviceId,
-                current
-        );
+        boolean wasActive = current == PeripheralWorkerState.RUNNING
+                || current == PeripheralWorkerState.STARTING;
+        if (wasActive) {
+            log.info(
+                    "Stopping peripheral worker {} from state {}",
+                    deviceId,
+                    current
+            );
+        } else {
+            log.debug(
+                    "Resetting peripheral worker {} from state {}",
+                    deviceId,
+                    current
+            );
+        }
         state.set(PeripheralWorkerState.STOPPING);
         running.set(false);
         if (executor != null) {
@@ -362,14 +372,18 @@ public final class PeripheralDeviceWorker implements AutoCloseable {
         commandQueue.clear();
         receiveBuffer.clear();
         state.set(PeripheralWorkerState.STOPPED);
-        log.info(
-                "Peripheral worker {} stopped: receivedBytes={}, sentBytes={}, receivedFrames={}, droppedFrames={}",
-                deviceId,
-                bytesReceived.get(),
-                bytesSent.get(),
-                framesReceived.get(),
-                framesDropped.get()
-        );
+        if (wasActive) {
+            log.info(
+                    "Peripheral worker {} stopped: receivedBytes={}, sentBytes={}, receivedFrames={}, droppedFrames={}",
+                    deviceId,
+                    bytesReceived.get(),
+                    bytesSent.get(),
+                    framesReceived.get(),
+                    framesDropped.get()
+            );
+        } else {
+            log.debug("Peripheral worker {} reset to STOPPED", deviceId);
+        }
     }
 
     /** Делегирует закрытие штатной остановке worker. */
@@ -416,11 +430,16 @@ public final class PeripheralDeviceWorker implements AutoCloseable {
                     if (!frameQueue.offer(frame)) {
                         frameQueue.poll();
                         frameQueue.offer(frame);
-                        framesDropped.incrementAndGet();
-                        log.warn(
-                                "Frame queue full for peripheral {}; oldest frame dropped",
-                                deviceId
-                        );
+                        long dropped = framesDropped.incrementAndGet();
+                        // Preserve visibility of data loss without writing one
+                        // warning for every frame in a sustained overload.
+                        if (dropped == 1 || dropped % 1000 == 0) {
+                            log.warn(
+                                    "Frame queue full for peripheral {}; oldest frame dropped, totalDropped={}",
+                                    deviceId,
+                                    dropped
+                            );
+                        }
                     }
                 }
             } catch (RuntimeException exception) {
@@ -476,7 +495,9 @@ public final class PeripheralDeviceWorker implements AutoCloseable {
         );
         state.set(PeripheralWorkerState.FAILED);
         running.set(false);
-        log.error(
+        // Scheduled device services record the first outage and recovery.
+        // Keep the repeated transport stack trace available only in DEBUG.
+        log.debug(
                 "Peripheral worker {} failed: {}",
                 deviceId,
                 lastError.get(),
@@ -492,7 +513,7 @@ public final class PeripheralDeviceWorker implements AutoCloseable {
     /** Проверяет, что публичная операция вызывается в рабочем состоянии. */
     private void requireRunning() {
         if (state.get() != PeripheralWorkerState.RUNNING) {
-            log.warn(
+            log.debug(
                     "Peripheral operation rejected for {} in state {}",
                     deviceId,
                     state.get()

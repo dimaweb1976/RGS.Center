@@ -60,6 +60,16 @@ public class JSerialCommBarcodeScannerPort
     )
     public void refreshConnectionStatus() {
         long checkedAt = Instant.now().getEpochSecond();
+        boolean previousConnected = currentDataService.getValue(
+                DeviceCode.BARCODE_SCANNER,
+                CurrentDataService.PINGED,
+                Boolean.class
+        );
+        long previousCheck = currentDataService.getValue(
+                DeviceCode.BARCODE_SCANNER,
+                CurrentDataService.INTERACTION_LASTDATE_IN,
+                Long.class
+        );
         boolean connected;
         try {
             if (communicationSnapshot().state()
@@ -86,6 +96,13 @@ public class JSerialCommBarcodeScannerPort
                 CurrentDataService.PINGED,
                 connected
         );
+        if (previousCheck == 0 || previousConnected != connected) {
+            if (connected) {
+                log.info("Barcode scanner connection is ONLINE");
+            } else {
+                log.warn("Barcode scanner connection is OFFLINE");
+            }
+        }
     }
 
     /**

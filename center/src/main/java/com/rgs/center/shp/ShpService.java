@@ -122,7 +122,7 @@ public class ShpService extends AbstractQueuedDeviceService {
             );
             lastMeasurements.set(measurements);
             responsive.set(true);
-            consecutiveFailures.set(0);
+            int recoveredAfterFailures = consecutiveFailures.getAndSet(0);
             lastError.set("");
             currentDataService.setValue(
                     DeviceCode.SHP,
@@ -130,6 +130,12 @@ public class ShpService extends AbstractQueuedDeviceService {
                     true
             );
             currentDataService.recordDataSuccess(DeviceCode.SHP, measurements);
+            if (recoveredAfterFailures > 0) {
+                log.info(
+                        "SHP communication restored after {} failed poll(s)",
+                        recoveredAfterFailures
+                );
+            }
             log.debug(
                     "SHP data updated: temperature={}, chargeVoltage={}, detectorCurrent={}, resistance={}",
                     measurements.detectorTemperatureCelsius(),
@@ -218,16 +224,23 @@ public class ShpService extends AbstractQueuedDeviceService {
         );
         currentDataService.recordDataFailure(DeviceCode.SHP, message);
         int failures = consecutiveFailures.incrementAndGet();
-        if (failures >= FAILURES_BEFORE_RECONNECT) {
+        if (failures == FAILURES_BEFORE_RECONNECT) {
             stopCommunication();
+            log.error(
+                    "SHP communication failed {} times; reconnecting: {}",
+                    failures,
+                    message,
+                    exception
+            );
+        } else if (failures == 1) {
+            log.warn("SHP communication failed: {}", message);
+        } else {
+            log.debug(
+                    "SHP communication still unavailable, failureCount={}: {}",
+                    failures,
+                    message
+            );
         }
-        log.error(
-                "SHP polling failed ({}/{} before reconnect): {}",
-                failures,
-                FAILURES_BEFORE_RECONNECT,
-                message,
-                exception
-        );
     }
 
     /** Создаёт COM5/9600 8N1 и устанавливает DTR=0, как в HPGe.Center. */

@@ -127,18 +127,25 @@ public class GdrmService extends AbstractQueuedDeviceService {
             return;
         }
         try {
-            if (!identified.get()) {
+            boolean wasIdentified = identified.get();
+            if (!wasIdentified) {
                 identifyDevice();
             } else {
                 readCurrentData();
             }
-            consecutiveFailures.set(0);
+            int recoveredAfterFailures = consecutiveFailures.getAndSet(0);
             lastError.set("");
             currentDataService.setValue(
                     DeviceCode.GDRM,
                     CurrentDataService.PINGED,
                     true
             );
+            if (wasIdentified && recoveredAfterFailures > 0) {
+                log.info(
+                        "GDRM communication restored after {} failed poll(s)",
+                        recoveredAfterFailures
+                );
+            }
         } catch (RuntimeException exception) {
             registerFailure(exception);
         } finally {
@@ -222,7 +229,7 @@ public class GdrmService extends AbstractQueuedDeviceService {
                     return;
                 } catch (RuntimeException exception) {
                     lastFailure = exception;
-                    log.warn(
+                    log.debug(
                             "GDRM identification failed on {} at {} baud, attempt {}/{}: {}",
                             connection.portName(),
                             baudRate,
@@ -345,20 +352,27 @@ public class GdrmService extends AbstractQueuedDeviceService {
         currentDataService.recordDataFailure(DeviceCode.GDRM, message);
 
         int failures = consecutiveFailures.incrementAndGet();
-        if (failures >= FAILURES_BEFORE_RECONNECT) {
+        if (failures == FAILURES_BEFORE_RECONNECT) {
             identified.set(false);
             serialNumber = "";
             firmwareVersion = "";
             deviceAddress = GdrmProtocol.BROADCAST_ADDRESS;
             stopCommunication();
+            log.error(
+                    "GDRM communication failed {} times; reconnecting: {}",
+                    failures,
+                    message,
+                    exception
+            );
+        } else if (failures == 1) {
+            log.warn("GDRM communication failed: {}", message);
+        } else {
+            log.debug(
+                    "GDRM communication still unavailable, failureCount={}: {}",
+                    failures,
+                    message
+            );
         }
-        log.error(
-                "GDRM polling failed ({}/{} before reconnect): {}",
-                failures,
-                FAILURES_BEFORE_RECONNECT,
-                message,
-                exception
-        );
     }
 
     /** Создаёт jSerialComm-транспорт с параметрами GDRM. */
