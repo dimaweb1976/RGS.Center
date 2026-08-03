@@ -67,11 +67,24 @@ class BarcodeScannerServiceTests {
                         Boolean.class
                 )
         );
+        assertEquals(
+                true,
+                currentData.getValue(
+                        DeviceCode.BARCODE_SCANNER,
+                        CurrentDataService.PINGED,
+                        Boolean.class
+                )
+        );
     }
 
     @Test
     void recordsReadFailureInCurrentData() {
         settings.setValue(SettingsService.BARCODE_SCANNER_PORT, "COM7");
+        currentData.setValue(
+                DeviceCode.BARCODE_SCANNER,
+                CurrentDataService.PINGED,
+                true
+        );
         BarcodeScannerService service = serviceWith(
                 (port, baud, timeout, maxLength) -> {
                     throw new BarcodeScannerException("scanner unavailable");
@@ -92,6 +105,14 @@ class BarcodeScannerServiceTests {
                 currentData.getValue(
                         DeviceCode.BARCODE_SCANNER,
                         CurrentDataService.DATA_AVAILABLE,
+                        Boolean.class
+                )
+        );
+        assertEquals(
+                false,
+                currentData.getValue(
+                        DeviceCode.BARCODE_SCANNER,
+                        CurrentDataService.PINGED,
                         Boolean.class
                 )
         );

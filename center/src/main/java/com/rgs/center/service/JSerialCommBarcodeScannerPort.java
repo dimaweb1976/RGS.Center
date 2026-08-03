@@ -3,12 +3,15 @@ package com.rgs.center.service;
 import com.rgs.center.connection.SerialDeviceConnection;
 import com.rgs.center.objects.DeviceCode;
 import com.rgs.center.peripheral.PeripheralWorkerConfiguration;
+import com.rgs.center.peripheral.PeripheralWorkerState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.Instant;
 
 /**
  * COM-адаптер сканера штрих-кодов на базе общего peripheral worker.
@@ -21,6 +24,9 @@ public class JSerialCommBarcodeScannerPort
     private static final Logger log =
             LoggerFactory.getLogger(JSerialCommBarcodeScannerPort.class);
 
+    /** Витрина состояния, используемая страницей {@code /devices}. */
+    private final CurrentDataService currentDataService;
+
     /**
      * Создаёт постоянное COM-подключение, которое менеджер запускает вместе
      * с остальными устройствами.
@@ -28,12 +34,57 @@ public class JSerialCommBarcodeScannerPort
      * @param settingsService источник параметров COM
      */
     public JSerialCommBarcodeScannerPort(
-            SettingsService settingsService
+            SettingsService settingsService,
+            CurrentDataService currentDataService
     ) {
         super(
                 DeviceCode.BARCODE_SCANNER,
                 createConnection(settingsService),
                 createConfiguration(settingsService)
+        );
+        this.currentDataService = currentDataService;
+    }
+
+    /**
+     * Обновляет время последней проверки и доступность виртуального COM-порта.
+     *
+     * <p>Сканер является пассивным устройством и не поддерживает отдельную
+     * ping-команду. Поэтому доступность определяется по состоянию его COM-worker.
+     * При потере соединения сервис выполняет очередную попытку открытия порта.</p>
+     */
+    @Scheduled(
+            fixedDelayString =
+                    "${rgs.device.barcode-scanner.status-interval-millis:10000}",
+            initialDelayString =
+                    "${rgs.device.barcode-scanner.status-initial-delay-millis:0}"
+    )
+    public void refreshConnectionStatus() {
+        long checkedAt = Instant.now().getEpochSecond();
+        boolean connected;
+        try {
+            if (communicationSnapshot().state()
+                    != PeripheralWorkerState.RUNNING) {
+                startCommunication();
+            }
+            connected = communicationSnapshot().state()
+                    == PeripheralWorkerState.RUNNING;
+        } catch (RuntimeException exception) {
+            connected = false;
+            log.debug(
+                    "Barcode scanner connection check failed",
+                    exception
+            );
+        }
+
+        currentDataService.setValue(
+                DeviceCode.BARCODE_SCANNER,
+                CurrentDataService.INTERACTION_LASTDATE_IN,
+                checkedAt
+        );
+        currentDataService.setValue(
+                DeviceCode.BARCODE_SCANNER,
+                CurrentDataService.PINGED,
+                connected
         );
     }
 

@@ -86,6 +86,11 @@ public class BarcodeScannerGetDataAdapter implements GetDataAdapter<String> {
                     toInt(SettingsService.BARCODE_SCANNER_READ_TIMEOUT_MILLIS),
                     toInt(SettingsService.BARCODE_SCANNER_MAX_CODE_LENGTH)
             );
+            currentDataService.setValue(
+                    deviceCode(),
+                    CurrentDataService.PINGED,
+                    true
+            );
             currentDataService.recordDataSuccess(deviceCode(), barcode);
             log.info(
                     "Barcode scanner read completed on port {}, characters={}",
@@ -124,6 +129,11 @@ public class BarcodeScannerGetDataAdapter implements GetDataAdapter<String> {
      * @param exception исходная ошибка чтения
      */
     private void recordFailure(RuntimeException exception) {
+        currentDataService.setValue(
+                deviceCode(),
+                CurrentDataService.PINGED,
+                false
+        );
         currentDataService.recordDataFailure(
                 deviceCode(),
                 exception.getMessage()
