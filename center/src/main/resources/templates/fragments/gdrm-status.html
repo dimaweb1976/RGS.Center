@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<body>
+<section th:fragment="status">
+    <style>
+        .gdrm-summary { display: grid; grid-template-columns: minmax(330px, 1.6fr) minmax(260px, 1fr); gap: 16px; }
+        .dose-card, .metric, .panel { border: 1px solid #ccd2d8; border-radius: 7px; background: #fff; box-shadow: 0 2px 8px rgba(20, 35, 50, .06); }
+        .dose-card { padding: 18px 24px 24px; }
+        .dose-title { display: flex; align-items: center; gap: 7px; font-weight: 700; }
+        .dose-title::before { width: 9px; height: 9px; content: ""; background: #e31c25; }
+        .dose-reading { display: flex; min-height: 150px; align-items: center; justify-content: center; gap: 28px; }
+        .dose-value { font-size: clamp(58px, 9vw, 94px); font-weight: 700; line-height: 1; color: #05090d; }
+        .dose-unit { font-size: 25px; font-weight: 700; line-height: 1.05; text-align: center; }
+        .dose-unit span { display: block; padding: 7px 12px; }
+        .dose-unit span:first-child { border-bottom: 2px solid #202830; }
+        .metrics { display: grid; gap: 12px; }
+        .metric { display: grid; grid-template-columns: 1.2fr 1fr; align-items: center; min-height: 70px; }
+        .metric-label { padding: 14px; color: #475462; font-size: 14px; }
+        .metric-value { height: 100%; display: flex; align-items: center; justify-content: center; padding: 14px; border-left: 1px solid #d6dbe0; background: #f7f8f9; font-size: 20px; font-weight: 700; }
+        .status-line { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; margin: 16px 0; padding: 13px 16px; border-radius: 5px; background: #e9edf1; }
+        .connection { font-weight: 700; }
+        .CONNECTED { color: #16813d; }
+        .OFFLINE { color: #c52222; }
+        .panel { margin-top: 16px; overflow: hidden; }
+        .panel h2 { margin: 0; padding: 13px 16px; border-bottom: 1px solid #d8dde2; background: #e9edf1; font-size: 17px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 11px 14px; border-bottom: 1px solid #e0e4e8; text-align: left; }
+        th { color: #465360; background: #f7f8f9; font-size: 13px; }
+        tr:last-child td { border-bottom: 0; }
+        .error { margin-top: 16px; padding: 12px 16px; border: 1px solid #dc6060; border-radius: 5px; color: #9d2020; background: #fff2f2; }
+        @media (max-width: 760px) {
+            .gdrm-summary { grid-template-columns: 1fr; }
+            .dose-reading { min-height: 120px; }
+            .panel { overflow-x: auto; }
+            table { min-width: 620px; }
+        }
+    </style>
+    <div class="gdrm-summary">
+        <article class="dose-card">
+            <div class="dose-title">Average Dose Rate</div>
+            <div class="dose-reading">
+                <strong class="dose-value" th:text="${gdrm.averageDoseRate}">—</strong>
+                <div class="dose-unit"><span>nSv</span><span>h</span></div>
+            </div>
+        </article>
+        <div class="metrics">
+            <div class="metric"><div class="metric-label">Average Statistical Error, [%]</div><div class="metric-value" th:text="${gdrm.averageStatisticalError}">—</div></div>
+            <div class="metric"><div class="metric-label">Dose</div><div class="metric-value"><span th:text="${gdrm.accumulatedDose}">—</span>&nbsp;[nSv]</div></div>
+            <div class="metric"><div class="metric-label">Measurement time</div><div class="metric-value" th:text="${gdrm.measurementTime}">—</div></div>
+        </div>
+    </div>
+    <div class="status-line">
+        <span class="connection" th:classappend="${gdrm.connectionStatus}" th:text="${gdrm.connectionStatus}">OFFLINE</span>
+        <span>Порт: <strong th:text="${gdrm.portName}">COM3</strong></span>
+        <span>Скорость: <strong th:text="${gdrm.baudRate}">9600</strong> baud</span>
+        <span>Последние данные: <strong th:text="${gdrm.lastUpdate}">—</strong></span>
+    </div>
+    <article class="panel">
+        <h2>Каналы измерения</h2>
+        <table>
+            <thead><tr><th>Канал</th><th>Скорость счёта, имп/с</th><th>Мощность дозы, нЗв/ч</th><th>Погрешность, %</th></tr></thead>
+            <tbody>
+            <tr th:each="channel : ${gdrm.channels}"><td th:text="${channel.number}">1</td><td th:text="${channel.countsPerSecond}">—</td><td th:text="${channel.doseRate}">—</td><td th:text="${channel.statisticalError}">—</td></tr>
+            <tr th:if="${gdrm.channels.isEmpty()}"><td colspan="4">Данные измерения ещё не получены.</td></tr>
+            </tbody>
+        </table>
+    </article>
+    <article class="panel">
+        <h2>Состояние прибора</h2>
+        <table><tbody>
+        <tr><th>Серийный номер</th><td th:text="${gdrm.serialNumber}">—</td><th>Версия ПО</th><td th:text="${gdrm.firmwareVersion}">—</td></tr>
+        <tr><th>Статус прибора</th><td th:text="${gdrm.deviceStatus}">—</td><th>Состояние потока</th><td th:text="${gdrm.workerState}">—</td></tr>
+        <tr><th>Рабочее напряжение, В</th><td th:text="${gdrm.operatingVoltage}">—</td><th>Высокое напряжение, В</th><td th:text="${gdrm.highVoltage}">—</td></tr>
+        <tr><th>Температура, °C</th><td th:text="${gdrm.temperature}">—</td><th>Влажность, %</th><td th:text="${gdrm.humidity}">—</td></tr>
+        <tr><th>Давление, hPa</th><td th:text="${gdrm.pressure}">—</td><th></th><td></td></tr>
+        </tbody></table>
+    </article>
+    <div class="error" th:if="${gdrm.lastError != '—'}">Ошибка связи: <span th:text="${gdrm.lastError}"></span></div>
+</section>
+</body>
+</html>

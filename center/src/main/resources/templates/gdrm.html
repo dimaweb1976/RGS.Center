@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>RGSCenter — GDRM</title>
+    <style>
+        :root { color-scheme: light; font-family: Arial, sans-serif; color: #17202a; background: #f4f6f8; }
+        * { box-sizing: border-box; }
+        body { margin: 0; }
+        header { padding: 18px 28px; color: white; background: #293744; }
+        header h1 { margin: 0; font-size: 24px; }
+        header p { margin: 5px 0 0; color: #cbd5df; }
+        main { max-width: 1120px; margin: 24px auto; padding: 0 20px 32px; }
+        .refresh-note { margin: 0 0 12px; color: #687582; font-size: 13px; }
+        .loading { opacity: .72; }
+    </style>
+    <script>
+        async function loadGdrmStatus() {
+            const panel = document.getElementById("gdrm-status");
+            panel.classList.add("loading");
+            try {
+                const response = await fetch("/gdrm/status", {cache: "no-store"});
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                panel.innerHTML = await response.text();
+            } catch (error) {
+                console.error("Failed to update GDRM status", error);
+            } finally {
+                panel.classList.remove("loading");
+            }
+        }
+
+        setInterval(loadGdrmStatus, 10000);
+    </script>
+</head>
+<body>
+<header>
+    <h1>Gamma Dose Rate Meter</h1>
+    <p>Текущие данные прибора GDRM</p>
+</header>
+<main>
+    <p class="refresh-note">Данные обновляются автоматически каждые 10 секунд.</p>
+    <div id="gdrm-status" th:insert="~{fragments/gdrm-status :: status}"></div>
+</main>
+</body>
+</html>
