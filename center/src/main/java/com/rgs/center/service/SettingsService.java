@@ -28,7 +28,7 @@ public class SettingsService {
             LoggerFactory.getLogger(SettingsService.class);
 
     public static final String CAMERA_IP = "device.camera.ip";
-    public static final String ROBOPLC_IP = "device.roboplc.ip";
+    public static final String LENOVO_PC_IP = "device.lenovo-pc.ip";
     public static final String NICOLE_IP = "device.nicole.ip";
     public static final String BOSON_IP = "device.boson.ip";
     public static final String MANIPULATOR_HOST = "device.manipulator.host";
@@ -79,8 +79,8 @@ public class SettingsService {
     @Value("${rgs.device.camera.ip:192.168.1.13}")
     private String cameraIp = "192.168.1.13";
 
-    @Value("${rgs.device.roboplc.ip:}")
-    private String roboplcIp = "";
+    @Value("${rgs.device.lenovo-pc.ip:192.168.201.20}")
+    private String lenovoPcIp = "192.168.201.20";
 
     @Value("${rgs.device.nicole.ip:}")
     private String nicoleIp = "";
@@ -176,7 +176,7 @@ public class SettingsService {
     @PostConstruct
     void initializeDefaults() {
         registerDefault(CAMERA_IP, SettingType.STRING, cameraIp);
-        registerDefault(ROBOPLC_IP, SettingType.STRING, roboplcIp);
+        registerDefault(LENOVO_PC_IP, SettingType.STRING, lenovoPcIp);
         registerDefault(NICOLE_IP, SettingType.STRING, nicoleIp);
         registerDefault(BOSON_IP, SettingType.STRING, bosonIp);
         registerDefault(MANIPULATOR_HOST, SettingType.STRING, manipulatorHost);

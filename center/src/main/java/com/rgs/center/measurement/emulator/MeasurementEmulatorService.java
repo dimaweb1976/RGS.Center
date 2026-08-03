@@ -65,7 +65,6 @@ public class MeasurementEmulatorService {
     public synchronized void reset() {
         deviceChecks.clear();
         addCheck(deviceChecks, "camera", "Камера", "Связь установлена");
-        addCheck(deviceChecks, "roboplc", "RoboPLC", "Связь установлена");
         addCheck(deviceChecks, "manipulator", "Манипулятор Dobot", "TCP-связь установлена");
         addCheck(deviceChecks, "nicole", "Nicole", "Связь установлена");
         addCheck(deviceChecks, "boson", "BOSON", "Связь установлена");

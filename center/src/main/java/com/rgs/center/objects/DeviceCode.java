@@ -8,7 +8,7 @@ package com.rgs.center.objects;
  */
 public enum DeviceCode {
     CAMERA("camera", "Camera", "device.camera.ip"),
-    ROBOPLC("roboplc", "RoboPLC", "device.roboplc.ip"),
+    LENOVO_PC("lenovo-pc", "LenovoPC", "device.lenovo-pc.ip"),
     NICOLE("nicole", "Nicole", "device.nicole.ip"),
     BOSON("boson", "BOSON", "device.boson.ip"),
     ROBOTIC_MANIPULATOR(

@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CameraServiceTests {
 
@@ -35,5 +36,8 @@ class CameraServiceTests {
 
         service.poll();
         assertEquals(DeviceStatus.ONLINE, service.getCamera().getStatus());
+        assertTrue(service.communicationSnapshot().bytesSent() > 0);
+        assertTrue(service.communicationSnapshot().bytesReceived() > 0);
+        service.stopCommunication();
     }
 }

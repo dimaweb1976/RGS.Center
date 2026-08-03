@@ -23,19 +23,19 @@ class IndependentDeviceServicesTests {
     }
 
     @Test
-    void roboPlcServicePollsRoboPlcItself() {
+    void lenovoPcServicePollsLenovoPcItself() {
         SettingsService settings = settings();
-        settings.setValue(SettingsService.ROBOPLC_IP, "192.168.1.18");
+        settings.setValue(SettingsService.LENOVO_PC_IP, "192.168.201.20");
         CurrentDataService currentData = currentData();
         DevicePingService pingService = pingService(settings, currentData);
-        RoboPlcService service = new RoboPlcService(
+        LenovoPcService service = new LenovoPcService(
                 new DeviceViewService(settings, currentData),
                 pingService
         );
 
         service.poll();
 
-        assertEquals(DeviceStatus.ONLINE, service.getRoboPlc().getStatus());
+        assertEquals(DeviceStatus.ONLINE, service.getLenovoPc().getStatus());
     }
 
     private SettingsService settings() {

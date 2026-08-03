@@ -5,8 +5,8 @@ import com.rgs.center.objects.DeviceCode;
 import com.rgs.center.service.BosonService;
 import com.rgs.center.service.CameraService;
 import com.rgs.center.service.DeviceViewService;
+import com.rgs.center.service.LenovoPcService;
 import com.rgs.center.service.NicoleService;
-import com.rgs.center.service.RoboPlcService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
@@ -34,8 +34,8 @@ public class HomeController {
     private final BosonService bosonService;
     /** Источник состояния Nicole. */
     private final NicoleService nicoleService;
-    /** Источник состояния RoboPLC. */
-    private final RoboPlcService roboPlcService;
+    /** Источник состояния операторского компьютера LenovoPC. */
+    private final LenovoPcService lenovoPcService;
     /** Формирует общее представление COM-устройств из витрины. */
     private final DeviceViewService deviceViewService;
 
@@ -45,20 +45,20 @@ public class HomeController {
      * @param cameraService сервис камер
      * @param bosonService сервис Boson
      * @param nicoleService сервис Nicole
-     * @param roboPlcService сервис RoboPLC
+     * @param lenovoPcService сервис операторского компьютера LenovoPC
      * @param deviceViewService представление состояния COM-устройств
      */
     public HomeController(
             CameraService cameraService,
             BosonService bosonService,
             NicoleService nicoleService,
-            RoboPlcService roboPlcService,
+            LenovoPcService lenovoPcService,
             DeviceViewService deviceViewService
     ) {
         this.cameraService = cameraService;
         this.bosonService = bosonService;
         this.nicoleService = nicoleService;
-        this.roboPlcService = roboPlcService;
+        this.lenovoPcService = lenovoPcService;
         this.deviceViewService = deviceViewService;
     }
 
@@ -110,7 +110,7 @@ public class HomeController {
     private List<Device> getVisibleDevices() {
         // Список камер может быть расширен, не затрагивая добавление остальных устройств.
         List<Device> devices = new ArrayList<>(cameraService.getCameras());
-        devices.add(roboPlcService.getRoboPlc());
+        devices.add(lenovoPcService.getLenovoPc());
         devices.add(nicoleService.getNicole());
         devices.add(bosonService.getBoson());
         devices.add(deviceViewService.getDevice(DeviceCode.ROBOTIC_MANIPULATOR));
