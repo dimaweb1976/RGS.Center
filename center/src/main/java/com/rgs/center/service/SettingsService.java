@@ -47,6 +47,11 @@ public class SettingsService {
             "device.gdrm.response-timeout-millis";
     public static final String SCALES_PORT = "device.scales.port";
     public static final String SHP_PORT = "device.shp.port";
+    public static final String SHP_BAUD_RATE = "device.shp.baud-rate";
+    public static final String SHP_READ_TIMEOUT_MILLIS =
+            "device.shp.read-timeout-millis";
+    public static final String SHP_RESPONSE_TIMEOUT_MILLIS =
+            "device.shp.response-timeout-millis";
     public static final String PING_TIMEOUT_MILLIS = "ping.timeout.millis";
 
     private final Map<String, Integer> settingTypes = new ConcurrentHashMap<>();
@@ -91,8 +96,17 @@ public class SettingsService {
     @Value("${rgs.device.scales.port:}")
     private String scalesPort = "";
 
-    @Value("${rgs.device.shp.port:}")
-    private String shpPort = "";
+    @Value("${rgs.device.shp.port:COM5}")
+    private String shpPort = "COM5";
+
+    @Value("${rgs.device.shp.baud-rate:9600}")
+    private long shpBaudRate = 9600L;
+
+    @Value("${rgs.device.shp.read-timeout-millis:250}")
+    private long shpReadTimeoutMillis = 250L;
+
+    @Value("${rgs.device.shp.response-timeout-millis:1200}")
+    private long shpResponseTimeoutMillis = 1200L;
 
     /** Регистрирует начальные значения после внедрения Spring properties. */
     @PostConstruct
@@ -139,6 +153,17 @@ public class SettingsService {
         );
         registerDefault(SCALES_PORT, SettingType.STRING, scalesPort);
         registerDefault(SHP_PORT, SettingType.STRING, shpPort);
+        registerDefault(SHP_BAUD_RATE, SettingType.LONG, shpBaudRate);
+        registerDefault(
+                SHP_READ_TIMEOUT_MILLIS,
+                SettingType.LONG,
+                shpReadTimeoutMillis
+        );
+        registerDefault(
+                SHP_RESPONSE_TIMEOUT_MILLIS,
+                SettingType.LONG,
+                shpResponseTimeoutMillis
+        );
         registerDefault(PING_TIMEOUT_MILLIS, SettingType.LONG, 3000L);
         log.info("Initialized {} application settings", settingValues.size());
     }

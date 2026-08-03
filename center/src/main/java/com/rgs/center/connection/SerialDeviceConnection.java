@@ -30,6 +30,12 @@ public final class SerialDeviceConnection extends AbstractDeviceConnection {
     /** Текущая скорость обмена; изменяется только через {@link #setBaudRate(int)}. */
     private volatile int baudRate;
 
+    /** Нужно ли явно установить линию DTR после открытия порта. */
+    private final boolean configureDtr;
+
+    /** Требуемое состояние DTR для устройств, использующих эту линию управления. */
+    private final boolean dtrEnabled;
+
     /** Поток чтения создаётся после успешного открытия порта. */
     private InputStream inputStream;
 
@@ -43,9 +49,39 @@ public final class SerialDeviceConnection extends AbstractDeviceConnection {
             int baudRate,
             int timeoutMillis
     ) {
+        this(portName, baudRate, timeoutMillis, false, false);
+    }
+
+    /**
+     * Создаёт COM-подключение с явным состоянием DTR после открытия.
+     *
+     * @param portName системное имя COM-порта
+     * @param baudRate скорость обмена
+     * @param timeoutMillis тайм-аут чтения
+     * @param dtrEnabled {@code true} для DTR=1, {@code false} для DTR=0
+     */
+    public SerialDeviceConnection(
+            String portName,
+            int baudRate,
+            int timeoutMillis,
+            boolean dtrEnabled
+    ) {
+        this(portName, baudRate, timeoutMillis, true, dtrEnabled);
+    }
+
+    /** Общая инициализация COM-подключения. */
+    private SerialDeviceConnection(
+            String portName,
+            int baudRate,
+            int timeoutMillis,
+            boolean configureDtr,
+            boolean dtrEnabled
+    ) {
         super("serial:" + portName);
         this.portName = portName;
         this.baudRate = baudRate;
+        this.configureDtr = configureDtr;
+        this.dtrEnabled = dtrEnabled;
         port = SerialPort.getCommPort(portName);
         port.setComPortParameters(
                 baudRate,
@@ -75,6 +111,24 @@ public final class SerialDeviceConnection extends AbstractDeviceConnection {
             throw new PeripheralCommunicationException(
                     "Cannot open serial port " + portName
             );
+        }
+        if (configureDtr) {
+            boolean dtrConfigured = dtrEnabled
+                    ? port.setDTR()
+                    : port.clearDTR();
+            if (!dtrConfigured) {
+                log.warn(
+                        "Serial port {} did not confirm DTR={}",
+                        portName,
+                        dtrEnabled ? 1 : 0
+                );
+            } else {
+                log.info(
+                        "Serial port {} configured with DTR={}",
+                        portName,
+                        dtrEnabled ? 1 : 0
+                );
+            }
         }
         inputStream = port.getInputStream();
         log.info("Serial port {} opened at {} baud", portName, baudRate);

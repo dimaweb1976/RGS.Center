@@ -3,10 +3,12 @@ package com.rgs.center.service;
 import com.rgs.center.connection.ManagedDeviceConnection;
 import com.rgs.center.objects.DeviceCode;
 import com.rgs.center.peripheral.PeripheralDeviceWorker;
+import com.rgs.center.peripheral.PeripheralFrameDecoder;
 import com.rgs.center.peripheral.PeripheralTransport;
 import com.rgs.center.peripheral.PeripheralWorkerConfiguration;
 import com.rgs.center.peripheral.PeripheralWorkerSnapshot;
 import com.rgs.center.peripheral.PeripheralWorkerState;
+import com.rgs.center.peripheral.LineFrameDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,11 +49,34 @@ public abstract class AbstractQueuedDeviceService
             PeripheralTransport transport,
             PeripheralWorkerConfiguration configuration
     ) {
+        this(
+                deviceCode,
+                transport,
+                configuration,
+                new LineFrameDecoder(configuration.maxFrameLength())
+        );
+    }
+
+    /**
+     * Создаёт сервис с декодером бинарных кадров конкретного протокола.
+     *
+     * @param deviceCode код устройства
+     * @param transport COM-, LAN- или другой транспорт
+     * @param configuration размеры очередей и буферов
+     * @param frameDecoder стратегия выделения входящих кадров
+     */
+    protected AbstractQueuedDeviceService(
+            DeviceCode deviceCode,
+            PeripheralTransport transport,
+            PeripheralWorkerConfiguration configuration,
+            PeripheralFrameDecoder frameDecoder
+    ) {
         this.deviceCode = deviceCode;
         worker = new PeripheralDeviceWorker(
                 deviceCode.getCode(),
                 transport,
-                configuration
+                configuration,
+                frameDecoder
         );
     }
 

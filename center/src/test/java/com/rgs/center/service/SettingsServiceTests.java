@@ -41,6 +41,18 @@ class SettingsServiceTests {
     }
 
     @Test
+    void providesComPortSettingsForTargetPeripheralDevices() {
+        assertEquals(
+                "",
+                service.getValue(SettingsService.SCALES_PORT, String.class)
+        );
+        assertEquals(
+                "COM5",
+                service.getValue(SettingsService.SHP_PORT, String.class)
+        );
+    }
+
+    @Test
     void loadsAndDumpsDatabaseShapedRecords() {
         service.load(List.of(
                 new SettingRecord(

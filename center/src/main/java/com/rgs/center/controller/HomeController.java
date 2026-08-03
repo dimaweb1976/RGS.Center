@@ -1,8 +1,10 @@
 package com.rgs.center.controller;
 
 import com.rgs.center.objects.Device;
+import com.rgs.center.objects.DeviceCode;
 import com.rgs.center.service.BosonService;
 import com.rgs.center.service.CameraService;
+import com.rgs.center.service.DeviceViewService;
 import com.rgs.center.service.NicoleService;
 import com.rgs.center.service.RoboPlcService;
 import org.slf4j.Logger;
@@ -34,6 +36,8 @@ public class HomeController {
     private final NicoleService nicoleService;
     /** Источник состояния RoboPLC. */
     private final RoboPlcService roboPlcService;
+    /** Формирует общее представление COM-устройств из витрины. */
+    private final DeviceViewService deviceViewService;
 
     /**
      * Создаёт контроллер страниц состояния.
@@ -42,17 +46,20 @@ public class HomeController {
      * @param bosonService сервис Boson
      * @param nicoleService сервис Nicole
      * @param roboPlcService сервис RoboPLC
+     * @param deviceViewService представление состояния COM-устройств
      */
     public HomeController(
             CameraService cameraService,
             BosonService bosonService,
             NicoleService nicoleService,
-            RoboPlcService roboPlcService
+            RoboPlcService roboPlcService,
+            DeviceViewService deviceViewService
     ) {
         this.cameraService = cameraService;
         this.bosonService = bosonService;
         this.nicoleService = nicoleService;
         this.roboPlcService = roboPlcService;
+        this.deviceViewService = deviceViewService;
     }
 
     /**
@@ -106,6 +113,7 @@ public class HomeController {
         devices.add(roboPlcService.getRoboPlc());
         devices.add(nicoleService.getNicole());
         devices.add(bosonService.getBoson());
+        devices.add(deviceViewService.getDevice(DeviceCode.SHP));
         return devices;
     }
 }

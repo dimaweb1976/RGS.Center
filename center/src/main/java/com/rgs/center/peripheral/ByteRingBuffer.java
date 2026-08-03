@@ -153,6 +153,53 @@ public final class ByteRingBuffer {
     }
 
     /**
+     * Извлекает двоичный кадр вместе с начальным и конечным маркерами.
+     * Байты до первого начального маркера считаются шумом и удаляются.
+     *
+     * @param startByte признак начала кадра
+     * @param endByte признак окончания кадра
+     * @param maxLength максимальная длина кадра вместе с маркерами
+     * @return полный кадр либо {@code null}, если конечный маркер ещё не получен
+     */
+    public byte[] pollDelimited(
+            byte startByte,
+            byte endByte,
+            int maxLength
+    ) {
+        if (maxLength < 2) {
+            throw new IllegalArgumentException(
+                    "Maximum delimited frame length must be at least 2"
+            );
+        }
+        lock.lock();
+        try {
+            while (size > 0 && valueAt(0) != startByte) {
+                discardOne();
+            }
+            for (int offset = 1; offset < size; offset++) {
+                if (offset + 1 > maxLength) {
+                    throw new PeripheralCommunicationException(
+                            "Received delimited frame exceeds maximum length of "
+                                    + maxLength
+                    );
+                }
+                if (valueAt(offset) == endByte) {
+                    return remove(offset + 1);
+                }
+            }
+            if (size > maxLength) {
+                throw new PeripheralCommunicationException(
+                        "Received delimited frame exceeds maximum length of "
+                                + maxLength
+                );
+            }
+            return null;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
      * @return физическая ёмкость буфера
      */
     public int capacity() {
