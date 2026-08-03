@@ -126,6 +126,13 @@ public class RoboticManipulatorStreamService
         if (started.get()) {
             return;
         }
+        // A failed TCP connection is still a completed availability check.
+        // Record its start so /devices can show Last check while the robot is OFFLINE.
+        currentData.setValue(
+                deviceCode(),
+                CurrentDataService.INTERACTION_LASTDATE_IN,
+                Instant.now().getEpochSecond()
+        );
         stopWorkerIfNecessary(commandWorker);
         stopWorkerIfNecessary(feedbackWorker);
         router.clear();
