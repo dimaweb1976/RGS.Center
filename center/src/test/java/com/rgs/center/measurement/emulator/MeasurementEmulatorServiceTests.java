@@ -31,6 +31,13 @@ class MeasurementEmulatorServiceTests {
     }
 
     @Test
+    void includesLenovoPcInDeviceConnectionChecks() {
+        assertTrue(service.snapshot().deviceChecks().stream()
+                .anyMatch(check -> check.code().equals("lenovo-pc")
+                        && check.label().equals("LenovoPC")));
+    }
+
+    @Test
     void completesCycleForEveryDetectedObject() {
         service.detectObjects();
         advancePreparation();
