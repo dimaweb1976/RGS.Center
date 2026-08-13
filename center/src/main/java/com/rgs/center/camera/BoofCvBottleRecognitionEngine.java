@@ -29,6 +29,9 @@ import java.util.List;
 @Component
 class BoofCvBottleRecognitionEngine implements BottleRecognitionEngine {
 
+    private static final int BOTTLE_NUMBER_FONT_SIZE = 54;
+    private static final double ROW_CENTER_TOLERANCE_RATIO = 0.75;
+
     private final DetectorConfig config;
 
     BoofCvBottleRecognitionEngine(
@@ -118,11 +121,10 @@ class BoofCvBottleRecognitionEngine implements BottleRecognitionEngine {
         );
         List<Candidate> candidates = candidates(contours);
         List<Candidate> rings = concentricRings(candidates);
-        List<DetectedBottle> bottles = new ArrayList<>(rings.size());
-        for (int index = 0; index < rings.size(); index++) {
-            Candidate value = rings.get(index);
-            bottles.add(new DetectedBottle(
-                    index + 1,
+        List<DetectedBottle> detected = new ArrayList<>(rings.size());
+        for (Candidate value : rings) {
+            detected.add(new DetectedBottle(
+                    0,
                     value.centerX,
                     value.centerY,
                     value.width,
@@ -131,6 +133,7 @@ class BoofCvBottleRecognitionEngine implements BottleRecognitionEngine {
                     value.circularity
             ));
         }
+        List<DetectedBottle> bottles = numberByRows(detected);
         return new BottleRecognitionResult(
                 annotate(source, bottles),
                 List.copyOf(bottles)
@@ -238,10 +241,53 @@ class BoofCvBottleRecognitionEngine implements BottleRecognitionEngine {
                 unique.add(candidate);
             }
         }
-        unique.sort(Comparator.comparingInt(
-                (Candidate value) -> value.width * value.height
-        ).reversed());
         return unique;
+    }
+
+    /**
+     * Groups detections into horizontal rows and numbers them from top to
+     * bottom, then from left to right inside each row.
+     */
+    static List<DetectedBottle> numberByRows(List<DetectedBottle> detected) {
+        List<DetectedBottle> orderedByY = new ArrayList<>(detected);
+        orderedByY.sort(
+                Comparator.comparingDouble(DetectedBottle::centerY)
+                        .thenComparingDouble(DetectedBottle::centerX)
+        );
+
+        List<BottleRow> rows = new ArrayList<>();
+        for (DetectedBottle bottle : orderedByY) {
+            BottleRow row = rows.stream()
+                    .filter(value -> value.accepts(bottle))
+                    .min(Comparator.comparingDouble(
+                            value -> value.distanceTo(bottle)
+                    ))
+                    .orElseGet(() -> {
+                        BottleRow value = new BottleRow();
+                        rows.add(value);
+                        return value;
+                    });
+            row.add(bottle);
+        }
+
+        rows.sort(Comparator.comparingDouble(BottleRow::centerY));
+        List<DetectedBottle> numbered = new ArrayList<>(detected.size());
+        int number = 1;
+        for (BottleRow row : rows) {
+            row.bottles.sort(Comparator.comparingDouble(DetectedBottle::centerX));
+            for (DetectedBottle bottle : row.bottles) {
+                numbered.add(new DetectedBottle(
+                        number++,
+                        bottle.centerX(),
+                        bottle.centerY(),
+                        bottle.width(),
+                        bottle.height(),
+                        bottle.diameter(),
+                        bottle.circularity()
+                ));
+            }
+        }
+        return List.copyOf(numbered);
     }
 
     private static GrayU8 grayscale(BufferedImage source) {
@@ -271,7 +317,11 @@ class BoofCvBottleRecognitionEngine implements BottleRecognitionEngine {
                     RenderingHints.VALUE_ANTIALIAS_ON
             );
             graphics.setStroke(new BasicStroke(4));
-            graphics.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 18));
+            graphics.setFont(new Font(
+                    Font.SANS_SERIF,
+                    Font.BOLD,
+                    BOTTLE_NUMBER_FONT_SIZE
+            ));
             for (DetectedBottle bottle : bottles) {
                 int padding = 5;
                 int x = (int) Math.round(bottle.centerX() - bottle.width() / 2.0)
@@ -341,6 +391,39 @@ class BoofCvBottleRecognitionEngine implements BottleRecognitionEngine {
             double diameter,
             double circularity
     ) {
+    }
+
+    private static final class BottleRow {
+
+        private final List<DetectedBottle> bottles = new ArrayList<>();
+
+        private void add(DetectedBottle bottle) {
+            bottles.add(bottle);
+        }
+
+        private boolean accepts(DetectedBottle bottle) {
+            if (bottles.isEmpty()) {
+                return true;
+            }
+            double averageHeight = bottles.stream()
+                    .mapToInt(DetectedBottle::height)
+                    .average()
+                    .orElse(bottle.height());
+            double tolerance = (averageHeight + bottle.height()) / 2.0
+                    * ROW_CENTER_TOLERANCE_RATIO;
+            return distanceTo(bottle) <= tolerance;
+        }
+
+        private double distanceTo(DetectedBottle bottle) {
+            return Math.abs(centerY() - bottle.centerY());
+        }
+
+        private double centerY() {
+            return bottles.stream()
+                    .mapToDouble(DetectedBottle::centerY)
+                    .average()
+                    .orElse(0.0);
+        }
     }
 
     private record DetectorConfig(
