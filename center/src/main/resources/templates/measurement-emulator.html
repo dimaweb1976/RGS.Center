@@ -22,7 +22,10 @@
         .secondary { color: #243340; background: #dce5eb; }
     </style>
     <script>
+        let emulatorActionPending = false;
+
         async function loadEmulatorStatus() {
+            if (emulatorActionPending) return;
             const panel = document.getElementById("emulator-status");
             panel.classList.add("loading");
             try {
@@ -37,9 +40,21 @@
         }
 
         async function emulatorAction(path) {
-            const response = await fetch(`/measurement-emulator/${path}`, {method: "POST"});
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            document.getElementById("emulator-status").innerHTML = await response.text();
+            if (emulatorActionPending) return;
+            emulatorActionPending = true;
+            const panel = document.getElementById("emulator-status");
+            panel.classList.add("loading");
+            panel.querySelectorAll("button").forEach(button => button.disabled = true);
+            try {
+                const response = await fetch(`/measurement-emulator/${path}`, {method: "POST"});
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                panel.innerHTML = await response.text();
+            } catch (error) {
+                console.error("Measurement emulator action failed", error);
+            } finally {
+                emulatorActionPending = false;
+                panel.classList.remove("loading");
+            }
         }
 
         setInterval(loadEmulatorStatus, 1000);

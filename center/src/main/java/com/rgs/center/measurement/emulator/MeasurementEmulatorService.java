@@ -1,5 +1,8 @@
 package com.rgs.center.measurement.emulator;
 
+import com.rgs.center.camera.CameraImagingOperations;
+import com.rgs.center.camera.CameraImagingSnapshot;
+import com.rgs.center.camera.DetectedBottle;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +34,9 @@ public class MeasurementEmulatorService {
     private static final int MAX_EVENTS = 30;
     private static final double LEAKAGE_LIMIT_MICROAMPS = 1.0;
 
+    /** Сервис получения кадра, распознавания и сохранения изображений. */
+    private final CameraImagingOperations cameraImaging;
+
     /** Точное тело цикла из требований; каждый шаг включает ожидание завершения. */
     private static final List<String> CYCLE_STEP_NAMES = List.of(
             "PLC: взять объект по координатам X,Y и дождаться завершения",
@@ -54,11 +60,14 @@ public class MeasurementEmulatorService {
     private String alert;
     private String highVoltageState;
     private double leakageCurrentMicroamps;
-    private boolean cameraImageVisible;
     private int preparationTicks;
     private int activeObjectIndex;
     private int activeStepIndex;
     private int completedObjects;
+
+    public MeasurementEmulatorService(CameraImagingOperations cameraImaging) {
+        this.cameraImaging = cameraImaging;
+    }
 
     /** Формирует исходное состояние после создания Spring-компонента. */
     @PostConstruct
@@ -87,11 +96,11 @@ public class MeasurementEmulatorService {
 
         objects.clear();
         events.clear();
+        cameraImaging.reset();
         phase = MeasurementEmulatorPhase.PRECHECK;
         alert = "";
         highVoltageState = "ВЫКЛЮЧЕНО";
         leakageCurrentMicroamps = 0.18;
-        cameraImageVisible = false;
         preparationTicks = 0;
         activeObjectIndex = -1;
         activeStepIndex = -1;
@@ -118,17 +127,57 @@ public class MeasurementEmulatorService {
         }
     }
 
-    /** Имитирует автоматическое распознавание трёх объектов камерой. */
-    public synchronized void detectObjects() {
+    /** Загружает тестовый кадр или получает новый снимок реальной камеры. */
+    public synchronized void captureCameraImage() {
         if (phase == MeasurementEmulatorPhase.RUNNING) {
+            addEvent("Снимок камеры запрещён во время выполнения цикла.");
             return;
         }
-        objects.clear();
-        objects.add(new MutableObject(1, "4601234567001", 482.4));
-        objects.add(new MutableObject(2, "4601234567002", 501.8));
-        objects.add(new MutableObject(3, "4601234567003", 475.1));
-        addEvent("Камера автоматически определила 3 объекта.");
-        updateReadyState();
+        try {
+            CameraImagingSnapshot camera = cameraImaging.capture();
+            objects.clear();
+            addEvent(camera.message());
+            updateReadyState();
+        } catch (RuntimeException exception) {
+            addEvent("Ошибка получения снимка: " + errorMessage(exception) + ".");
+        }
+    }
+
+    /** Распознаёт бутылки на последнем снимке и формирует список объектов. */
+    public synchronized void recognizeBottles() {
+        if (phase == MeasurementEmulatorPhase.RUNNING) {
+            addEvent("Распознавание запрещено во время выполнения цикла.");
+            return;
+        }
+        try {
+            CameraImagingSnapshot camera = cameraImaging.recognize();
+            objects.clear();
+            for (DetectedBottle bottle : camera.bottles()) {
+                objects.add(new MutableObject(
+                        bottle.number(),
+                        "НЕ СЧИТАН",
+                        0.0,
+                        "ОБНАРУЖЕН"
+                ));
+            }
+            addEvent(camera.message());
+            addEvent("Оригинал сохранён: " + camera.originalFile() + ".");
+            addEvent("Размеченный снимок сохранён: " + camera.detectedFile() + ".");
+            updateReadyState();
+        } catch (RuntimeException exception) {
+            addEvent("Ошибка распознавания: " + errorMessage(exception) + ".");
+        }
+    }
+
+    /** Совместимость со старым именем операции определения объектов. */
+    public synchronized void detectObjects() {
+        recognizeBottles();
+    }
+
+    private static String errorMessage(Throwable exception) {
+        return exception.getMessage() == null
+                ? exception.getClass().getSimpleName()
+                : exception.getMessage();
     }
 
     /** Запускает обработку списка, только если все условия истинны. */
@@ -178,6 +227,7 @@ public class MeasurementEmulatorService {
 
     /** @return согласованный снимок всех полей эмулятора */
     public synchronized MeasurementEmulatorSnapshot snapshot() {
+        CameraImagingSnapshot camera = cameraImaging.snapshot();
         return new MeasurementEmulatorSnapshot(
                 phase,
                 phase.getDisplayName(),
@@ -186,7 +236,13 @@ public class MeasurementEmulatorService {
                 highVoltageState,
                 leakageCurrentMicroamps,
                 LEAKAGE_LIMIT_MICROAMPS,
-                cameraImageVisible,
+                camera.imageAvailable(),
+                camera.imageVersion(),
+                camera.recognized(),
+                camera.message(),
+                camera.originalFile(),
+                camera.detectedFile(),
+                camera.bottles(),
                 activeObjectIndex < 0 ? 0 : activeObjectIndex + 1,
                 completedObjects,
                 checksSnapshot(deviceChecks),
@@ -205,9 +261,8 @@ public class MeasurementEmulatorService {
         }
         phase = MeasurementEmulatorPhase.PARALLEL_PREPARATION;
         highVoltageState = "НАБОР НАПРЯЖЕНИЯ";
-        cameraImageVisible = true;
         preparationTicks = 0;
-        addEvent("Параллельно запущены высокое напряжение и изображение камеры.");
+        addEvent("Параллельно запущен набор высокого; окно камеры готово к снимку.");
     }
 
     private void advancePreparation() {
@@ -321,7 +376,6 @@ public class MeasurementEmulatorService {
         phase = MeasurementEmulatorPhase.PRECHECK;
         alert = "";
         highVoltageState = "ВЫКЛЮЧЕНО";
-        cameraImageVisible = false;
         preparationTicks = 0;
         addEvent(reason + ". Проверки запущены повторно.");
     }
@@ -403,9 +457,19 @@ public class MeasurementEmulatorService {
         private String status = "ОЖИДАЕТ";
 
         private MutableObject(int number, String barcode, double estimatedMassGrams) {
+            this(number, barcode, estimatedMassGrams, "ОЖИДАЕТ");
+        }
+
+        private MutableObject(
+                int number,
+                String barcode,
+                double estimatedMassGrams,
+                String status
+        ) {
             this.number = number;
             this.barcode = barcode;
             this.estimatedMassGrams = estimatedMassGrams;
+            this.status = status;
         }
     }
 }

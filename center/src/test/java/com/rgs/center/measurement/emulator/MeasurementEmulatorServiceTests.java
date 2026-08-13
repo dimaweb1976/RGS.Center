@@ -1,7 +1,14 @@
 package com.rgs.center.measurement.emulator;
 
+import com.rgs.center.camera.CameraImagePayload;
+import com.rgs.center.camera.CameraImagingOperations;
+import com.rgs.center.camera.CameraImagingSnapshot;
+import com.rgs.center.camera.DetectedBottle;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -13,7 +20,7 @@ class MeasurementEmulatorServiceTests {
 
     @BeforeEach
     void setUp() {
-        service = new MeasurementEmulatorService();
+        service = new MeasurementEmulatorService(new FakeCameraImaging());
         service.reset();
     }
 
@@ -84,5 +91,62 @@ class MeasurementEmulatorServiceTests {
         service.advance();
         service.advance();
         service.advance();
+    }
+
+    private static final class FakeCameraImaging
+            implements CameraImagingOperations {
+
+        private CameraImagingSnapshot snapshot = empty();
+
+        @Override
+        public CameraImagingSnapshot capture() {
+            snapshot = new CameraImagingSnapshot(
+                    true, 1, false, "Тестовый снимок загружен",
+                    "", "", List.of()
+            );
+            return snapshot;
+        }
+
+        @Override
+        public CameraImagingSnapshot recognize() {
+            List<DetectedBottle> bottles = List.of(
+                    bottle(1, 100, 100),
+                    bottle(2, 200, 100),
+                    bottle(3, 300, 100)
+            );
+            snapshot = new CameraImagingSnapshot(
+                    true, 2, true, "Найдено бутылок: 3",
+                    "C:\\camera\\bottles_test.jpeg",
+                    "C:\\camera\\bottles_detected_test.jpeg",
+                    bottles
+            );
+            return snapshot;
+        }
+
+        @Override
+        public CameraImagingSnapshot snapshot() {
+            return snapshot;
+        }
+
+        @Override
+        public Optional<CameraImagePayload> currentImage() {
+            return Optional.empty();
+        }
+
+        @Override
+        public void reset() {
+            snapshot = empty();
+        }
+
+        private static CameraImagingSnapshot empty() {
+            return new CameraImagingSnapshot(
+                    false, 0, false, "Снимок ещё не сделан.",
+                    "", "", List.of()
+            );
+        }
+
+        private static DetectedBottle bottle(int number, double x, double y) {
+            return new DetectedBottle(number, x, y, 60, 62, 61, 0.85);
+        }
     }
 }

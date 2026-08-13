@@ -1,5 +1,7 @@
 package com.rgs.center.measurement.emulator;
 
+import com.rgs.center.camera.DetectedBottle;
+
 import java.util.List;
 
 /** Неизменяемый снимок эмулятора для Thymeleaf-представления. */
@@ -12,6 +14,12 @@ public record MeasurementEmulatorSnapshot(
         double leakageCurrentMicroamps,
         double leakageLimitMicroamps,
         boolean cameraImageVisible,
+        long cameraImageVersion,
+        boolean cameraRecognized,
+        String cameraResultMessage,
+        String cameraOriginalFile,
+        String cameraDetectedFile,
+        List<DetectedBottle> detectedBottles,
         int activeObjectNumber,
         int completedObjects,
         List<EmulatorCheck> deviceChecks,

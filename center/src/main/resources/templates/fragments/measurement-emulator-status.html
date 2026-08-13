@@ -18,7 +18,14 @@
         .check small { color: #6b7780; }
         .check .lamp { width: 13px; height: 13px; margin-top: 4px; border-radius: 50%; background: #d23939; box-shadow: 0 0 0 4px #f8dada; }
         .check.ready .lamp { background: #169b62; box-shadow: 0 0 0 4px #d9f2e8; }
-        .camera { min-height: 128px; display: grid; place-items: center; border-radius: 7px; color: #b9dfe9; background: repeating-linear-gradient(135deg, #173746, #173746 12px, #1b4152 12px, #1b4152 24px); font-size: 22px; }
+        .camera { min-height: 280px; display: grid; place-items: center; overflow: hidden; border-radius: 7px; color: #b9dfe9; background: repeating-linear-gradient(135deg, #173746, #173746 12px, #1b4152 12px, #1b4152 24px); font-size: 22px; }
+        .camera img { display: block; width: 100%; max-height: 520px; object-fit: contain; background: #101820; }
+        .camera-actions { display: flex; justify-content: space-between; gap: 12px; margin-top: 12px; }
+        .camera-actions button { min-width: 150px; }
+        .recognition-result { margin-top: 14px; }
+        .recognition-summary { margin: 0 0 12px; padding: 10px 12px; border-radius: 7px; background: #f1f5f8; }
+        .recognition-note { margin: 10px 0 0; color: #64737e; font-size: 12px; }
+        .saved-files { display: grid; gap: 4px; margin-top: 10px; color: #52616c; font-family: Consolas, monospace; font-size: 11px; overflow-wrap: anywhere; }
         .metric { font-size: 25px; font-weight: 800; }
         .metric.ok { color: #087f5b; }
         .metric.bad { color: #c92a2a; }
@@ -43,7 +50,6 @@
                   th:text="'Объект ' + ${emulator.activeObjectNumber}"></span></div>
         <div class="actions">
             <button class="secondary" onclick="emulatorAction('reset')">СБРОС</button>
-            <button class="secondary" onclick="emulatorAction('detect-objects')">ОПРЕДЕЛИТЬ ОБЪЕКТЫ</button>
             <button class="primary" th:disabled="${!emulator.startEnabled}"
                     onclick="emulatorAction('start')">START</button>
         </div>
@@ -94,41 +100,83 @@
         </article>
         <article class="card">
             <h2>Изображение камеры</h2>
-            <div class="camera" th:if="${emulator.cameraImageVisible}">CAMERA · LIVE · EMULATOR</div>
-            <div class="camera" th:unless="${emulator.cameraImageVisible}">КАМЕРА ОЖИДАЕТ</div>
+            <div class="camera" th:if="${emulator.cameraImageVisible}">
+                <img th:src="|/measurement-emulator/camera/image?version=${emulator.cameraImageVersion}|"
+                     alt="Последний снимок камеры">
+            </div>
+            <div class="camera" th:unless="${emulator.cameraImageVisible}">СНИМОК ЕЩЁ НЕ СДЕЛАН</div>
+            <div class="camera-actions">
+                <button class="secondary"
+                        onclick="emulatorAction('camera/capture')">Сделать снимок</button>
+                <button class="primary"
+                        th:disabled="${!emulator.cameraImageVisible}"
+                        onclick="emulatorAction('camera/recognize')">Распознать</button>
+            </div>
         </article>
     </div>
 
-    <div class="lower">
-        <div>
-            <article class="card">
-                <h2>Список объектов</h2>
-                <p th:if="${#lists.isEmpty(emulator.objects)}">Объекты ещё не определены.</p>
-                <table th:unless="${#lists.isEmpty(emulator.objects)}">
-                    <thead><tr><th>№</th><th>Штрих-код</th><th>Масса, г</th><th>Статус</th></tr></thead>
-                    <tbody><tr th:each="object : ${emulator.objects}">
-                        <td th:text="${object.number}"></td><td th:text="${object.barcode}"></td>
-                        <td th:text="${#numbers.formatDecimal(object.estimatedMassGrams, 1, 1)}"></td>
-                        <td th:text="${object.status}"></td>
-                    </tr></tbody>
-                </table>
-            </article>
-            <article class="card" style="margin-top:14px">
-                <h2>Тело цикла</h2>
-                <ol class="steps">
-                    <li th:each="step : ${emulator.cycleSteps}"
-                        th:classappend="${step.state == 'ВЫПОЛНЯЕТСЯ'} ? ' active' : (${step.state == 'ГОТОВО'} ? ' done' : '')">
-                        <span class="number" th:text="${step.number}"></span>
-                        <span th:text="${step.name}"></span><span class="state" th:text="${step.state}"></span>
-                    </li>
-                </ol>
-            </article>
+    <article class="card recognition-result">
+        <h2>Результат распознавания</h2>
+        <p class="recognition-summary" th:text="${emulator.cameraResultMessage}">
+            Снимок ещё не сделан.
+        </p>
+        <p th:if="${emulator.cameraRecognized && #lists.isEmpty(emulator.detectedBottles)}">
+            На изображении не найдено объектов, соответствующих настроенным признакам бутылки.
+        </p>
+        <table th:if="${!#lists.isEmpty(emulator.detectedBottles)}">
+            <thead>
+            <tr><th>№</th><th>Центр X, px</th><th>Центр Y, px</th><th>Размер, px</th><th>Круглость</th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="bottle : ${emulator.detectedBottles}">
+                <td th:text="${bottle.number}"></td>
+                <td th:text="${#numbers.formatDecimal(bottle.centerX, 1, 1)}"></td>
+                <td th:text="${#numbers.formatDecimal(bottle.centerY, 1, 1)}"></td>
+                <td th:text="|${bottle.width} × ${bottle.height}|"></td>
+                <td th:text="${#numbers.formatDecimal(bottle.circularity, 1, 3)}"></td>
+            </tr>
+            </tbody>
+        </table>
+        <p class="recognition-note" th:if="${emulator.cameraRecognized}">
+            X и Y — координаты центра окружности в пикселях изображения. Размер — габариты
+            найденного контура. Круглость стремится к 1 для идеальной окружности.
+            Всего найдено: <strong th:text="${#lists.size(emulator.detectedBottles)}">0</strong>.
+        </p>
+        <div class="saved-files" th:if="${emulator.cameraRecognized}">
+            <span th:text="${'Оригинал: ' + emulator.cameraOriginalFile}"></span>
+            <span th:text="${'Результат: ' + emulator.cameraDetectedFile}"></span>
         </div>
+    </article>
+
+    <div class="lower">
         <article class="card">
-            <h2>Журнал событий</h2>
-            <ul class="events"><li th:each="event : ${emulator.events}" th:text="${event}"></li></ul>
+            <h2>Список объектов сценария</h2>
+            <p th:if="${#lists.isEmpty(emulator.objects)}">Объекты ещё не определены.</p>
+            <table th:unless="${#lists.isEmpty(emulator.objects)}">
+                <thead><tr><th>№</th><th>Штрих-код</th><th>Масса, г</th><th>Статус</th></tr></thead>
+                <tbody><tr th:each="object : ${emulator.objects}">
+                    <td th:text="${object.number}"></td><td th:text="${object.barcode}"></td>
+                    <td th:text="${object.estimatedMassGrams > 0 ? #numbers.formatDecimal(object.estimatedMassGrams, 1, 1) : '—'}"></td>
+                    <td th:text="${object.status}"></td>
+                </tr></tbody>
+            </table>
+        </article>
+        <article class="card">
+            <h2>Тело цикла</h2>
+            <ol class="steps">
+                <li th:each="step : ${emulator.cycleSteps}"
+                    th:classappend="${step.state == 'ВЫПОЛНЯЕТСЯ'} ? ' active' : (${step.state == 'ГОТОВО'} ? ' done' : '')">
+                    <span class="number" th:text="${step.number}"></span>
+                    <span th:text="${step.name}"></span><span class="state" th:text="${step.state}"></span>
+                </li>
+            </ol>
         </article>
     </div>
+
+    <article class="card" style="margin-top:14px">
+        <h2>Журнал событий</h2>
+        <ul class="events"><li th:each="event : ${emulator.events}" th:text="${event}"></li></ul>
+    </article>
 </section>
 </body>
 </html>
