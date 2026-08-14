@@ -5,10 +5,13 @@
     <title>RGSCenter Menu</title>
 </head>
 <body>
-<nav th:fragment="menu">
-    <a href="/">Главная</a>
-    <a href="/devices">Приборы</a>
-    <a href="/measurement-emulator">Эмулятор измерения</a>
-</nav>
+<div th:fragment="menu">
+    <nav>
+        <a href="/">Главная</a>
+        <a href="/devices">Приборы</a>
+        <a href="/measurement-emulator">Эмулятор измерения</a>
+    </nav>
+    <div th:replace="~{fragments/auth-status :: status}"></div>
+</div>
 </body>
 </html>

@@ -9,6 +9,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -19,7 +20,7 @@ class MeasurementEmulatorWebTests {
 
     @Test
     void rendersCameraControlsRecognitionResultAndEventJournal() throws Exception {
-        mockMvc.perform(get("/measurement-emulator"))
+        mockMvc.perform(get("/measurement-emulator").with(user("test-operator")))
                 .andExpect(status().isOk())
                 .andExpect(content().string(
                         org.hamcrest.Matchers.containsString("Сделать снимок")
@@ -32,6 +33,9 @@ class MeasurementEmulatorWebTests {
                 ))
                 .andExpect(content().string(
                         org.hamcrest.Matchers.containsString("Журнал событий")
+                ))
+                .andExpect(content().string(
+                        org.hamcrest.Matchers.containsString("id=\"emulator-feedback\"")
                 ))
                 .andExpect(content().string(
                         org.hamcrest.Matchers.not(

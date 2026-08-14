@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Вход — RGSCenter</title>
+    <link rel="stylesheet" th:href="@{/css/auth.css}">
+</head>
+<body class="login-page">
+<main class="login-card">
+    <div class="login-brand">RGSCenter</div>
+    <h1>Вход в систему</h1>
+    <p class="login-hint">Введите логин и пароль пользователя.</p>
+
+    <div class="login-error" th:if="${error}" th:text="${error}"></div>
+
+    <form method="post" th:action="@{/auth/login}" autocomplete="on">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+        <label for="login">Логин</label>
+        <input id="login" name="login" type="text" maxlength="256"
+               autocomplete="username" required autofocus th:value="${login}">
+
+        <label for="password">Пароль</label>
+        <input id="password" name="password" type="password" maxlength="1024"
+               autocomplete="current-password" required>
+
+        <button type="submit">Войти</button>
+    </form>
+</main>
+</body>
+</html>

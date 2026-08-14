@@ -15,7 +15,10 @@
         nav a { color: #fff; margin-right: 18px; }
         main { max-width: 1400px; margin: 22px auto; padding: 0 20px 36px; }
         .note { color: #657481; font-size: 13px; }
-        .loading { opacity: .62; }
+        .loading { opacity: .62; pointer-events: none; }
+        .action-message { min-height: 20px; margin: 8px 0 12px; font-size: 13px; font-weight: 700; }
+        .action-message.success { color: #087f5b; }
+        .action-message.error { color: #b42318; }
         button { border: 0; border-radius: 6px; padding: 9px 14px; cursor: pointer; font-weight: 700; }
         button:disabled { cursor: not-allowed; opacity: .42; }
         .primary { color: white; background: #087f5b; }
@@ -24,16 +27,34 @@
     <script>
         let emulatorActionPending = false;
 
+        function showEmulatorMessage(message, type = "success") {
+            const feedback = document.getElementById("emulator-feedback");
+            feedback.textContent = message;
+            feedback.className = `action-message ${type}`;
+        }
+
+        function emulatorCsrfHeaders() {
+            if (window.rgsCsrfHeaders) return window.rgsCsrfHeaders();
+            const csrfElement = document.querySelector(".auth-csrf");
+            if (!csrfElement) return {};
+            return {[csrfElement.dataset.header]: csrfElement.dataset.token};
+        }
+
         async function loadEmulatorStatus() {
             if (emulatorActionPending) return;
             const panel = document.getElementById("emulator-status");
             panel.classList.add("loading");
             try {
                 const response = await fetch("/measurement-emulator/status", {cache: "no-store"});
+                if (response.redirected || response.status === 401) {
+                    window.location.assign("/login");
+                    return;
+                }
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 panel.innerHTML = await response.text();
             } catch (error) {
                 console.error("Failed to update measurement emulator", error);
+                showEmulatorMessage("Не удалось обновить состояние эмулятора.", "error");
             } finally {
                 panel.classList.remove("loading");
             }
@@ -44,13 +65,30 @@
             emulatorActionPending = true;
             const panel = document.getElementById("emulator-status");
             panel.classList.add("loading");
-            panel.querySelectorAll("button").forEach(button => button.disabled = true);
             try {
-                const response = await fetch(`/measurement-emulator/${path}`, {method: "POST"});
+                const response = await fetch(`/measurement-emulator/${path}`, {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: {
+                        Accept: "text/html",
+                        ...emulatorCsrfHeaders()
+                    }
+                });
+                if (response.redirected || response.status === 401) {
+                    window.location.assign("/login");
+                    return;
+                }
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 panel.innerHTML = await response.text();
+                showEmulatorMessage(
+                    path === "reset" ? "Сценарий сброшен." : "Команда выполнена."
+                );
             } catch (error) {
                 console.error("Measurement emulator action failed", error);
+                showEmulatorMessage(
+                    `Команда не выполнена: сервер вернул ошибку (${error.message}).`,
+                    "error"
+                );
             } finally {
                 emulatorActionPending = false;
                 panel.classList.remove("loading");
@@ -61,6 +99,7 @@
     </script>
 </head>
 <body>
+<div th:replace="~{fragments/auth-status :: status}"></div>
 <header>
     <h1>Эмулятор алгоритма измерения</h1>
     <p>Безопасная модель сценария — команды физическим устройствам не отправляются</p>
@@ -68,6 +107,7 @@
 </header>
 <main>
     <p class="note">Состояние обновляется каждую секунду. Нажатие на проверку имитирует отказ или восстановление.</p>
+    <p id="emulator-feedback" class="action-message" role="status" aria-live="polite"></p>
     <div id="emulator-status"
          th:insert="~{fragments/measurement-emulator-status :: status}"></div>
 </main>
