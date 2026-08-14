@@ -11,6 +11,11 @@ public interface ManagedDeviceConnection {
     /** @return постоянный код устройства */
     DeviceCode deviceCode();
 
+    /** @return whether startup, polling and reconnects are allowed */
+    default boolean isEnabled() {
+        return true;
+    }
+
     /** Открывает подключение и запускает RX/TX-worker. */
     void startCommunication();
 

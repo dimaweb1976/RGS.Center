@@ -1,5 +1,6 @@
 package com.rgs.center.service;
 
+import com.rgs.center.connection.DeviceEnablementService;
 import com.rgs.center.connection.ManagedDeviceConnection;
 import com.rgs.center.objects.DeviceCode;
 import com.rgs.center.peripheral.PeripheralDeviceWorker;
@@ -11,6 +12,7 @@ import com.rgs.center.peripheral.PeripheralWorkerState;
 import com.rgs.center.peripheral.LineFrameDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -38,6 +40,17 @@ public abstract class AbstractQueuedDeviceService
 
     /** Не допускает одновременный запуск/перезапуск одного worker. */
     private final ReentrantLock lifecycleLock = new ReentrantLock();
+
+    /** Central flag source; it is absent only in directly constructed tests. */
+    private DeviceEnablementService deviceEnablementService;
+
+    /** Injects device flags without expanding every concrete constructor. */
+    @Autowired(required = false)
+    void setDeviceEnablementService(
+            DeviceEnablementService deviceEnablementService
+    ) {
+        this.deviceEnablementService = deviceEnablementService;
+    }
 
     /**
      * @param deviceCode код устройства
@@ -86,12 +99,22 @@ public abstract class AbstractQueuedDeviceService
         return deviceCode;
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public final boolean isEnabled() {
+        return deviceEnablementService == null
+                || deviceEnablementService.isEnabled(deviceCode);
+    }
+
     /**
      * Запускает подключение. После транспортной ошибки предварительно
      * переводит worker из FAILED в STOPPED и повторяет открытие.
      */
     @Override
     public final void startCommunication() {
+        if (!isEnabled()) {
+            return;
+        }
         lifecycleLock.lock();
         try {
             PeripheralWorkerState state =
@@ -165,6 +188,11 @@ public abstract class AbstractQueuedDeviceService
      * Гарантирует готовность worker перед прикладной операцией.
      */
     private void ensureCommunication() {
+        if (!isEnabled()) {
+            throw new IllegalStateException(
+                    "Device " + deviceCode + " is disabled by configuration"
+            );
+        }
         if (worker.snapshot().state() != PeripheralWorkerState.RUNNING) {
             log.info(
                     "Communication with {} is not running; reconnecting",

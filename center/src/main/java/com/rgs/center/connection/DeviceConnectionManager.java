@@ -53,7 +53,17 @@ public class DeviceConnectionManager implements SmartLifecycle {
         }
 
         int started = 0;
+        int enabled = 0;
         for (ManagedDeviceConnection device : devices) {
+            if (!device.isEnabled()) {
+                log.info(
+                        "Device {} is disabled by configuration ({})",
+                        device.deviceCode(),
+                        device.deviceCode().getEnabledProperty()
+                );
+                continue;
+            }
+            enabled++;
             try {
                 device.startCommunication();
                 started++;
@@ -66,8 +76,9 @@ public class DeviceConnectionManager implements SmartLifecycle {
             }
         }
         log.info(
-                "Initial device connections completed: started={}, total={}",
+                "Initial device connections completed: started={}, enabled={}, total={}",
                 started,
+                enabled,
                 devices.size()
         );
     }
@@ -80,6 +91,9 @@ public class DeviceConnectionManager implements SmartLifecycle {
         }
         for (int index = devices.size() - 1; index >= 0; index--) {
             ManagedDeviceConnection device = devices.get(index);
+            if (!device.isEnabled()) {
+                continue;
+            }
             try {
                 device.stopCommunication();
             } catch (RuntimeException exception) {

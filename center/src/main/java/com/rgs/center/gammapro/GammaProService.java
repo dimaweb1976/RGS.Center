@@ -85,6 +85,9 @@ public class GammaProService extends AbstractQueuedDeviceService {
                     "${rgs.device.gamma-pro.poll-initial-delay-millis:0}"
     )
     public void pollGammaPro() {
+        if (!isEnabled()) {
+            return;
+        }
         if (!protocolLock.tryLock()) {
             log.trace("Gamma-PRO poll skipped: another command is active");
             return;

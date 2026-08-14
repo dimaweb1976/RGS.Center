@@ -105,6 +105,9 @@ public class ShpService extends AbstractQueuedDeviceService {
             initialDelayString = "${rgs.device.shp.poll-initial-delay-millis:2000}"
     )
     public void poll() {
+        if (!isEnabled()) {
+            return;
+        }
         if (!pollLock.tryLock()) {
             log.debug("SHP poll skipped because previous cycle is still running");
             return;

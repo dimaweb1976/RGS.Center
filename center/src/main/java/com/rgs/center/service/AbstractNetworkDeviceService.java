@@ -44,6 +44,9 @@ public abstract class AbstractNetworkDeviceService
      * @return результат проверки доступности
      */
     protected final boolean pollQueued() {
+        if (!isEnabled()) {
+            return false;
+        }
         return pingService.executePing(
                 deviceCode(),
                 () -> {

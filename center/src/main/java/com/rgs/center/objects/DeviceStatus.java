@@ -5,5 +5,7 @@ public enum DeviceStatus {
     /** Последняя проверка доступности успешна. */
     ONLINE,
     /** Последняя проверка доступности неуспешна. */
-    OFFLINE
+    OFFLINE,
+    /** Device polling and connection are disabled by configuration. */
+    DISABLED
 }

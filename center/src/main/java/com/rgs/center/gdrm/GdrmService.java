@@ -122,6 +122,9 @@ public class GdrmService extends AbstractQueuedDeviceService {
             initialDelayString = "${rgs.device.gdrm.poll-initial-delay-millis:1000}"
     )
     public void poll() {
+        if (!isEnabled()) {
+            return;
+        }
         if (!pollLock.tryLock()) {
             log.debug("GDRM poll skipped because previous cycle is still running");
             return;

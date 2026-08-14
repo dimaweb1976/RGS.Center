@@ -1,8 +1,10 @@
 package com.rgs.center.service;
 
+import com.rgs.center.connection.DeviceEnablementService;
 import com.rgs.center.objects.Device;
 import com.rgs.center.objects.DeviceCode;
 import com.rgs.center.objects.DeviceStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -17,17 +19,31 @@ public class DeviceViewService {
 
     private final SettingsService settingsService;
     private final CurrentDataService currentDataService;
+    private final DeviceEnablementService deviceEnablementService;
 
     /**
      * @param settingsService источник адресов устройств
      * @param currentDataService витрина статусов
      */
+    @Autowired
+    public DeviceViewService(
+            SettingsService settingsService,
+            CurrentDataService currentDataService,
+            DeviceEnablementService deviceEnablementService
+    ) {
+        this.settingsService = settingsService;
+        this.currentDataService = currentDataService;
+        this.deviceEnablementService = deviceEnablementService;
+    }
+
+    /** Constructor retained for focused tests where all devices are enabled. */
     public DeviceViewService(
             SettingsService settingsService,
             CurrentDataService currentDataService
     ) {
         this.settingsService = settingsService;
         this.currentDataService = currentDataService;
+        this.deviceEnablementService = null;
     }
 
     /**
@@ -64,7 +80,11 @@ public class DeviceViewService {
         );
         long lastCheck = Math.max(lastRequest, lastResponse);
 
-        device.setStatus(pinged ? DeviceStatus.ONLINE : DeviceStatus.OFFLINE);
+        boolean enabled = deviceEnablementService == null
+                || deviceEnablementService.isEnabled(deviceCode);
+        device.setStatus(enabled
+                ? (pinged ? DeviceStatus.ONLINE : DeviceStatus.OFFLINE)
+                : DeviceStatus.DISABLED);
         if (lastCheck > 0) {
             device.setLastCheck(LocalDateTime.ofInstant(
                     Instant.ofEpochSecond(lastCheck),

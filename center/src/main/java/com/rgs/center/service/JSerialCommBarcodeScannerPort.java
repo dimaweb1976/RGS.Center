@@ -59,6 +59,9 @@ public class JSerialCommBarcodeScannerPort
                     "${rgs.device.barcode-scanner.status-initial-delay-millis:0}"
     )
     public void refreshConnectionStatus() {
+        if (!isEnabled()) {
+            return;
+        }
         long checkedAt = Instant.now().getEpochSecond();
         boolean previousConnected = currentDataService.getValue(
                 DeviceCode.BARCODE_SCANNER,

@@ -95,4 +95,12 @@ public enum DeviceCode {
     public String getPortSettingCode() {
         return portSettingCode;
     }
+
+    /** @return Spring property controlling this device connection */
+    public String getEnabledProperty() {
+        if (this == ROBOTIC_MANIPULATOR) {
+            return "rgs.device.manipulator.enabled";
+        }
+        return "rgs.device." + code + ".enabled";
+    }
 }

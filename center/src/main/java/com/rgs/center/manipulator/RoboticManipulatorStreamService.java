@@ -1,6 +1,7 @@
 package com.rgs.center.manipulator;
 
 import com.rgs.center.connection.ManagedDeviceConnection;
+import com.rgs.center.connection.DeviceEnablementService;
 import com.rgs.center.connection.TcpDeviceConnection;
 import com.rgs.center.objects.DeviceCode;
 import com.rgs.center.peripheral.FixedLengthFrameDecoder;
@@ -17,6 +18,7 @@ import com.rgs.center.service.CurrentDataService;
 import com.rgs.center.service.SettingsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -72,6 +74,9 @@ public class RoboticManipulatorStreamService
     private final ReentrantLock feedbackLock = new ReentrantLock();
     private final Condition feedbackChanged = feedbackLock.newCondition();
 
+    /** Central per-device flag; absent only in direct unit tests. */
+    private DeviceEnablementService deviceEnablementService;
+
     private ExecutorService routerExecutor;
 
     /** Builds both physical channels from centrally managed settings. */
@@ -103,6 +108,14 @@ public class RoboticManipulatorStreamService
         );
     }
 
+    /** Injects the manipulator enable flag without changing test constructors. */
+    @Autowired(required = false)
+    public void setDeviceEnablementService(
+            DeviceEnablementService deviceEnablementService
+    ) {
+        this.deviceEnablementService = deviceEnablementService;
+    }
+
     /** Creates a TCP transport whose address and timeouts remain configurable. */
     private TcpDeviceConnection tcpConnection(String id, String portSetting) {
         return new TcpDeviceConnection(
@@ -120,9 +133,19 @@ public class RoboticManipulatorStreamService
         return DeviceCode.ROBOTIC_MANIPULATOR;
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public boolean isEnabled() {
+        return deviceEnablementService == null
+                || deviceEnablementService.isEnabled(deviceCode());
+    }
+
     /** Opens both sockets and starts routing and telemetry processing threads. */
     @Override
     public synchronized void startCommunication() {
+        if (!isEnabled()) {
+            return;
+        }
         if (started.get()) {
             return;
         }
@@ -375,6 +398,12 @@ public class RoboticManipulatorStreamService
             initialDelayString = "${rgs.device.manipulator.watchdog-initial-delay-millis:1000}"
     )
     public void maintainConnection() {
+        if (!isEnabled()) {
+            if (started.get()) {
+                stopCommunication();
+            }
+            return;
+        }
         if (!started.get()) {
             try {
                 stopCommunication();
@@ -409,6 +438,11 @@ public class RoboticManipulatorStreamService
     }
 
     private void requireStarted() {
+        if (!isEnabled()) {
+            throw new IllegalStateException(
+                    "Robotic manipulator is disabled by configuration"
+            );
+        }
         if (!started.get()) {
             throw new IllegalStateException("Dobot communication is not running");
         }
