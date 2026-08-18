@@ -6,9 +6,8 @@
     <span class="auth-csrf" hidden
           th:attr="data-token=${_csrf.token},data-header=${_csrf.headerName}"></span>
     <div class="auth-user">
-        Пользователь: <strong th:text="${authDisplayName ?: authUsername}">user</strong>
-        <span class="auth-login" th:if="${authDisplayName != authUsername}"
-              th:text="|(${authUsername})|">(login)</span>
+        Пользователь: <strong th:text="${authUsername}">user</strong>
+        <span class="auth-login" th:text="|(${authRole})|">(role)</span>
     </div>
     <div class="auth-connection-warning" role="alert" hidden>
         Внимание: одновременно подключено браузеров: <strong class="auth-connection-count">2</strong>

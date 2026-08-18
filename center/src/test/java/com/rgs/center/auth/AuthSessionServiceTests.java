@@ -7,7 +7,6 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.time.Duration;
@@ -33,6 +32,8 @@ class AuthSessionServiceTests {
                 .execute(dataSource);
 
         jdbcClient = JdbcClient.create(dataSource);
+        jdbcClient.sql("DELETE FROM auth_sessions").update();
+        jdbcClient.sql("DELETE FROM users").update();
         sessionService = new AuthSessionService(
                 jdbcClient,
                 Duration.ofHours(8),
@@ -47,7 +48,7 @@ class AuthSessionServiceTests {
 
     @Test
     void issuesIndependentTokensAndWarnsForSecondConnectedBrowser() {
-        insertUser("operator", "secret-password", true);
+        insertUser("operator", "secret-password", 3);
 
         IssuedToken first = authenticationService.login(
                 "operator", "secret-password", "127.0.0.1", "browser-one");
@@ -58,6 +59,8 @@ class AuthSessionServiceTests {
         assertEquals(2, sessionService.countConnected());
         assertEquals("operator", sessionService.authenticate(first.value())
                 .orElseThrow().principal().login());
+        assertEquals("operator", sessionService.authenticate(first.value())
+                .orElseThrow().principal().roleName());
 
         sessionService.revoke(first.value());
         assertTrue(sessionService.authenticate(first.value()).isEmpty());
@@ -65,28 +68,26 @@ class AuthSessionServiceTests {
     }
 
     @Test
-    void rejectsWrongPasswordAndInactiveUser() {
-        insertUser("operator", "secret-password", true);
-        insertUser("disabled", "secret-password", false);
+    void rejectsWrongPasswordAndUnknownUser() {
+        insertUser("operator", "secret-password", 3);
 
         assertThrows(BadCredentialsException.class, () ->
                 authenticationService.login(
                         "operator", "wrong", "127.0.0.1", "browser"));
-        assertThrows(DisabledException.class, () ->
+        assertThrows(BadCredentialsException.class, () ->
                 authenticationService.login(
-                        "disabled", "secret-password", "127.0.0.1", "browser"));
+                        "missing", "secret-password", "127.0.0.1", "browser"));
     }
 
-    private void insertUser(String login, String password, boolean active) {
+    private void insertUser(String login, String password, int role) {
         String hash = new BCryptPasswordEncoder().encode(password);
         jdbcClient.sql("""
-                        INSERT INTO appusers (treename, login, scrthsh, active)
-                        VALUES (:name, :login, :hash, :active)
+                        INSERT INTO users (login, hash, role)
+                        VALUES (:login, :hash, :role)
                         """)
-                .param("name", login)
                 .param("login", login)
                 .param("hash", hash)
-                .param("active", active)
+                .param("role", role)
                 .update();
     }
 }

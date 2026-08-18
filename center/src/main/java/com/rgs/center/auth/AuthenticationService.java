@@ -1,10 +1,10 @@
 package com.rgs.center.auth;
 
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+/** Verifies user credentials and delegates token creation to {@link AuthSessionService}. */
 @Service
 class AuthenticationService {
 
@@ -32,6 +32,7 @@ class AuthenticationService {
             String remoteAddress,
             String userAgent
     ) {
+        // Reject unreasonable input before querying the database or running BCrypt.
         String login = suppliedLogin == null ? "" : suppliedLogin.trim();
         String password = suppliedPassword == null ? "" : suppliedPassword;
         if (login.isEmpty() || login.length() > 256 || password.isEmpty()
@@ -40,16 +41,14 @@ class AuthenticationService {
         }
 
         AuthUser user = userRepository.findByLogin(login).orElse(null);
+        // The dummy hash prevents a missing login from returning substantially faster
+        // than a login with an incorrect password (user-enumeration timing defence).
         String passwordHash = user == null ? DUMMY_PASSWORD_HASH : user.passwordHash();
         if (!passwordEncoder.matches(password, passwordHash) || user == null) {
             throw new BadCredentialsException("Invalid credentials");
         }
-        if (!user.active()) {
-            throw new DisabledException("User is disabled");
-        }
-
         return sessionService.issue(
-                new AuthPrincipal(user.id(), user.login(), user.displayName()),
+                new AuthPrincipal(user.id(), user.login(), user.roleName()),
                 remoteAddress,
                 userAgent
         );

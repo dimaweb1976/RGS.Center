@@ -17,9 +17,17 @@ import java.util.Base64;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Owns the complete server-side token lifecycle: issuance, validation,
+ * activity tracking, revocation and delayed removal of old sessions.
+ *
+ * <p>The raw token is returned to the browser only. PostgreSQL stores its
+ * SHA-256 digest in {@code auth_sessions.token_hash}.</p>
+ */
 @Service
 class AuthSessionService {
 
+    /** 32 random bytes provide 256 bits of token entropy. */
     private static final int TOKEN_BYTES = 32;
 
     private final JdbcClient jdbcClient;
@@ -37,10 +45,15 @@ class AuthSessionService {
         this.activeWindow = activeWindow;
     }
 
+    /**
+     * Creates a URL-safe random token, stores only its hash and returns the raw
+     * value with the absolute expiration time for creation of the browser cookie.
+     */
     @Transactional
     IssuedToken issue(AuthPrincipal principal, String remoteAddress, String userAgent) {
         byte[] bytes = new byte[TOKEN_BYTES];
         secureRandom.nextBytes(bytes);
+        // 32 bytes become a 43-character URL-safe Base64 string without padding.
         String token = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
         Instant now = Instant.now();
         Instant expiresAt = now.plus(sessionDuration);
@@ -66,6 +79,10 @@ class AuthSessionService {
         return new IssuedToken(token, expiresAt);
     }
 
+    /**
+     * Authenticates a raw cookie token when its hash exists, is not revoked and
+     * has not expired. Successful use refreshes last_seen_at at most every 15 seconds.
+     */
     @Transactional
     Optional<AuthenticatedSession> authenticate(String token) {
         if (token == null || token.length() < 32 || token.length() > 128) {
@@ -74,13 +91,13 @@ class AuthSessionService {
 
         Instant now = Instant.now();
         Optional<AuthenticatedSession> session = jdbcClient.sql("""
-                        SELECT s.id, u.id AS user_id, u.login, u.treename
+                        SELECT s.id, u.id AS user_id, u.login, r.rolename
                         FROM auth_sessions s
-                        JOIN appusers u ON u.id = s.user_id
+                        JOIN users u ON u.id = s.user_id
+                        JOIN roles r ON r.id = u.role
                         WHERE s.token_hash = :tokenHash
                           AND s.revoked_at IS NULL
                           AND s.expires_at > :now
-                          AND u.active = TRUE
                         """)
                 .param("tokenHash", hash(token))
                 .param("now", asTimestamp(now))
@@ -89,11 +106,12 @@ class AuthSessionService {
                         new AuthPrincipal(
                                 rs.getLong("user_id"),
                                 rs.getString("login"),
-                                rs.getString("treename")
+                                rs.getString("rolename")
                         )
                 ))
                 .optional();
 
+        // Throttling avoids a database UPDATE for every asset/API request.
         session.ifPresent(value -> jdbcClient.sql("""
                         UPDATE auth_sessions
                         SET last_seen_at = :now
@@ -107,6 +125,7 @@ class AuthSessionService {
         return session;
     }
 
+    /** Marks a session as revoked; keeping the row provides an audit timestamp. */
     void revoke(String token) {
         if (token == null || token.isBlank()) {
             return;
@@ -121,16 +140,16 @@ class AuthSessionService {
                 .update();
     }
 
+    /** Counts non-revoked, unexpired sessions active inside {@code activeWindow}. */
     int countConnected() {
         Instant now = Instant.now();
         Long count = jdbcClient.sql("""
                         SELECT COUNT(*)
                         FROM auth_sessions s
-                        JOIN appusers u ON u.id = s.user_id
+                        JOIN users u ON u.id = s.user_id
                         WHERE s.revoked_at IS NULL
                           AND s.expires_at > :now
                           AND s.last_seen_at >= :activeSince
-                          AND u.active = TRUE
                         """)
                 .param("now", asTimestamp(now))
                 .param("activeSince", asTimestamp(now.minus(activeWindow)))
@@ -140,6 +159,7 @@ class AuthSessionService {
     }
 
     private void purgeOldSessions(Instant now) {
+        // Expired/revoked rows remain for seven days and are purged on a later login.
         jdbcClient.sql("""
                         DELETE FROM auth_sessions
                         WHERE expires_at < :cutoff
@@ -154,6 +174,7 @@ class AuthSessionService {
     }
 
     private static String hash(String token) {
+        // The digest is used as a lookup key; the raw bearer token is never persisted.
         try {
             byte[] digest = MessageDigest.getInstance("SHA-256")
                     .digest(token.getBytes(StandardCharsets.US_ASCII));

@@ -13,14 +13,26 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.savedrequest.NullRequestCache;
 
+/**
+ * Configures stateless browser-token authentication for RGSCenter.
+ *
+ * <p>Spring HTTP sessions, the standard form-login filter, HTTP Basic and the
+ * standard logout handler are disabled. {@link AuthTokenFilter} restores the
+ * authenticated user independently for every request from the token cookie.</p>
+ */
 @Configuration
 class SecurityConfiguration {
 
+    /** BCrypt encoder used both when checking and when creating password hashes. */
     @Bean
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * Defines public endpoints, CSRF handling and the position of the custom
+     * token filter in the Spring Security filter chain.
+     */
     @Bean
     SecurityFilterChain securityFilterChain(
             HttpSecurity http,
@@ -53,6 +65,8 @@ class SecurityConfiguration {
                                 "/favicon.ico",
                                 "/error"
                         ).permitAll()
+                        // Role authorities are attached by AuthTokenFilter. At present all
+                        // authenticated roles have access to the same protected endpoints.
                         .anyRequest().authenticated())
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(

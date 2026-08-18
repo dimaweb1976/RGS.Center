@@ -49,10 +49,10 @@ class AuthWebIntegrationTests {
     @BeforeEach
     void insertOperator() {
         jdbcClient.sql("DELETE FROM auth_sessions").update();
-        jdbcClient.sql("DELETE FROM appusers").update();
+        jdbcClient.sql("DELETE FROM users").update();
         jdbcClient.sql("""
-                        INSERT INTO appusers (treename, login, scrthsh, active)
-                        VALUES ('Test operator', 'operator', :hash, TRUE)
+                        INSERT INTO users (login, hash, role)
+                        VALUES ('operator', :hash, 3)
                         """)
                 .param("hash", passwordEncoder.encode("secret-password"))
                 .update();
@@ -73,6 +73,7 @@ class AuthWebIntegrationTests {
 
         mockMvc.perform(get("/auth/connections").cookie(firstCookie))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.role").value("operator"))
                 .andExpect(jsonPath("$.connected").value(1))
                 .andExpect(jsonPath("$.warning").value(false));
 

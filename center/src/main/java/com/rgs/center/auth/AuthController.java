@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.Map;
 
+/** HTTP endpoints for login, logout and the connected-browser indicator. */
 @Controller
 class AuthController {
 
@@ -44,6 +45,10 @@ class AuthController {
         return "login";
     }
 
+    /**
+     * Revokes the token already present in this browser, checks credentials,
+     * creates a new server-side session and writes its raw token to the cookie.
+     */
     @PostMapping("/auth/login")
     String login(
             @RequestParam String login,
@@ -67,12 +72,13 @@ class AuthController {
         } catch (AuthenticationException exception) {
             log.warn("Authentication failed for login '{}'", login);
             model.addAttribute("login", login);
-            model.addAttribute("error", "Неверный логин или пароль либо пользователь отключён");
+            model.addAttribute("error", "Неверный логин или пароль");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return "login";
         }
     }
 
+    /** Revokes the server-side session and expires the browser cookie. */
     @PostMapping("/auth/logout")
     String logout(HttpServletRequest request, HttpServletResponse response) {
         cookieService.read(request).ifPresent(sessionService::revoke);
@@ -81,12 +87,15 @@ class AuthController {
         return "redirect:/login";
     }
 
+    /** Returns the current principal and number of recently active token sessions. */
     @GetMapping("/auth/connections")
     @ResponseBody
     Map<String, Object> connectionStatus(Authentication authentication) {
         int connected = sessionService.countConnected();
+        AuthPrincipal principal = (AuthPrincipal) authentication.getPrincipal();
         return Map.of(
-                "username", authentication.getName(),
+                "username", principal.login(),
+                "role", principal.roleName(),
                 "connected", connected,
                 "warning", connected > 1
         );

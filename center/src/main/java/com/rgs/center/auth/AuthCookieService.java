@@ -13,9 +13,11 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Optional;
 
+/** Reads, writes and expires the browser cookie containing the raw bearer token. */
 @Component
 class AuthCookieService {
 
+    /** Authentication cookie name shared by the controller and request filter. */
     static final String COOKIE_NAME = "RGS_AUTH_TOKEN";
 
     private final boolean secure;
@@ -24,6 +26,7 @@ class AuthCookieService {
         this.secure = secure;
     }
 
+    /** Returns the first RGSCenter authentication cookie from the request. */
     Optional<String> read(HttpServletRequest request) {
         if (request.getCookies() == null) {
             return Optional.empty();
@@ -34,6 +37,7 @@ class AuthCookieService {
                 .findFirst();
     }
 
+    /** Writes an HttpOnly cookie whose Max-Age matches {@link IssuedToken#expiresAt()}. */
     void write(HttpServletResponse response, IssuedToken token) {
         Duration maxAge = Duration.between(Instant.now(), token.expiresAt());
         ResponseCookie cookie = baseCookie(token.value())
@@ -42,12 +46,14 @@ class AuthCookieService {
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 
+    /** Instructs the browser to remove the authentication cookie immediately. */
     void clear(HttpServletResponse response) {
         response.addHeader(HttpHeaders.SET_COOKIE,
                 baseCookie("").maxAge(Duration.ZERO).build().toString());
     }
 
     private ResponseCookie.ResponseCookieBuilder baseCookie(String value) {
+        // SameSite=Strict limits cross-site delivery; Secure must be enabled for HTTPS.
         return ResponseCookie.from(COOKIE_NAME, value)
                 .httpOnly(true)
                 .secure(secure)
