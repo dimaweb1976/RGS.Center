@@ -1,5 +1,7 @@
 package com.rgs.center.service;
 
+import com.rgs.center.gammapro.BosonHighVoltageSnapshot;
+import com.rgs.center.gammapro.GammaProHighVoltageValueType;
 import com.rgs.center.gammapro.GammaProMeasurementRequest;
 import com.rgs.center.gammapro.GammaProMeasurementState;
 import com.rgs.center.gammapro.GammaProProtocol;
@@ -64,6 +66,14 @@ class GammaProServiceTests {
             try {
                 service.startCommunication();
                 service.pollGammaPro();
+                BosonHighVoltageSnapshot highVoltage =
+                        service.applyBosonHighVoltage(
+                                "BOSON1",
+                                "GCD-4020",
+                                true,
+                                2500,
+                                GammaProHighVoltageValueType.HIGH_VOLTAGE
+                        );
                 GammaProSnapshot started = service.startSpectrumAcquisition(
                         new GammaProMeasurementRequest(
                                 "BOSON1",
@@ -83,6 +93,16 @@ class GammaProServiceTests {
                         completed.measurementState()
                 );
                 assertTrue(completed.connected());
+                assertTrue(highVoltage.commandAccepted());
+                assertEquals(2500, highVoltage.requestedValue());
+                assertEquals(
+                        highVoltage,
+                        currentData.getValue(
+                                DeviceCode.BOSON,
+                                CurrentDataService.LAST_DATA,
+                                BosonHighVoltageSnapshot.class
+                        )
+                );
                 assertEquals(
                         true,
                         currentData.getValue(
@@ -94,6 +114,8 @@ class GammaProServiceTests {
                 assertEquals(
                         List.of(
                                 "GET_TRACTS_NAME",
+                                "SET_TRACT(BOSON1,GCD-4020)",
+                                "SET_HV(1,2500,0)",
                                 "SET_TRACT(BOSON1,GCD-4020)",
                                 "SET_PRESET(120)",
                                 "START",
@@ -132,6 +154,10 @@ class GammaProServiceTests {
                     }
                     case "SET_TRACT" -> respond(output, "SET_TRACT=OK");
                     case "SET_PRESET" -> respond(output, "SET_PRESET=OK");
+                    case GammaProProtocol.SET_HV -> respond(
+                            output,
+                            "SET_HV=OK"
+                    );
                     case GammaProProtocol.START -> respond(output, "START=OK");
                     case GammaProProtocol.WAIT_MEAS_END -> {
                         respond(output, "WAIT_MEAS_END=DO");

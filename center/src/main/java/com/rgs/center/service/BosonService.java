@@ -1,5 +1,8 @@
 package com.rgs.center.service;
 
+import com.rgs.center.gammapro.BosonHighVoltageSnapshot;
+import com.rgs.center.gammapro.GammaProHighVoltageControl;
+import com.rgs.center.gammapro.GammaProHighVoltageValueType;
 import com.rgs.center.objects.Device;
 import com.rgs.center.objects.DeviceCode;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -14,17 +17,23 @@ import org.springframework.stereotype.Service;
 @Service
 public class BosonService extends AbstractNetworkDeviceService {
 
+    /** Команды BOSON проходят через TCP-сервер Gamma-PRO. */
+    private final GammaProHighVoltageControl highVoltageControl;
+
     /**
      * Создаёт сервис Boson.
      *
      * @param deviceViewService витрина текущего состояния устройств
      * @param pingService сервис выполнения ping-проверки
+     * @param highVoltageControl управление BOSON через Gamma-PRO
      */
     public BosonService(
             DeviceViewService deviceViewService,
-            DevicePingService pingService
+            DevicePingService pingService,
+            GammaProHighVoltageControl highVoltageControl
     ) {
         super(DeviceCode.BOSON, deviceViewService, pingService);
+        this.highVoltageControl = highVoltageControl;
     }
 
     @Scheduled(
@@ -45,5 +54,41 @@ public class BosonService extends AbstractNetworkDeviceService {
      */
     public Device getBoson() {
         return currentDevice();
+    }
+
+    /**
+     * Включает HV на BOSON командой, переданной через Gamma-PRO.
+     *
+     * @param mcaName имя анализатора в Gamma-PRO
+     * @param channelName имя спектрометрического канала
+     * @param voltage целевое высокое напряжение
+     * @return подтверждение принятия команды Gamma-PRO
+     */
+    public BosonHighVoltageSnapshot enableHighVoltage(
+            String mcaName,
+            String channelName,
+            int voltage
+    ) {
+        return highVoltageControl.applyBosonHighVoltage(
+                mcaName,
+                channelName,
+                true,
+                voltage,
+                GammaProHighVoltageValueType.HIGH_VOLTAGE
+        );
+    }
+
+    /** Выключает HV на BOSON через тот же тракт и очередь Gamma-PRO. */
+    public BosonHighVoltageSnapshot disableHighVoltage(
+            String mcaName,
+            String channelName
+    ) {
+        return highVoltageControl.applyBosonHighVoltage(
+                mcaName,
+                channelName,
+                false,
+                0,
+                GammaProHighVoltageValueType.HIGH_VOLTAGE
+        );
     }
 }

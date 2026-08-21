@@ -12,6 +12,7 @@ public final class GammaProProtocol {
     public static final String STOP = "STOP";
     public static final String BREAK = "BREAK";
     public static final String WAIT_MEAS_END = "WAIT_MEAS_END";
+    public static final String SET_HV = "SET_HV";
 
     private static final String LINE_ENDING = "\n\r";
 
@@ -33,6 +34,30 @@ public final class GammaProProtocol {
             );
         }
         return "SET_PRESET(" + seconds + ")";
+    }
+
+    /**
+     * Формирует документированную команду управления высоким напряжением
+     * текущего тракта Gamma-PRO.
+     *
+     * @param enabled {@code true} для включения, {@code false} для выключения
+     * @param value целевое целочисленное значение напряжения
+     * @param valueType физический смысл передаваемого значения
+     * @return команда {@code SET_HV(IsOn,Value_HV,Type_value)}
+     */
+    public static String setHighVoltage(
+            boolean enabled,
+            int value,
+            GammaProHighVoltageValueType valueType
+    ) {
+        if (value < 0) {
+            throw new IllegalArgumentException(
+                    "High-voltage value must not be negative"
+            );
+        }
+        Objects.requireNonNull(valueType, "HV value type must not be null");
+        return SET_HV + "(" + (enabled ? 1 : 0) + "," + value + ","
+                + valueType.protocolCode() + ")";
     }
 
     /** Добавляет документированный конец строки LF CR и кодирует команду. */

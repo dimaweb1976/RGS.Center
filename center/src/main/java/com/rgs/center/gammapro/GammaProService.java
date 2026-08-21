@@ -27,7 +27,8 @@ import java.util.concurrent.locks.ReentrantLock;
  * измерения, запускает набор спектра и ожидает {@code WAIT_MEAS_END=OK}.</p>
  */
 @Service
-public class GammaProService extends AbstractQueuedDeviceService {
+public class GammaProService extends AbstractQueuedDeviceService
+        implements GammaProHighVoltageControl {
 
     private static final Logger log =
             LoggerFactory.getLogger(GammaProService.class);
@@ -45,6 +46,8 @@ public class GammaProService extends AbstractQueuedDeviceService {
     private volatile List<String> tracts = List.of();
     private volatile String lastResponse = "";
     private volatile String lastError = "";
+    private volatile BosonHighVoltageSnapshot bosonHighVoltage =
+            BosonHighVoltageSnapshot.initial();
 
     /**
      * @param settingsService параметры TCP и кодировки
@@ -196,6 +199,94 @@ public class GammaProService extends AbstractQueuedDeviceService {
         } finally {
             protocolLock.unlock();
         }
+    }
+
+    /**
+     * Управляет HV устройства BOSON через выбранный тракт Gamma-PRO.
+     * Команды выбора тракта и SET_HV выполняются под общей блокировкой, поэтому
+     * не перемешиваются с heartbeat и командами набора спектра.
+     */
+    @Override
+    public BosonHighVoltageSnapshot applyBosonHighVoltage(
+            String requestedMcaName,
+            String requestedChannelName,
+            boolean enabled,
+            int value,
+            GammaProHighVoltageValueType valueType
+    ) {
+        protocolLock.lock();
+        try {
+            if (measurementState == GammaProMeasurementState.RUNNING) {
+                throw new GammaProProtocolException(
+                        "Cannot change BOSON HV while acquisition is running"
+                );
+            }
+            executeCommandLocked(GammaProProtocol.setTract(
+                    requestedMcaName,
+                    requestedChannelName
+            ));
+            currentDataService.setValue(
+                    DeviceCode.BOSON,
+                    CurrentDataService.INTERACTION_LASTDATE_IN,
+                    Instant.now().getEpochSecond()
+            );
+            executeCommandLocked(GammaProProtocol.setHighVoltage(
+                    enabled,
+                    value,
+                    valueType
+            ));
+
+            long confirmedAt = Instant.now().getEpochSecond();
+            mcaName = requestedMcaName;
+            channelName = requestedChannelName;
+            bosonHighVoltage = new BosonHighVoltageSnapshot(
+                    requestedMcaName,
+                    requestedChannelName,
+                    enabled,
+                    value,
+                    valueType,
+                    true,
+                    confirmedAt,
+                    ""
+            );
+            currentDataService.recordDataSuccess(
+                    DeviceCode.BOSON,
+                    bosonHighVoltage
+            );
+            publishSuccess();
+            log.info(
+                    "Gamma-PRO accepted BOSON HV command: enabled={}, value={}, type={}, tract={}/{}",
+                    enabled,
+                    value,
+                    valueType,
+                    requestedMcaName,
+                    requestedChannelName
+            );
+            return bosonHighVoltage;
+        } catch (RuntimeException exception) {
+            String message = exception.getMessage() == null
+                    ? exception.getClass().getSimpleName()
+                    : exception.getMessage();
+            bosonHighVoltage = new BosonHighVoltageSnapshot(
+                    requestedMcaName,
+                    requestedChannelName,
+                    enabled,
+                    value,
+                    valueType,
+                    false,
+                    Instant.now().getEpochSecond(),
+                    message
+            );
+            currentDataService.recordDataFailure(DeviceCode.BOSON, message);
+            throw exception;
+        } finally {
+            protocolLock.unlock();
+        }
+    }
+
+    /** @return последнее состояние команды HV, а не фактическое измерение BOSON */
+    public BosonHighVoltageSnapshot bosonHighVoltageSnapshot() {
+        return bosonHighVoltage;
     }
 
     /** @return потокобезопасный снимок сервиса */

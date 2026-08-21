@@ -28,6 +28,34 @@ class GammaProProtocolTests {
                 GammaProProtocol.setTract("BOSON1", "GCD-4020")
         );
         assertEquals("SET_PRESET(120)", GammaProProtocol.setPreset(120));
+        assertEquals(
+                "SET_HV(1,2500,0)",
+                GammaProProtocol.setHighVoltage(
+                        true,
+                        2500,
+                        GammaProHighVoltageValueType.HIGH_VOLTAGE
+                )
+        );
+        assertEquals(
+                "SET_HV(0,0,0)",
+                GammaProProtocol.setHighVoltage(
+                        false,
+                        0,
+                        GammaProHighVoltageValueType.HIGH_VOLTAGE
+                )
+        );
+    }
+
+    @Test
+    void rejectsNegativeHighVoltage() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> GammaProProtocol.setHighVoltage(
+                        true,
+                        -1,
+                        GammaProHighVoltageValueType.HIGH_VOLTAGE
+                )
+        );
     }
 
     @Test
