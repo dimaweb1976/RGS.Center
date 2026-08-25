@@ -7,6 +7,7 @@ import com.rgs.center.service.CameraService;
 import com.rgs.center.service.DeviceViewService;
 import com.rgs.center.service.LenovoPcService;
 import com.rgs.center.service.NicoleService;
+import com.rgs.center.shp.ShpService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
@@ -38,6 +39,8 @@ public class HomeController {
     private final LenovoPcService lenovoPcService;
     /** Формирует общее представление COM-устройств из витрины. */
     private final DeviceViewService deviceViewService;
+    /** Источник последних успешно полученных показаний SHP. */
+    private final ShpService shpService;
 
     /**
      * Создаёт контроллер страниц состояния.
@@ -47,19 +50,22 @@ public class HomeController {
      * @param nicoleService сервис Nicole
      * @param lenovoPcService сервис операторского компьютера LenovoPC
      * @param deviceViewService представление состояния COM-устройств
+     * @param shpService фоновый сервис предусилителя SHP
      */
     public HomeController(
             CameraService cameraService,
             BosonService bosonService,
             NicoleService nicoleService,
             LenovoPcService lenovoPcService,
-            DeviceViewService deviceViewService
+            DeviceViewService deviceViewService,
+            ShpService shpService
     ) {
         this.cameraService = cameraService;
         this.bosonService = bosonService;
         this.nicoleService = nicoleService;
         this.lenovoPcService = lenovoPcService;
         this.deviceViewService = deviceViewService;
+        this.shpService = shpService;
     }
 
     /**
@@ -82,7 +88,7 @@ public class HomeController {
     @GetMapping("/devices")
     public String devices(Model model) {
         log.debug("Rendering devices page");
-        model.addAttribute("devices", getVisibleDevices());
+        addDeviceStatus(model);
         return "devices";
     }
 
@@ -98,8 +104,14 @@ public class HomeController {
     @GetMapping("/devices/status")
     public String deviceStatus(Model model) {
         log.trace("Rendering periodic device status fragment");
-        model.addAttribute("devices", getVisibleDevices());
+        addDeviceStatus(model);
         return "fragments/device-status :: status";
+    }
+
+    /** Добавляет общий список устройств и последние показания SHP. */
+    private void addDeviceStatus(Model model) {
+        model.addAttribute("devices", getVisibleDevices());
+        model.addAttribute("shpMeasurements", shpService.snapshot().measurements());
     }
 
     /**

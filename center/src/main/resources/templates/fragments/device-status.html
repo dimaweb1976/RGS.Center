@@ -2,7 +2,8 @@
 <html lang="ru" xmlns:th="http://www.thymeleaf.org">
 <body>
 
-<table th:fragment="status">
+<div th:fragment="status">
+<table>
     <thead>
     <tr>
         <th>Name</th>
@@ -23,6 +24,38 @@
     </tr>
     </tbody>
 </table>
+
+<section th:if="${shpMeasurements != null}" class="shp-measurements">
+    <h2>SHP measurements</h2>
+    <table>
+        <thead>
+        <tr>
+            <th>Temperature</th>
+            <th>Humidity</th>
+            <th>Pressure</th>
+            <th>Leakage current</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>
+                <span th:text="${#numbers.formatDecimal(shpMeasurements.ambientTemperatureCelsius, 1, 3)}">25.000</span>
+                °C
+            </td>
+            <td>
+                <span th:text="${#numbers.formatDecimal(shpMeasurements.humidityPercent, 1, 3)}">35.000</span>
+                %
+            </td>
+            <td>
+                <span th:text="${#numbers.formatDecimal(shpMeasurements.atmosphericPressureHpa, 1, 3)}">750.000</span>
+                hPa
+            </td>
+            <td th:text="${#numbers.formatDecimal(shpMeasurements.detectorCurrent, 1, 3)}">0.000</td>
+        </tr>
+        </tbody>
+    </table>
+</section>
+</div>
 
 </body>
 </html>

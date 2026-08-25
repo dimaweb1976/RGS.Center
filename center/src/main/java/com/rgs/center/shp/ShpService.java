@@ -120,7 +120,9 @@ public class ShpService extends AbstractQueuedDeviceService {
                     readSensor(4),
                     readSensor(5),
                     readSensor(6),
-                    readFeedbackResistance(),
+                    readMeteo(1),
+                    readMeteo(2),
+                    readMeteo(3),
                     Instant.now().getEpochSecond()
             );
             lastMeasurements.set(measurements);
@@ -140,11 +142,11 @@ public class ShpService extends AbstractQueuedDeviceService {
                 );
             }
             log.debug(
-                    "SHP data updated: temperature={}, chargeVoltage={}, detectorCurrent={}, resistance={}",
-                    measurements.detectorTemperatureCelsius(),
-                    measurements.chargeOutputVoltage(),
-                    measurements.detectorCurrent(),
-                    measurements.feedbackResistance()
+                    "SHP data updated: ambientTemperature={}, humidity={}, pressure={}, leakageCurrent={}",
+                    measurements.ambientTemperatureCelsius(),
+                    measurements.humidityPercent(),
+                    measurements.atmosphericPressureHpa(),
+                    measurements.detectorCurrent()
             );
         } catch (RuntimeException exception) {
             registerFailure(exception);
@@ -190,10 +192,11 @@ public class ShpService extends AbstractQueuedDeviceService {
         );
     }
 
-    /** Читает значение резистора обратной связи командой SETUP_SHP. */
-    private int readFeedbackResistance() {
-        return ShpProtocol.parseFeedbackResistance(
-                request(ShpProtocol.readFeedbackResistanceCommand())
+    /** Читает температуру, влажность или давление командой METEO_SHP. */
+    private double readMeteo(int parameter) {
+        return ShpProtocol.parseMeteoValue(
+                request(ShpProtocol.readMeteoCommand(parameter)),
+                parameter
         );
     }
 

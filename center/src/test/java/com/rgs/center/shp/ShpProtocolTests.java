@@ -42,6 +42,19 @@ class ShpProtocolTests {
     }
 
     @Test
+    void createsKnownHumidityCommand() {
+        assertArrayEquals(
+                new byte[]{
+                        (byte) 0xC0,
+                        0x73, 0x02, 0, 0, 0, 0, 0,
+                        (byte) 0xFA,
+                        0x0C
+                },
+                ShpProtocol.readMeteoCommand(2)
+        );
+    }
+
+    @Test
     void parsesBigEndianSensorFloatAndByteStuffing() {
         byte[] body = new byte[17];
         body[0] = (byte) 0x91;
@@ -59,6 +72,43 @@ class ShpProtocolTests {
 
         assertEquals(-12.25, ShpProtocol.parseSensorValue(frame, 4));
         assertArrayEquals(body, ShpProtocol.decode(frame));
+    }
+
+    @Test
+    void parsesBigEndianMeteoFloat() {
+        byte[] body = new byte[17];
+        body[0] = (byte) 0x93;
+        body[1] = 0x03;
+        body[2] = 0;
+        byte[] value = ByteBuffer.allocate(Float.BYTES)
+                .order(ByteOrder.BIG_ENDIAN)
+                .putFloat(1013.25f)
+                .array();
+        System.arraycopy(value, 0, body, 3, value.length);
+
+        assertEquals(
+                1013.25,
+                ShpProtocol.parseMeteoValue(
+                        ShpProtocol.encodeAnswer(body),
+                        3
+                )
+        );
+    }
+
+    @Test
+    void rejectsFailedMeteoSensorStatus() {
+        byte[] body = new byte[17];
+        body[0] = (byte) 0x93;
+        body[1] = 0x01;
+        body[2] = 1;
+
+        assertThrows(
+                PeripheralCommunicationException.class,
+                () -> ShpProtocol.parseMeteoValue(
+                        ShpProtocol.encodeAnswer(body),
+                        1
+                )
+        );
     }
 
     @Test

@@ -15,6 +15,8 @@ public final class ShpProtocol {
     public static final byte ESCAPE = (byte) 0xAA;
     public static final byte SENSORS_COMMAND = 0x71;
     public static final byte SENSORS_ACK = (byte) 0x91;
+    public static final byte METEO_COMMAND = 0x73;
+    public static final byte METEO_ACK = (byte) 0x93;
     public static final byte SETUP_COMMAND = 0x75;
     public static final byte SETUP_ACK = (byte) 0x95;
 
@@ -39,6 +41,21 @@ public final class ShpProtocol {
         });
     }
 
+    /**
+     * Формирует команду чтения одного параметра METEO_SHP.
+     *
+     * @param parameter 1 — температура, 2 — влажность, 3 — давление
+     * @return транспортный кадр с CRC и byte stuffing
+     */
+    public static byte[] readMeteoCommand(int parameter) {
+        requireRange(parameter, 1, 3, "SHP meteo parameter");
+        return encode(new byte[]{
+                METEO_COMMAND,
+                (byte) parameter,
+                0, 0, 0, 0, 0
+        });
+    }
+
     /** @return команда чтения значения резистора обратной связи */
     public static byte[] readFeedbackResistanceCommand() {
         return encode(new byte[]{SETUP_COMMAND, 7, 0, 0, 0, 0, 0});
@@ -58,6 +75,30 @@ public final class ShpProtocol {
         byte[] body = decode(frame);
         requireAnswer(body, SENSORS_ACK, expectedParameter);
         return ByteBuffer.wrap(body, 2, Float.BYTES)
+                .order(ByteOrder.BIG_ENDIAN)
+                .getFloat();
+    }
+
+    /**
+     * Разбирает ответ METEO_SHP_ACK с float IEEE 754 big-endian в D3-D6.
+     *
+     * @param frame полный транспортный кадр
+     * @param expectedParameter ожидаемый номер метеопараметра
+     * @return значение температуры, влажности или давления
+     */
+    public static double parseMeteoValue(
+            byte[] frame,
+            int expectedParameter
+    ) {
+        requireRange(expectedParameter, 1, 3, "SHP meteo parameter");
+        byte[] body = decode(frame);
+        requireAnswer(body, METEO_ACK, expectedParameter);
+        if ((body[2] & 0xFF) != 0) {
+            throw new PeripheralCommunicationException(
+                    "SHP meteo sensor status is " + (body[2] & 0xFF)
+            );
+        }
+        return ByteBuffer.wrap(body, 3, Float.BYTES)
                 .order(ByteOrder.BIG_ENDIAN)
                 .getFloat();
     }

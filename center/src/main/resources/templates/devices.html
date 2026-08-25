@@ -30,6 +30,10 @@
             color: #777777;
             font-weight: bold;
         }
+
+        .shp-measurements {
+            margin-top: 24px;
+        }
     </style>
     <script>
         async function loadStatus() {
@@ -59,7 +63,7 @@
 <h1>RGSCenter devices status</h1>
 
 <div id="device-status">
-    <table th:replace="~{fragments/device-status :: status}"></table>
+    <div th:replace="~{fragments/device-status :: status}"></div>
 </div>
 
 </body>
