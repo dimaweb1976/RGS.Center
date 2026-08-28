@@ -50,6 +50,20 @@ class SettingsServiceTests {
                 "COM5",
                 service.getValue(SettingsService.SHP_PORT, String.class)
         );
+        assertEquals(
+                105.0,
+                service.getValue(
+                        SettingsService.SHP_READY_MAX_CHARGE_OUTPUT_VOLTAGE,
+                        Double.class
+                )
+        );
+        assertEquals(
+                50.0,
+                service.getValue(
+                        SettingsService.SHP_READY_MAX_LEAKAGE_CURRENT,
+                        Double.class
+                )
+        );
     }
 
     @Test
@@ -61,6 +75,21 @@ class SettingsServiceTests {
         assertEquals(
                 37569L,
                 service.getValue(SettingsService.GAMMA_PRO_PORT, Long.class)
+        );
+    }
+
+    @Test
+    void providesNicoleTcpDefaults() {
+        assertEquals(
+                5000L,
+                service.getValue(SettingsService.NICOLE_PORT, Long.class)
+        );
+        assertEquals(
+                3000L,
+                service.getValue(
+                        SettingsService.NICOLE_RESPONSE_TIMEOUT_MILLIS,
+                        Long.class
+                )
         );
     }
 

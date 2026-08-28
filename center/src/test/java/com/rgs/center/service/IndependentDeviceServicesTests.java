@@ -8,21 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class IndependentDeviceServicesTests {
 
     @Test
-    void nicoleServicePollsNicoleItself() {
-        SettingsService settings = settings();
-        CurrentDataService currentData = currentData();
-        DevicePingService pingService = pingService(settings, currentData);
-        NicoleService service = new NicoleService(
-                new DeviceViewService(settings, currentData),
-                pingService
-        );
-
-        service.poll();
-
-        assertEquals(DeviceStatus.ONLINE, service.getNicole().getStatus());
-    }
-
-    @Test
     void lenovoPcServicePollsLenovoPcItself() {
         SettingsService settings = settings();
         settings.setValue(SettingsService.LENOVO_PC_IP, "192.168.201.20");

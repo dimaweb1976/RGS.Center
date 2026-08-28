@@ -25,7 +25,90 @@
     </tbody>
 </table>
 
-<section th:if="${shpMeasurements != null}" class="shp-measurements">
+<section class="nicole-state">
+    <h2>Nicole state</h2>
+    <table>
+        <thead>
+        <tr>
+            <th>Controller</th>
+            <th>Cryocooler</th>
+            <th>Nitrogen</th>
+            <th>Level voltages</th>
+            <th>Controller time</th>
+            <th>Cooler error</th>
+            <th>Warnings</th>
+            <th>Connection status</th>
+            <th>Technical status</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <th:block th:if="${nicoleStatus.snapshot != null}">
+                <td>
+                    <span class="nicole-state-detail"
+                          th:text="${'Ethernet: ' + (nicoleStatus.snapshot.ethernetUp ? 'Up' : 'Down')}">Ethernet: Up</span>
+                    <span class="nicole-state-detail"
+                          th:text="${'DHCP: ' + (nicoleStatus.snapshot.dhcpLeased ? 'Leased' : 'Static / no lease')}">DHCP: Static / no lease</span>
+                    <span class="nicole-state-detail"
+                          th:text="${'Cryo link: ' + (nicoleStatus.snapshot.cryoControllerCommunication ? 'OK' : 'Failed')}">Cryo link: OK</span>
+                    <span class="nicole-state-detail"
+                          th:text="${'Reset cause: ' + nicoleStatus.snapshot.resetCause}">Reset cause: 0</span>
+                </td>
+                <td>
+                    <span class="nicole-state-detail"
+                          th:text="${nicoleStatus.snapshot.cryocoolerStarted ? 'Started' : 'Stopped'}">Started</span>
+                    <span class="nicole-state-detail"
+                          th:text="${nicoleStatus.snapshot.advancedMode ? 'Advanced mode' : 'Normal mode'}">Normal mode</span>
+                </td>
+                <td>
+                    <span class="nicole-state-detail"
+                          th:text="${'Level: ' + nicoleStatus.snapshot.currentNitrogenLevel}">Level: 0</span>
+                    <span class="nicole-state-detail"
+                          th:text="${'Pressure: ' + nicoleStatus.snapshot.currentNitrogenPressure}">Pressure: 0</span>
+                    <span class="nicole-state-detail"
+                          th:text="${'Frequency: ' + nicoleStatus.snapshot.nitrogenLevelFrequency}">Frequency: 0</span>
+                </td>
+                <td>
+                    <span class="nicole-state-detail"
+                          th:text="${'Lower: ' + nicoleStatus.snapshot.lowerLevelVoltage}">Lower: 0</span>
+                    <span class="nicole-state-detail"
+                          th:text="${'Upper: ' + nicoleStatus.snapshot.upperLevelVoltage}">Upper: 0</span>
+                </td>
+                <td th:text="${nicoleStatus.snapshot.controllerTime}">2026-01-01T00:00</td>
+                <td th:text="${nicoleStatus.snapshot.coolerErrorCode}">0</td>
+                <td th:text="${nicoleStatus.warningText}">None</td>
+            </th:block>
+            <th:block th:unless="${nicoleStatus.snapshot != null}">
+                <td>-</td>
+                <td>-</td>
+                <td>-</td>
+                <td>-</td>
+                <td>-</td>
+                <td>-</td>
+                <td>-</td>
+            </th:block>
+            <td class="nicole-status-cell">
+                <span class="nicole-connection-indicator"
+                      th:classappend="${nicoleStatus.connectionStatus.cssClass}"
+                      aria-hidden="true"></span>
+                <strong class="nicole-connection-text"
+                        th:classappend="${nicoleStatus.connectionStatus.cssClass}"
+                        th:text="${nicoleStatus.connectionStatus.label}">Offline</strong>
+            </td>
+            <td class="nicole-status-cell">
+                <span class="nicole-status-indicator"
+                      th:classappend="${nicoleStatus.readiness.cssClass}"
+                      aria-hidden="true"></span>
+                <strong class="nicole-status-text"
+                        th:classappend="${nicoleStatus.readiness.cssClass}"
+                        th:text="${nicoleStatus.readiness.label}">Alert</strong>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</section>
+
+<section class="shp-measurements">
     <h2>SHP measurements</h2>
     <table>
         <thead>
@@ -34,23 +117,45 @@
             <th>Humidity</th>
             <th>Pressure</th>
             <th>Leakage current</th>
+            <th>Charge circuit output voltage</th>
+            <th>Status</th>
         </tr>
         </thead>
         <tbody>
         <tr>
             <td>
-                <span th:text="${#numbers.formatDecimal(shpMeasurements.ambientTemperatureCelsius, 1, 3)}">25.000</span>
-                °C
+                <span th:if="${shpStatus.ambientTemperatureCelsius != null}"
+                      th:text="${#numbers.formatDecimal(shpStatus.ambientTemperatureCelsius, 1, 3) + ' °C'}">25.000 °C</span>
+                <span th:if="${shpStatus.ambientTemperatureCelsius == null}">-</span>
             </td>
             <td>
-                <span th:text="${#numbers.formatDecimal(shpMeasurements.humidityPercent, 1, 3)}">35.000</span>
-                %
+                <span th:if="${shpStatus.humidityPercent != null}"
+                      th:text="${#numbers.formatDecimal(shpStatus.humidityPercent, 1, 3) + ' %'}">35.000 %</span>
+                <span th:if="${shpStatus.humidityPercent == null}">-</span>
             </td>
             <td>
-                <span th:text="${#numbers.formatDecimal(shpMeasurements.atmosphericPressureHpa, 1, 3)}">750.000</span>
-                hPa
+                <span th:if="${shpStatus.atmosphericPressureHpa != null}"
+                      th:text="${#numbers.formatDecimal(shpStatus.atmosphericPressureHpa, 1, 3) + ' hPa'}">750.000 hPa</span>
+                <span th:if="${shpStatus.atmosphericPressureHpa == null}">-</span>
             </td>
-            <td th:text="${#numbers.formatDecimal(shpMeasurements.detectorCurrent, 1, 3)}">0.000</td>
+            <td>
+                <span th:if="${shpStatus.leakageCurrent != null}"
+                      th:text="${#numbers.formatDecimal(shpStatus.leakageCurrent, 1, 3)}">0.000</span>
+                <span th:if="${shpStatus.leakageCurrent == null}">-</span>
+            </td>
+            <td>
+                <span th:if="${shpStatus.chargeOutputVoltage != null}"
+                      th:text="${#numbers.formatDecimal(shpStatus.chargeOutputVoltage, 1, 3) + ' V'}">0.000 V</span>
+                <span th:if="${shpStatus.chargeOutputVoltage == null}">-</span>
+            </td>
+            <td class="shp-status-cell">
+                <span class="shp-status-indicator"
+                      th:classappend="${shpStatus.readiness.cssClass}"
+                      aria-hidden="true"></span>
+                <strong class="shp-status-text"
+                        th:classappend="${shpStatus.readiness.cssClass}"
+                        th:text="${shpStatus.readiness.label}">No data</strong>
+            </td>
         </tr>
         </tbody>
     </table>

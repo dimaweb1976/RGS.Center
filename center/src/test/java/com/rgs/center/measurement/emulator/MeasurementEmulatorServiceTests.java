@@ -4,9 +4,14 @@ import com.rgs.center.camera.CameraImagePayload;
 import com.rgs.center.camera.CameraImagingOperations;
 import com.rgs.center.camera.CameraImagingSnapshot;
 import com.rgs.center.camera.DetectedBottle;
+import com.rgs.center.nicole.NicoleReadinessStatus;
+import com.rgs.center.nicole.NicoleSnapshot;
+import com.rgs.center.nicole.NicoleTechnicalStatusChangedEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -87,6 +92,42 @@ class MeasurementEmulatorServiceTests {
                 > snapshot.leakageLimitMicroamps());
     }
 
+    @Test
+    void entersEmergencyOnNicoleReadyToAlertDuringRunningCycle() {
+        service.detectObjects();
+        advancePreparation();
+        service.startCycle();
+
+        service.onNicoleTechnicalStatusChanged(new NicoleTechnicalStatusChangedEvent(
+                NicoleReadinessStatus.READY,
+                NicoleReadinessStatus.ALERT,
+                nicoleSnapshot(true, 0, 1 << 10),
+                List.of("LN2 low level"),
+                Instant.now()
+        ));
+
+        MeasurementEmulatorSnapshot snapshot = service.snapshot();
+        assertEquals(MeasurementEmulatorPhase.ALERT, snapshot.phase());
+        assertEquals("АВАРИЙНО ВЫКЛЮЧЕНО", snapshot.highVoltageState());
+        assertTrue(snapshot.alert().contains("Nicole"));
+        assertTrue(snapshot.controlParameterChecks().stream()
+                .filter(check -> check.code().equals("nicole-ok"))
+                .noneMatch(EmulatorCheck::ready));
+
+        service.onNicoleTechnicalStatusChanged(new NicoleTechnicalStatusChangedEvent(
+                NicoleReadinessStatus.ALERT,
+                NicoleReadinessStatus.READY,
+                nicoleSnapshot(true, 0, 0),
+                List.of(),
+                Instant.now()
+        ));
+
+        assertEquals(MeasurementEmulatorPhase.ALERT, service.snapshot().phase());
+        assertTrue(service.snapshot().controlParameterChecks().stream()
+                .filter(check -> check.code().equals("nicole-ok"))
+                .allMatch(EmulatorCheck::ready));
+    }
+
     private void advancePreparation() {
         service.advance();
         service.advance();
@@ -148,5 +189,18 @@ class MeasurementEmulatorServiceTests {
         private static DetectedBottle bottle(int number, double x, double y) {
             return new DetectedBottle(number, x, y, 60, 62, 61, 0.85);
         }
+    }
+
+    private static NicoleSnapshot nicoleSnapshot(
+            boolean started,
+            int error,
+            int warnings
+    ) {
+        return new NicoleSnapshot(
+                0, true, false, true, started, false,
+                0, 0, 0, 0, 0,
+                LocalDateTime.of(2026, 8, 28, 12, 0),
+                error, warnings, Instant.now()
+        );
     }
 }

@@ -30,6 +30,13 @@ public class SettingsService {
     public static final String CAMERA_IP = "device.camera.ip";
     public static final String LENOVO_PC_IP = "device.lenovo-pc.ip";
     public static final String NICOLE_IP = "device.nicole.ip";
+    public static final String NICOLE_PORT = "device.nicole.port";
+    public static final String NICOLE_CONNECT_TIMEOUT_MILLIS =
+            "device.nicole.connect-timeout-millis";
+    public static final String NICOLE_READ_TIMEOUT_MILLIS =
+            "device.nicole.read-timeout-millis";
+    public static final String NICOLE_RESPONSE_TIMEOUT_MILLIS =
+            "device.nicole.response-timeout-millis";
     public static final String BOSON_IP = "device.boson.ip";
     public static final String MANIPULATOR_HOST = "device.manipulator.host";
     public static final String MANIPULATOR_COMMAND_PORT = "device.manipulator.command-port";
@@ -61,6 +68,10 @@ public class SettingsService {
             "device.shp.read-timeout-millis";
     public static final String SHP_RESPONSE_TIMEOUT_MILLIS =
             "device.shp.response-timeout-millis";
+    public static final String SHP_READY_MAX_CHARGE_OUTPUT_VOLTAGE =
+            "device.shp.ready.max-charge-output-voltage";
+    public static final String SHP_READY_MAX_LEAKAGE_CURRENT =
+            "device.shp.ready.max-leakage-current";
     public static final String GAMMA_PRO_HOST = "device.gamma-pro.host";
     public static final String GAMMA_PRO_PORT = "device.gamma-pro.port";
     public static final String GAMMA_PRO_CONNECT_TIMEOUT_MILLIS =
@@ -84,6 +95,18 @@ public class SettingsService {
 
     @Value("${rgs.device.nicole.ip:}")
     private String nicoleIp = "";
+
+    @Value("${rgs.device.nicole.port:5000}")
+    private long nicolePort = 5000L;
+
+    @Value("${rgs.device.nicole.connect-timeout-millis:2000}")
+    private long nicoleConnectTimeoutMillis = 2000L;
+
+    @Value("${rgs.device.nicole.read-timeout-millis:250}")
+    private long nicoleReadTimeoutMillis = 250L;
+
+    @Value("${rgs.device.nicole.response-timeout-millis:3000}")
+    private long nicoleResponseTimeoutMillis = 3000L;
 
     @Value("${rgs.device.boson.ip:192.168.1.16}")
     private String bosonIp = "192.168.1.16";
@@ -154,6 +177,12 @@ public class SettingsService {
     @Value("${rgs.device.shp.response-timeout-millis:1200}")
     private long shpResponseTimeoutMillis = 1200L;
 
+    @Value("${rgs.device.shp.ready.max-charge-output-voltage:105}")
+    private double shpReadyMaxChargeOutputVoltage = 105.0;
+
+    @Value("${rgs.device.shp.ready.max-leakage-current:50}")
+    private double shpReadyMaxLeakageCurrent = 50.0;
+
     @Value("${rgs.device.gamma-pro.host:127.0.0.1}")
     private String gammaProHost = "127.0.0.1";
 
@@ -178,6 +207,22 @@ public class SettingsService {
         registerDefault(CAMERA_IP, SettingType.STRING, cameraIp);
         registerDefault(LENOVO_PC_IP, SettingType.STRING, lenovoPcIp);
         registerDefault(NICOLE_IP, SettingType.STRING, nicoleIp);
+        registerDefault(NICOLE_PORT, SettingType.LONG, nicolePort);
+        registerDefault(
+                NICOLE_CONNECT_TIMEOUT_MILLIS,
+                SettingType.LONG,
+                nicoleConnectTimeoutMillis
+        );
+        registerDefault(
+                NICOLE_READ_TIMEOUT_MILLIS,
+                SettingType.LONG,
+                nicoleReadTimeoutMillis
+        );
+        registerDefault(
+                NICOLE_RESPONSE_TIMEOUT_MILLIS,
+                SettingType.LONG,
+                nicoleResponseTimeoutMillis
+        );
         registerDefault(BOSON_IP, SettingType.STRING, bosonIp);
         registerDefault(MANIPULATOR_HOST, SettingType.STRING, manipulatorHost);
         registerDefault(MANIPULATOR_COMMAND_PORT, SettingType.LONG, manipulatorCommandPort);
@@ -236,6 +281,16 @@ public class SettingsService {
                 SHP_RESPONSE_TIMEOUT_MILLIS,
                 SettingType.LONG,
                 shpResponseTimeoutMillis
+        );
+        registerDefault(
+                SHP_READY_MAX_CHARGE_OUTPUT_VOLTAGE,
+                SettingType.DOUBLE,
+                shpReadyMaxChargeOutputVoltage
+        );
+        registerDefault(
+                SHP_READY_MAX_LEAKAGE_CURRENT,
+                SettingType.DOUBLE,
+                shpReadyMaxLeakageCurrent
         );
         registerDefault(GAMMA_PRO_HOST, SettingType.STRING, gammaProHost);
         registerDefault(GAMMA_PRO_PORT, SettingType.LONG, gammaProPort);

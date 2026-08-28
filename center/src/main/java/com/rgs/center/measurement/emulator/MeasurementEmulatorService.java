@@ -3,9 +3,12 @@ package com.rgs.center.measurement.emulator;
 import com.rgs.center.camera.CameraImagingOperations;
 import com.rgs.center.camera.CameraImagingSnapshot;
 import com.rgs.center.camera.DetectedBottle;
+import com.rgs.center.nicole.NicoleReadinessStatus;
+import com.rgs.center.nicole.NicoleTechnicalStatusChangedEvent;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -222,6 +225,49 @@ public class MeasurementEmulatorService {
             enterAlert("Превышен допустимый ток утечки");
         } else if (phase == MeasurementEmulatorPhase.ALERT && allChecksReady()) {
             recoverFromAlert("Ток утечки нормализован");
+        }
+    }
+
+    /**
+     * Принимает изменение технического состояния NICOLE из фонового сервиса.
+     *
+     * <p>Переход READY → ALERT во время цикла немедленно переводит автомат в
+     * аварийное состояние. Повторные PONG со статусом ALERT нового события не
+     * создают, а возврат READY только фиксируется: остановленный сценарий не
+     * возобновляется автоматически.</p>
+     *
+     * @param event новое вычисленное состояние по PONG
+     */
+    @EventListener
+    public synchronized void onNicoleTechnicalStatusChanged(
+            NicoleTechnicalStatusChangedEvent event
+    ) {
+        CheckState check = controlParameterChecks.get("nicole-ok");
+        if (check == null) {
+            log.error("NICOLE control check is not initialized");
+            return;
+        }
+
+        if (event.currentStatus() == NicoleReadinessStatus.READY) {
+            check.ready = true;
+            check.details = "Технический статус READY";
+            addEvent("Nicole: технический статус READY.");
+            return;
+        }
+        if (event.currentStatus() != NicoleReadinessStatus.ALERT) {
+            return;
+        }
+
+        check.ready = false;
+        String reason = event.reasons().isEmpty()
+                ? "причина не указана"
+                : String.join(", ", event.reasons());
+        check.details = "ALERT: " + reason;
+        if (event.isReadyToAlert()
+                && phase == MeasurementEmulatorPhase.RUNNING) {
+            enterAlert("Nicole: технический статус ALERT (" + reason + ")");
+        } else {
+            addEvent("Nicole: технический статус ALERT — " + reason + ".");
         }
     }
 

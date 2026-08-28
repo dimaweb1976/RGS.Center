@@ -8,6 +8,7 @@ import com.rgs.center.service.DeviceViewService;
 import com.rgs.center.service.LenovoPcService;
 import com.rgs.center.service.NicoleService;
 import com.rgs.center.shp.ShpService;
+import com.rgs.center.shp.ShpStatusEvaluator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
@@ -41,6 +42,8 @@ public class HomeController {
     private final DeviceViewService deviceViewService;
     /** Источник последних успешно полученных показаний SHP. */
     private final ShpService shpService;
+    /** Рассчитывает READY/ALERT по последнему снимку SHP. */
+    private final ShpStatusEvaluator shpStatusEvaluator;
 
     /**
      * Создаёт контроллер страниц состояния.
@@ -51,6 +54,7 @@ public class HomeController {
      * @param lenovoPcService сервис операторского компьютера LenovoPC
      * @param deviceViewService представление состояния COM-устройств
      * @param shpService фоновый сервис предусилителя SHP
+     * @param shpStatusEvaluator расчёт технологического статуса SHP
      */
     public HomeController(
             CameraService cameraService,
@@ -58,7 +62,8 @@ public class HomeController {
             NicoleService nicoleService,
             LenovoPcService lenovoPcService,
             DeviceViewService deviceViewService,
-            ShpService shpService
+            ShpService shpService,
+            ShpStatusEvaluator shpStatusEvaluator
     ) {
         this.cameraService = cameraService;
         this.bosonService = bosonService;
@@ -66,6 +71,7 @@ public class HomeController {
         this.lenovoPcService = lenovoPcService;
         this.deviceViewService = deviceViewService;
         this.shpService = shpService;
+        this.shpStatusEvaluator = shpStatusEvaluator;
     }
 
     /**
@@ -108,10 +114,18 @@ public class HomeController {
         return "fragments/device-status :: status";
     }
 
-    /** Добавляет общий список устройств и последние показания SHP. */
+    /** Добавляет общий список устройств и последние снимки NICOLE и SHP. */
     private void addDeviceStatus(Model model) {
         model.addAttribute("devices", getVisibleDevices());
-        model.addAttribute("shpMeasurements", shpService.snapshot().measurements());
+        model.addAttribute("nicoleStatus", nicoleService.statusView());
+        var shpSnapshot = shpService.snapshot();
+        model.addAttribute(
+                "shpStatus",
+                shpStatusEvaluator.evaluate(
+                        shpSnapshot.connected(),
+                        shpSnapshot.measurements()
+                )
+        );
     }
 
     /**
