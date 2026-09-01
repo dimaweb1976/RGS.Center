@@ -7,11 +7,19 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.access.AccessDeniedHandlerImpl;
+import org.springframework.security.web.access.RequestMatcherDelegatingAccessDeniedHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.savedrequest.NullRequestCache;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
+
+import java.util.LinkedHashMap;
 
 /**
  * Configures stateless browser-token authentication for RGSCenter.
@@ -37,6 +45,7 @@ class SecurityConfiguration {
     SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             AuthTokenFilter authTokenFilter,
+            ApiSecurityErrorHandler apiSecurityErrorHandler,
             @Value("${rgs.auth.cookie-secure:false}") boolean secureCookies
     ) throws Exception {
         CookieCsrfTokenRepository csrfRepository =
@@ -45,6 +54,30 @@ class SecurityConfiguration {
                 .sameSite("Strict")
                 .secure(secureCookies)
                 .path("/"));
+
+        var apiMatcher = PathPatternRequestMatcher.pathPattern("/api/**");
+        var delegatedAccessDeniedHandlers = new LinkedHashMap<
+                RequestMatcher,
+                AccessDeniedHandler
+                >();
+        delegatedAccessDeniedHandlers.put(apiMatcher, apiSecurityErrorHandler);
+        var accessDeniedHandler = new RequestMatcherDelegatingAccessDeniedHandler(
+                delegatedAccessDeniedHandlers,
+                new AccessDeniedHandlerImpl()
+        );
+        var htmlEntryPoint = new LoginUrlAuthenticationEntryPoint("/login");
+        AuthenticationEntryPoint authenticationEntryPoint =
+                (request, response, exception) -> {
+                    if (apiMatcher.matches(request)) {
+                        apiSecurityErrorHandler.commence(
+                                request,
+                                response,
+                                exception
+                        );
+                    } else {
+                        htmlEntryPoint.commence(request, response, exception);
+                    }
+                };
 
         http
                 .csrf(csrf -> csrf
@@ -69,8 +102,8 @@ class SecurityConfiguration {
                         // authenticated roles have access to the same protected endpoints.
                         .anyRequest().authenticated())
                 .exceptionHandling(exceptions -> exceptions
-                        .authenticationEntryPoint(
-                                new LoginUrlAuthenticationEntryPoint("/login")))
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler))
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable())
                 .logout(logout -> logout.disable())

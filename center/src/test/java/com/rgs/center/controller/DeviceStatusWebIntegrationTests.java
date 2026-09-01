@@ -10,6 +10,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(properties = {
@@ -50,5 +51,27 @@ class DeviceStatusWebIntegrationTests {
                         "shp-status--no-data"
                 )))
                 .andExpect(content().string(containsString("No data")));
+    }
+
+    @Test
+    void existingThymeleafPageAndPollingFragmentRemainCompatible()
+            throws Exception {
+        mockMvc.perform(get("/devices"))
+                .andExpect(status().isFound())
+                .andExpect(redirectedUrl("/login"));
+
+        mockMvc.perform(get("/devices").with(user("test-user")))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith("text/html"))
+                .andExpect(content().string(containsString(
+                        "setInterval(loadStatus, 10000)"
+                )));
+
+        mockMvc.perform(get("/devices/status").with(user("test-user")))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith("text/html"))
+                .andExpect(content().string(containsString(
+                        "Nicole state"
+                )));
     }
 }
