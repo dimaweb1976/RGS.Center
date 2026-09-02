@@ -47,6 +47,17 @@ class SettingsServiceTests {
                 service.getValue(SettingsService.SCALES_PORT, String.class)
         );
         assertEquals(
+                9600L,
+                service.getValue(SettingsService.SCALES_BAUD_RATE, Long.class)
+        );
+        assertEquals(
+                700L,
+                service.getValue(
+                        SettingsService.SCALES_RESPONSE_TIMEOUT_MILLIS,
+                        Long.class
+                )
+        );
+        assertEquals(
                 "COM5",
                 service.getValue(SettingsService.SHP_PORT, String.class)
         );

@@ -141,6 +141,7 @@ public class HomeController {
         devices.add(bosonService.getBoson());
         devices.add(deviceViewService.getDevice(DeviceCode.ROBOTIC_MANIPULATOR));
         devices.add(deviceViewService.getDevice(DeviceCode.BARCODE_SCANNER));
+        devices.add(deviceViewService.getDevice(DeviceCode.SCALES));
         devices.add(deviceViewService.getDevice(DeviceCode.SHP));
         devices.add(deviceViewService.getDevice(DeviceCode.GAMMA_PRO));
         return devices;

@@ -62,6 +62,12 @@ public class SettingsService {
     public static final String GDRM_RESPONSE_TIMEOUT_MILLIS =
             "device.gdrm.response-timeout-millis";
     public static final String SCALES_PORT = "device.scales.port";
+    public static final String SCALES_BAUD_RATE =
+            "device.scales.baud-rate";
+    public static final String SCALES_READ_TIMEOUT_MILLIS =
+            "device.scales.read-timeout-millis";
+    public static final String SCALES_RESPONSE_TIMEOUT_MILLIS =
+            "device.scales.response-timeout-millis";
     public static final String SHP_PORT = "device.shp.port";
     public static final String SHP_BAUD_RATE = "device.shp.baud-rate";
     public static final String SHP_READ_TIMEOUT_MILLIS =
@@ -164,6 +170,15 @@ public class SettingsService {
 
     @Value("${rgs.device.scales.port:}")
     private String scalesPort = "";
+
+    @Value("${rgs.device.scales.baud-rate:9600}")
+    private long scalesBaudRate = 9600L;
+
+    @Value("${rgs.device.scales.read-timeout-millis:250}")
+    private long scalesReadTimeoutMillis = 250L;
+
+    @Value("${rgs.device.scales.response-timeout-millis:700}")
+    private long scalesResponseTimeoutMillis = 700L;
 
     @Value("${rgs.device.shp.port:COM5}")
     private String shpPort = "COM5";
@@ -270,6 +285,17 @@ public class SettingsService {
                 gdrmResponseTimeoutMillis
         );
         registerDefault(SCALES_PORT, SettingType.STRING, scalesPort);
+        registerDefault(SCALES_BAUD_RATE, SettingType.LONG, scalesBaudRate);
+        registerDefault(
+                SCALES_READ_TIMEOUT_MILLIS,
+                SettingType.LONG,
+                scalesReadTimeoutMillis
+        );
+        registerDefault(
+                SCALES_RESPONSE_TIMEOUT_MILLIS,
+                SettingType.LONG,
+                scalesResponseTimeoutMillis
+        );
         registerDefault(SHP_PORT, SettingType.STRING, shpPort);
         registerDefault(SHP_BAUD_RATE, SettingType.LONG, shpBaudRate);
         registerDefault(
