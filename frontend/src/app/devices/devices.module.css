@@ -1,0 +1,57 @@
+.page { min-height: 100vh; color: #172b35; background: #edf3f6; }
+.header { min-height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 14px max(24px, calc((100vw - 1180px) / 2)); border-bottom: 1px solid #ccd9df; background: #fff; }
+.header > div:first-child { display: flex; align-items: baseline; gap: 17px; }
+.brand { color: #08735d; font-size: 23px; font-weight: 850; }
+.section { color: #6a7d86; font-size: 14px; }
+.account { display: flex; align-items: center; gap: 16px; }
+.userInfo { display: grid; text-align: right; }
+.userInfo strong { font-size: 14px; }
+.userInfo span { margin-top: 2px; color: #687b84; font-size: 12px; }
+.account button, .refreshButton { min-height: 38px; padding: 0 16px; border: 1px solid #9fb3bc; border-radius: 8px; color: #263e49; background: #fff; font: inherit; font-size: 14px; font-weight: 750; cursor: pointer; }
+.account button:hover:not(:disabled), .refreshButton:hover:not(:disabled) { border-color: #08735d; color: #08735d; }
+.account button:disabled, .refreshButton:disabled { cursor: wait; opacity: .6; }
+.content { width: min(1180px, calc(100% - 48px)); margin: 0 auto; padding: 38px 0 56px; }
+.titleRow { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.titleRow h1 { font-size: clamp(26px, 3vw, 34px); }
+.titleRow p { margin-top: 7px; color: #677b85; font-size: 14px; }
+.warning, .error { margin-top: 22px; padding: 13px 16px; border-radius: 8px; font-size: 14px; }
+.warning { border: 1px solid #edcd81; color: #765713; background: #fff8e6; }
+.error { border: 1px solid #efb4b4; color: #9e2020; background: #fff0f0; }
+.summary { display: grid; grid-template-columns: repeat(3, minmax(150px, 1fr)); gap: 14px; margin-top: 26px; }
+.summary > div { display: flex; align-items: center; gap: 10px; padding: 17px 18px; border: 1px solid #d1dde2; border-radius: 10px; background: #fff; color: #526872; font-size: 14px; }
+.summary strong { margin-left: auto; color: #172b35; font-size: 20px; }
+.onlineDot, .offlineDot, .disabledDot { width: 11px; height: 11px; flex: 0 0 auto; border-radius: 50%; }
+.onlineDot { background: #17a675; }
+.offlineDot { background: #df3c3c; }
+.disabledDot { background: #84939a; }
+.tableCard { margin-top: 22px; overflow: hidden; border: 1px solid #d1dde2; border-radius: 12px; background: #fff; box-shadow: 0 10px 30px rgba(31, 61, 74, .06); }
+.tableHeading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 21px 23px; border-bottom: 1px solid #dce5e9; }
+.tableHeading h2 { font-size: 18px; }
+.tableHeading span { color: #71838c; font-size: 12px; }
+.tableScroll { overflow-x: auto; }
+.tableScroll table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.tableScroll th, .tableScroll td { padding: 15px 23px; border-bottom: 1px solid #e2e9ec; text-align: left; white-space: nowrap; }
+.tableScroll th { color: #617680; background: #f7f9fa; font-size: 12px; letter-spacing: .025em; text-transform: uppercase; }
+.tableScroll tbody tr:last-child td { border-bottom: 0; }
+.tableScroll tbody tr:hover { background: #f8fbfa; }
+.deviceName { color: #172b35; font-weight: 750; }
+.address { color: #526872; font-family: var(--font-geist-mono), monospace; font-size: 13px; }
+.status { width: fit-content; display: inline-flex; align-items: center; gap: 8px; padding: 5px 9px; border-radius: 20px; font-size: 12px; font-weight: 800; }
+.status > span { width: 8px; height: 8px; border-radius: 50%; }
+.online { color: #087254; background: #e3f7ef; }
+.online > span { background: #13a370; }
+.offline { color: #aa2828; background: #fdeaea; }
+.offline > span { background: #dc3838; }
+.disabled { color: #5f6e75; background: #eaeff1; }
+.disabled > span { background: #84939a; }
+.loadingCell { height: 130px; color: #71838c; text-align: center !important; }
+
+@media (max-width: 700px) {
+  .header { align-items: flex-start; padding: 15px 18px; }
+  .header > div:first-child { display: grid; gap: 2px; }
+  .section, .userInfo { display: none; }
+  .content { width: calc(100% - 28px); padding-top: 26px; }
+  .titleRow { align-items: flex-end; }
+  .summary { grid-template-columns: 1fr; }
+  .tableHeading { align-items: flex-start; flex-direction: column; }
+}
