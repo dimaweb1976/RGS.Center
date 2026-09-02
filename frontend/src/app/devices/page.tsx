@@ -19,6 +19,44 @@ type Device = {
 type DevicesResponse = {
   generatedAt: string;
   devices: Device[];
+  nicole: NicoleStatus;
+  shp: ShpStatus;
+};
+
+type TechnicalStatus = "READY" | "ALERT" | "NO_DATA" | "DISABLED";
+
+type NicoleSnapshot = {
+  resetCause: number;
+  ethernetUp: boolean;
+  dhcpLeased: boolean;
+  cryoControllerCommunication: boolean;
+  cryocoolerStarted: boolean;
+  advancedMode: boolean;
+  currentNitrogenLevel: number;
+  currentNitrogenPressure: number;
+  lowerLevelVoltage: number;
+  upperLevelVoltage: number;
+  nitrogenLevelFrequency: number;
+  controllerTime: string | null;
+  coolerErrorCode: number;
+  warningFlags: number;
+  receivedAt: string;
+};
+
+type NicoleStatus = {
+  connectionStatus: ConnectionStatus;
+  technicalStatus: TechnicalStatus;
+  warningText: string;
+  snapshot: NicoleSnapshot | null;
+};
+
+type ShpStatus = {
+  ambientTemperatureCelsius: number | null;
+  humidityPercent: number | null;
+  atmosphericPressureHpa: number | null;
+  leakageCurrent: number | null;
+  chargeOutputVoltage: number | null;
+  technicalStatus: Exclude<TechnicalStatus, "DISABLED">;
 };
 
 const statusLabels: Record<ConnectionStatus, string> = {
@@ -26,6 +64,27 @@ const statusLabels: Record<ConnectionStatus, string> = {
   OFFLINE: "Нет связи",
   DISABLED: "Отключено"
 };
+
+const technicalStatusLabels: Record<TechnicalStatus, string> = {
+  READY: "Готово",
+  ALERT: "Авария",
+  NO_DATA: "Нет данных",
+  DISABLED: "Отключено"
+};
+
+function statusClass(status: ConnectionStatus | TechnicalStatus): string {
+  if (status === "ONLINE" || status === "READY") return styles.online;
+  if (status === "OFFLINE" || status === "ALERT") return styles.offline;
+  return styles.disabled;
+}
+
+function StatusPill({ status, label }: { status: ConnectionStatus | TechnicalStatus; label: string }) {
+  return (
+    <span className={`${styles.status} ${statusClass(status)}`}>
+      <span />{label}
+    </span>
+  );
+}
 
 function roleLabel(role: string): string {
   const labels: Record<string, string> = {
@@ -46,6 +105,15 @@ function formatDate(value: string | null): string {
     dateStyle: "short",
     timeStyle: "medium"
   }).format(date);
+}
+
+function formatMetric(value: number | null, unit = ""): string {
+  if (value === null) return "—";
+  const formatted = new Intl.NumberFormat("ru-RU", {
+    minimumFractionDigits: 3,
+    maximumFractionDigits: 3
+  }).format(value);
+  return unit ? `${formatted} ${unit}` : formatted;
 }
 
 export default function DevicesPage() {
@@ -218,9 +286,10 @@ export default function DevicesPage() {
                     <td className={styles.deviceName}>{device.name}</td>
                     <td className={styles.address}>{device.address || "—"}</td>
                     <td>
-                      <span className={`${styles.status} ${styles[device.connectionStatus.toLowerCase()]}`}>
-                        <span />{statusLabels[device.connectionStatus]}
-                      </span>
+                      <StatusPill
+                        status={device.connectionStatus}
+                        label={statusLabels[device.connectionStatus]}
+                      />
                     </td>
                     <td>{formatDate(device.lastCheck)}</td>
                   </tr>
@@ -234,6 +303,137 @@ export default function DevicesPage() {
             </table>
           </div>
         </section>
+
+        {data && (
+          <section className={styles.detailSection} aria-labelledby="nicole-state-title">
+            <div className={styles.detailHeading}>
+              <div>
+                <h2 id="nicole-state-title">Состояние NICOLE</h2>
+                <p>Последний корректно разобранный протокольный PONG</p>
+              </div>
+              {data.nicole.snapshot?.receivedAt && (
+                <span>Получено: {formatDate(data.nicole.snapshot.receivedAt)}</span>
+              )}
+            </div>
+
+            <div className={styles.detailCard}>
+              <div className={styles.tableScroll}>
+                <table className={styles.nicoleTable}>
+                  <thead>
+                    <tr>
+                      <th>Контроллер</th>
+                      <th>Криоохладитель</th>
+                      <th>Азот</th>
+                      <th>Напряжения уровней</th>
+                      <th>Время контроллера</th>
+                      <th>Ошибка охладителя</th>
+                      <th>Предупреждения</th>
+                      <th>Состояние связи</th>
+                      <th>Техническое состояние</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>
+                        {data.nicole.snapshot ? (
+                          <div className={styles.detailsStack}>
+                            <span>Ethernet: {data.nicole.snapshot.ethernetUp ? "Up" : "Down"}</span>
+                            <span>DHCP: {data.nicole.snapshot.dhcpLeased ? "Lease получен" : "Static / no lease"}</span>
+                            <span>Cryo link: {data.nicole.snapshot.cryoControllerCommunication ? "OK" : "Нет связи"}</span>
+                            <span>Reset cause: {data.nicole.snapshot.resetCause}</span>
+                          </div>
+                        ) : "—"}
+                      </td>
+                      <td>
+                        {data.nicole.snapshot ? (
+                          <div className={styles.detailsStack}>
+                            <span>{data.nicole.snapshot.cryocoolerStarted ? "Запущен" : "Остановлен"}</span>
+                            <span>{data.nicole.snapshot.advancedMode ? "Расширенный режим" : "Нормальный режим"}</span>
+                          </div>
+                        ) : "—"}
+                      </td>
+                      <td>
+                        {data.nicole.snapshot ? (
+                          <div className={styles.detailsStack}>
+                            <span>Уровень: {data.nicole.snapshot.currentNitrogenLevel}</span>
+                            <span>Давление: {data.nicole.snapshot.currentNitrogenPressure}</span>
+                            <span>Частота: {data.nicole.snapshot.nitrogenLevelFrequency}</span>
+                          </div>
+                        ) : "—"}
+                      </td>
+                      <td>
+                        {data.nicole.snapshot ? (
+                          <div className={styles.detailsStack}>
+                            <span>Нижнее: {data.nicole.snapshot.lowerLevelVoltage}</span>
+                            <span>Верхнее: {data.nicole.snapshot.upperLevelVoltage}</span>
+                          </div>
+                        ) : "—"}
+                      </td>
+                      <td>{data.nicole.snapshot ? formatDate(data.nicole.snapshot.controllerTime) : "—"}</td>
+                      <td>{data.nicole.snapshot?.coolerErrorCode ?? "—"}</td>
+                      <td>{data.nicole.warningText?.trim() || "Нет"}</td>
+                      <td>
+                        <StatusPill
+                          status={data.nicole.connectionStatus}
+                          label={statusLabels[data.nicole.connectionStatus]}
+                        />
+                      </td>
+                      <td>
+                        <StatusPill
+                          status={data.nicole.technicalStatus}
+                          label={technicalStatusLabels[data.nicole.technicalStatus]}
+                        />
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {data && (
+          <section className={styles.detailSection} aria-labelledby="shp-measurements-title">
+            <div className={styles.detailHeading}>
+              <div>
+                <h2 id="shp-measurements-title">Измерения SHP</h2>
+                <p>Последний полный набор значений предусилителя</p>
+              </div>
+            </div>
+
+            <div className={styles.detailCard}>
+              <div className={styles.tableScroll}>
+                <table className={styles.shpTable}>
+                  <thead>
+                    <tr>
+                      <th>Температура</th>
+                      <th>Влажность</th>
+                      <th>Давление</th>
+                      <th>Ток утечки</th>
+                      <th>Выходное напряжение</th>
+                      <th>Состояние</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className={styles.measurement}>{formatMetric(data.shp.ambientTemperatureCelsius, "°C")}</td>
+                      <td className={styles.measurement}>{formatMetric(data.shp.humidityPercent, "%")}</td>
+                      <td className={styles.measurement}>{formatMetric(data.shp.atmosphericPressureHpa, "hPa")}</td>
+                      <td className={styles.measurement}>{formatMetric(data.shp.leakageCurrent)}</td>
+                      <td className={styles.measurement}>{formatMetric(data.shp.chargeOutputVoltage, "V")}</td>
+                      <td>
+                        <StatusPill
+                          status={data.shp.technicalStatus}
+                          label={technicalStatusLabels[data.shp.technicalStatus]}
+                        />
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        )}
       </main>
     </div>
   );

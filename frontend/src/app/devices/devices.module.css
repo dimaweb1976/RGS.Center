@@ -45,6 +45,21 @@
 .disabled { color: #5f6e75; background: #eaeff1; }
 .disabled > span { background: #84939a; }
 .loadingCell { height: 130px; color: #71838c; text-align: center !important; }
+.detailSection { margin-top: 30px; }
+.detailHeading { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
+.detailHeading h2 { font-size: 21px; }
+.detailHeading p { margin-top: 5px; color: #677b85; font-size: 13px; }
+.detailHeading > span { color: #71838c; font-size: 12px; }
+.detailCard { overflow: hidden; border: 1px solid #d1dde2; border-radius: 12px; background: #fff; box-shadow: 0 10px 30px rgba(31, 61, 74, .05); }
+.detailCard table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.detailCard th, .detailCard td { padding: 14px 16px; border-right: 1px solid #e2e9ec; text-align: left; vertical-align: top; }
+.detailCard th:last-child, .detailCard td:last-child { border-right: 0; }
+.detailCard th { color: #526872; background: #f4f8f9; font-size: 11px; letter-spacing: .02em; text-transform: uppercase; }
+.detailCard td { border-top: 1px solid #e2e9ec; }
+.nicoleTable { min-width: 1280px; }
+.shpTable { min-width: 880px; }
+.detailsStack { display: grid; gap: 4px; line-height: 1.25; }
+.measurement { color: #203843; font-variant-numeric: tabular-nums; font-weight: 700; }
 
 @media (max-width: 700px) {
   .header { align-items: flex-start; padding: 15px 18px; }
@@ -54,4 +69,5 @@
   .titleRow { align-items: flex-end; }
   .summary { grid-template-columns: 1fr; }
   .tableHeading { align-items: flex-start; flex-direction: column; }
+  .detailHeading { align-items: flex-start; flex-direction: column; }
 }
