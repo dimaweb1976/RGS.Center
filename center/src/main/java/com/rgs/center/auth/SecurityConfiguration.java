@@ -93,6 +93,8 @@ class SecurityConfiguration {
                         .requestMatchers(
                                 "/login",
                                 "/auth/login",
+                                "/api/v1/auth/csrf",
+                                "/api/v1/auth/login",
                                 "/css/**",
                                 "/js/**",
                                 "/favicon.ico",
