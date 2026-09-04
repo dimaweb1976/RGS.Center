@@ -43,6 +43,28 @@ class SettingsServiceTests {
     @Test
     void providesComPortSettingsForTargetPeripheralDevices() {
         assertEquals(
+                250L,
+                service.getValue(
+                        SettingsService.BARCODE_SCANNER_READ_TIMEOUT_MILLIS,
+                        Long.class
+                )
+        );
+        assertEquals(
+                5000L,
+                service.getValue(
+                        SettingsService
+                                .BARCODE_SCANNER_SCAN_ATTEMPT_TIMEOUT_MILLIS,
+                        Long.class
+                )
+        );
+        assertEquals(
+                "AUTO",
+                service.getValue(
+                        SettingsService.BARCODE_SCANNER_DATA_SUFFIX,
+                        String.class
+                )
+        );
+        assertEquals(
                 "",
                 service.getValue(SettingsService.SCALES_PORT, String.class)
         );

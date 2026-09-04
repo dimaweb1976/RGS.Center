@@ -1,4 +1,4 @@
-package com.rgs.center.service;
+package com.rgs.center.barcodescanner;
 
 /**
  * Транспортный фасад чтения сканера через управляемое COM-подключение.

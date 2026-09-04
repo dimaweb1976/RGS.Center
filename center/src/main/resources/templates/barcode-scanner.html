@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>RGSCenter — сканер штрих-кодов</title>
+    <style>
+        :root { color-scheme: light; font-family: Arial, sans-serif; color: #17202a; background: #f4f6f8; }
+        * { box-sizing: border-box; }
+        body { margin: 0; }
+        header { padding: 18px 28px; color: white; background: #293744; }
+        header h1 { margin: 0; font-size: 24px; }
+        header p { margin: 5px 0 0; color: #cbd5df; }
+        main { max-width: 1180px; margin: 24px auto; padding: 0 20px 32px; }
+        .refresh-note { margin: 0 0 12px; color: #687582; font-size: 13px; }
+        .loading { opacity: .68; }
+        .action-message { min-height: 20px; color: #687582; font-size: 13px; }
+        .action-message.error { color: #b42318; }
+    </style>
+    <script>
+        let scannerActionPending = false;
+
+        function scannerCsrfHeaders() {
+            if (window.rgsCsrfHeaders) return window.rgsCsrfHeaders();
+            const element = document.querySelector(".auth-csrf");
+            if (!element) return {};
+            return {[element.dataset.header]: element.dataset.token};
+        }
+
+        function scannerMessage(message, error = false) {
+            const element = document.getElementById("scanner-feedback");
+            element.textContent = message;
+            element.className = error
+                ? "action-message error"
+                : "action-message";
+        }
+
+        async function scannerRequest(path, method = "GET") {
+            const response = await fetch(`/barcode-scanner/${path}`, {
+                method,
+                cache: "no-store",
+                credentials: "same-origin",
+                headers: {
+                    Accept: "text/html",
+                    ...(method === "POST" ? scannerCsrfHeaders() : {})
+                }
+            });
+            if (response.redirected || response.status === 401) {
+                window.location.assign("/login");
+                return null;
+            }
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return response.text();
+        }
+
+        async function loadScannerStatus() {
+            if (scannerActionPending) return;
+            const panel = document.getElementById("barcode-scanner-status");
+            panel.classList.add("loading");
+            try {
+                const html = await scannerRequest("status");
+                if (html !== null) panel.innerHTML = html;
+            } catch (error) {
+                console.error("Failed to update barcode scanner status", error);
+                scannerMessage("Не удалось обновить состояние сканера.", true);
+            } finally {
+                panel.classList.remove("loading");
+            }
+        }
+
+        async function scannerAction(path) {
+            if (scannerActionPending) return;
+            scannerActionPending = true;
+            const panel = document.getElementById("barcode-scanner-status");
+            panel.classList.add("loading");
+            try {
+                const html = await scannerRequest(path, "POST");
+                if (html !== null) panel.innerHTML = html;
+                scannerMessage(path === "cancel"
+                    ? "Отправлен запрос на отмену."
+                    : "Сканирование запущено.");
+            } catch (error) {
+                console.error("Barcode scanner action failed", error);
+                scannerMessage(`Команда не выполнена (${error.message}).`, true);
+            } finally {
+                scannerActionPending = false;
+                panel.classList.remove("loading");
+            }
+        }
+
+        window.setInterval(loadScannerStatus, 1000);
+    </script>
+</head>
+<body>
+<div th:replace="~{fragments/menu :: menu}"></div>
+<header>
+    <h1>Сканер штрих-кодов Honeywell Vuquest 3320</h1>
+    <p>Сервисное чтение через физический RS-232, COM8, 9600 baud</p>
+</header>
+<main>
+    <p class="refresh-note">Состояние обновляется каждую секунду.</p>
+    <p id="scanner-feedback" class="action-message" role="status" aria-live="polite"></p>
+    <div id="barcode-scanner-status"
+         th:insert="~{fragments/barcode-scanner-status :: status}"></div>
+</main>
+</body>
+</html>

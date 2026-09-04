@@ -56,8 +56,18 @@ public class SettingsService {
             "device.barcode-scanner.baud-rate";
     public static final String BARCODE_SCANNER_READ_TIMEOUT_MILLIS =
             "device.barcode-scanner.read-timeout-millis";
+    public static final String BARCODE_SCANNER_SCAN_ATTEMPT_TIMEOUT_MILLIS =
+            "device.barcode-scanner.scan-attempt-timeout-millis";
     public static final String BARCODE_SCANNER_MAX_CODE_LENGTH =
             "device.barcode-scanner.max-code-length";
+    public static final String BARCODE_SCANNER_RESPONSE_TIMEOUT_MILLIS =
+            "device.barcode-scanner.response-timeout-millis";
+    public static final String BARCODE_SCANNER_MAX_SCAN_ATTEMPTS =
+            "device.barcode-scanner.max-scan-attempts";
+    public static final String BARCODE_SCANNER_RETRY_DELAY_MILLIS =
+            "device.barcode-scanner.retry-delay-millis";
+    public static final String BARCODE_SCANNER_DATA_SUFFIX =
+            "device.barcode-scanner.data-suffix";
     public static final String GDRM_PORT = "device.gdrm.port";
     public static final String GDRM_INITIAL_BAUD_RATE =
             "device.gdrm.initial-baud-rate";
@@ -163,11 +173,26 @@ public class SettingsService {
     @Value("${rgs.device.barcode-scanner.baud-rate:9600}")
     private long barcodeScannerBaudRate = 9600L;
 
-    @Value("${rgs.device.barcode-scanner.read-timeout-millis:5000}")
-    private long barcodeScannerReadTimeoutMillis = 5000L;
+    @Value("${rgs.device.barcode-scanner.read-timeout-millis:250}")
+    private long barcodeScannerReadTimeoutMillis = 250L;
+
+    @Value("${rgs.device.barcode-scanner.scan-attempt-timeout-millis:5000}")
+    private long barcodeScannerScanAttemptTimeoutMillis = 5000L;
 
     @Value("${rgs.device.barcode-scanner.max-code-length:4096}")
     private long barcodeScannerMaxCodeLength = 4096L;
+
+    @Value("${rgs.device.barcode-scanner.response-timeout-millis:1000}")
+    private long barcodeScannerResponseTimeoutMillis = 1000L;
+
+    @Value("${rgs.device.barcode-scanner.max-scan-attempts:2}")
+    private long barcodeScannerMaxScanAttempts = 2L;
+
+    @Value("${rgs.device.barcode-scanner.retry-delay-millis:250}")
+    private long barcodeScannerRetryDelayMillis = 250L;
+
+    @Value("${rgs.device.barcode-scanner.data-suffix:AUTO}")
+    private String barcodeScannerDataSuffix = "AUTO";
 
     @Value("${rgs.device.gdrm.port:COM3}")
     private String gdrmPort = "COM3";
@@ -288,9 +313,34 @@ public class SettingsService {
                 barcodeScannerReadTimeoutMillis
         );
         registerDefault(
+                BARCODE_SCANNER_SCAN_ATTEMPT_TIMEOUT_MILLIS,
+                SettingType.LONG,
+                barcodeScannerScanAttemptTimeoutMillis
+        );
+        registerDefault(
                 BARCODE_SCANNER_MAX_CODE_LENGTH,
                 SettingType.LONG,
                 barcodeScannerMaxCodeLength
+        );
+        registerDefault(
+                BARCODE_SCANNER_RESPONSE_TIMEOUT_MILLIS,
+                SettingType.LONG,
+                barcodeScannerResponseTimeoutMillis
+        );
+        registerDefault(
+                BARCODE_SCANNER_MAX_SCAN_ATTEMPTS,
+                SettingType.LONG,
+                barcodeScannerMaxScanAttempts
+        );
+        registerDefault(
+                BARCODE_SCANNER_RETRY_DELAY_MILLIS,
+                SettingType.LONG,
+                barcodeScannerRetryDelayMillis
+        );
+        registerDefault(
+                BARCODE_SCANNER_DATA_SUFFIX,
+                SettingType.STRING,
+                barcodeScannerDataSuffix
         );
         registerDefault(GDRM_PORT, SettingType.STRING, gdrmPort);
         registerDefault(
