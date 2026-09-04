@@ -2,6 +2,7 @@ package com.rgs.center.controller;
 
 import com.rgs.center.gammapro.GammaProDeviceView;
 import com.rgs.center.gammapro.GammaProService;
+import com.rgs.center.measurement.ScenarioStatusService;
 import com.rgs.center.objects.Device;
 import com.rgs.center.objects.DeviceCode;
 import com.rgs.center.service.BosonService;
@@ -48,6 +49,8 @@ public class HomeController {
     private final ShpStatusEvaluator shpStatusEvaluator;
     /** Источник фактического состояния TCP-сокета Gamma-PRO. */
     private final GammaProService gammaProService;
+    /** Источник состояния автоматического сценария. */
+    private final ScenarioStatusService scenarioStatusService;
 
     /**
      * Создаёт контроллер страниц состояния.
@@ -60,6 +63,7 @@ public class HomeController {
      * @param shpService фоновый сервис предусилителя SHP
      * @param shpStatusEvaluator расчёт технологического статуса SHP
      * @param gammaProService фактическое состояние TCP-соединения Gamma-PRO
+     * @param scenarioStatusService состояние автоматического сценария
      */
     public HomeController(
             CameraService cameraService,
@@ -69,7 +73,8 @@ public class HomeController {
             DeviceViewService deviceViewService,
             ShpService shpService,
             ShpStatusEvaluator shpStatusEvaluator,
-            GammaProService gammaProService
+            GammaProService gammaProService,
+            ScenarioStatusService scenarioStatusService
     ) {
         this.cameraService = cameraService;
         this.bosonService = bosonService;
@@ -79,6 +84,7 @@ public class HomeController {
         this.shpService = shpService;
         this.shpStatusEvaluator = shpStatusEvaluator;
         this.gammaProService = gammaProService;
+        this.scenarioStatusService = scenarioStatusService;
     }
 
     /**
@@ -133,6 +139,7 @@ public class HomeController {
         );
         model.addAttribute("gammaProStatus", gammaProService.statusView());
         model.addAttribute("nicoleStatus", nicoleService.statusView());
+        model.addAttribute("scenarioStatus", scenarioStatusService.currentStatus());
         var shpSnapshot = shpService.snapshot();
         model.addAttribute(
                 "shpStatus",

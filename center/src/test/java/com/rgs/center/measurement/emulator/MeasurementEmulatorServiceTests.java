@@ -4,6 +4,8 @@ import com.rgs.center.camera.CameraImagePayload;
 import com.rgs.center.camera.CameraImagingOperations;
 import com.rgs.center.camera.CameraImagingSnapshot;
 import com.rgs.center.camera.DetectedBottle;
+import com.rgs.center.measurement.ScenarioStatus;
+import com.rgs.center.measurement.ScenarioStatusService;
 import com.rgs.center.nicole.NicoleReadinessStatus;
 import com.rgs.center.nicole.NicoleSnapshot;
 import com.rgs.center.nicole.NicoleTechnicalStatusChangedEvent;
@@ -22,10 +24,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class MeasurementEmulatorServiceTests {
 
     private MeasurementEmulatorService service;
+    private ScenarioStatusService scenarioStatusService;
 
     @BeforeEach
     void setUp() {
-        service = new MeasurementEmulatorService(new FakeCameraImaging());
+        scenarioStatusService = new ScenarioStatusService();
+        service = new MeasurementEmulatorService(
+                new FakeCameraImaging(),
+                scenarioStatusService
+        );
         service.reset();
     }
 
@@ -74,11 +81,16 @@ class MeasurementEmulatorServiceTests {
     void raisesAlertAndRecoversAfterEmulatedFailure() {
         service.toggleCheck("boson-ready");
         assertEquals(MeasurementEmulatorPhase.ALERT, service.snapshot().phase());
+        assertEquals(
+                ScenarioStatus.EMERGENCY,
+                scenarioStatusService.currentStatus()
+        );
         assertTrue(service.snapshot().alert().contains("BOSON.Status"));
 
         service.toggleCheck("boson-ready");
 
         assertEquals(MeasurementEmulatorPhase.PRECHECK, service.snapshot().phase());
+        assertEquals(ScenarioStatus.NORMAL, scenarioStatusService.currentStatus());
         assertTrue(service.snapshot().alert().isEmpty());
     }
 
@@ -88,6 +100,10 @@ class MeasurementEmulatorServiceTests {
 
         MeasurementEmulatorSnapshot snapshot = service.snapshot();
         assertEquals(MeasurementEmulatorPhase.ALERT, snapshot.phase());
+        assertEquals(
+                ScenarioStatus.EMERGENCY,
+                scenarioStatusService.currentStatus()
+        );
         assertTrue(snapshot.leakageCurrentMicroamps()
                 > snapshot.leakageLimitMicroamps());
     }

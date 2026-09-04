@@ -160,6 +160,48 @@
             color: #777777;
         }
 
+        .scenario-status-cell {
+            white-space: nowrap;
+        }
+
+        .scenario-status-indicator {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            margin-right: 8px;
+            border-radius: 50%;
+            vertical-align: middle;
+            background-color: #777777;
+        }
+
+        .scenario-status-indicator.scenario-status--normal {
+            background-color: #24ad5f;
+        }
+
+        .scenario-status-indicator.scenario-status--emergency,
+        .scenario-status-indicator.scenario-status--aborting {
+            background-color: #ed1c2e;
+        }
+
+        .scenario-status-indicator.scenario-status--paused,
+        .scenario-status-indicator.scenario-status--recovery-required {
+            background-color: #d99800;
+        }
+
+        .scenario-status-text.scenario-status--normal {
+            color: #168347;
+        }
+
+        .scenario-status-text.scenario-status--emergency,
+        .scenario-status-text.scenario-status--aborting {
+            color: #d7192d;
+        }
+
+        .scenario-status-text.scenario-status--paused,
+        .scenario-status-text.scenario-status--recovery-required {
+            color: #946700;
+        }
+
         .shp-measurements table {
             max-width: 1400px;
         }

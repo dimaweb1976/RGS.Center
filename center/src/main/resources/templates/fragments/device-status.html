@@ -49,6 +49,7 @@
             <th>Warnings</th>
             <th>Connection status</th>
             <th>Technical status</th>
+            <th>Scenario status</th>
         </tr>
         </thead>
         <tbody>
@@ -112,6 +113,14 @@
                 <strong class="nicole-status-text"
                         th:classappend="${nicoleStatus.readiness.cssClass}"
                         th:text="${nicoleStatus.readiness.label}">Alert</strong>
+            </td>
+            <td class="scenario-status-cell">
+                <span class="scenario-status-indicator"
+                      th:classappend="${scenarioStatus.cssClass}"
+                      aria-hidden="true"></span>
+                <strong class="scenario-status-text"
+                        th:classappend="${scenarioStatus.cssClass}"
+                        th:text="${scenarioStatus.label}">NORMAL</strong>
             </td>
         </tr>
         </tbody>

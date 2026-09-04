@@ -3,6 +3,8 @@ package com.rgs.center.measurement.emulator;
 import com.rgs.center.camera.CameraImagingOperations;
 import com.rgs.center.camera.CameraImagingSnapshot;
 import com.rgs.center.camera.DetectedBottle;
+import com.rgs.center.measurement.ScenarioStatus;
+import com.rgs.center.measurement.ScenarioStatusService;
 import com.rgs.center.nicole.NicoleReadinessStatus;
 import com.rgs.center.nicole.NicoleTechnicalStatusChangedEvent;
 import jakarta.annotation.PostConstruct;
@@ -39,6 +41,8 @@ public class MeasurementEmulatorService {
 
     /** Сервис получения кадра, распознавания и сохранения изображений. */
     private final CameraImagingOperations cameraImaging;
+    /** Общая витрина состояния автоматического сценария. */
+    private final ScenarioStatusService scenarioStatusService;
 
     /** Точное тело цикла из требований; каждый шаг включает ожидание завершения. */
     private static final List<String> CYCLE_STEP_NAMES = List.of(
@@ -68,8 +72,12 @@ public class MeasurementEmulatorService {
     private int activeStepIndex;
     private int completedObjects;
 
-    public MeasurementEmulatorService(CameraImagingOperations cameraImaging) {
+    public MeasurementEmulatorService(
+            CameraImagingOperations cameraImaging,
+            ScenarioStatusService scenarioStatusService
+    ) {
         this.cameraImaging = cameraImaging;
+        this.scenarioStatusService = scenarioStatusService;
     }
 
     /** Формирует исходное состояние после создания Spring-компонента. */
@@ -108,6 +116,10 @@ public class MeasurementEmulatorService {
         activeObjectIndex = -1;
         activeStepIndex = -1;
         completedObjects = 0;
+        scenarioStatusService.updateStatus(
+                ScenarioStatus.NORMAL,
+                "measurement emulator reset"
+        );
         addEvent("Эмулятор сброшен. Запущены первичные проверки.");
         log.info("Measurement algorithm emulator reset");
     }
@@ -414,6 +426,7 @@ public class MeasurementEmulatorService {
         phase = MeasurementEmulatorPhase.ALERT;
         alert = message;
         highVoltageState = "АВАРИЙНО ВЫКЛЮЧЕНО";
+        scenarioStatusService.updateStatus(ScenarioStatus.EMERGENCY, message);
         addEvent("ОПОВЕЩЕНИЕ: " + message + ".");
         log.warn("Measurement emulator alert: {}", message);
     }
@@ -423,6 +436,7 @@ public class MeasurementEmulatorService {
         alert = "";
         highVoltageState = "ВЫКЛЮЧЕНО";
         preparationTicks = 0;
+        scenarioStatusService.updateStatus(ScenarioStatus.NORMAL, reason);
         addEvent(reason + ". Проверки запущены повторно.");
     }
 

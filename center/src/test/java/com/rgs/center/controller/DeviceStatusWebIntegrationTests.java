@@ -1,5 +1,7 @@
 package com.rgs.center.controller;
 
+import com.rgs.center.measurement.emulator.MeasurementEmulatorService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -30,6 +32,14 @@ class DeviceStatusWebIntegrationTests {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private MeasurementEmulatorService measurementEmulatorService;
+
+    @BeforeEach
+    void resetScenarioStatus() {
+        measurementEmulatorService.reset();
+    }
+
     @Test
     void devicesPageRendersDeviceDetailTablesBeforeFirstSuccessfulPoll()
             throws Exception {
@@ -52,6 +62,11 @@ class DeviceStatusWebIntegrationTests {
                         "gamma-pro-status DISCONNECTED"
                 )))
                 .andExpect(content().string(containsString("Cryocooler")))
+                .andExpect(content().string(containsString("Scenario status")))
+                .andExpect(content().string(containsString(
+                        "scenario-status--normal"
+                )))
+                .andExpect(content().string(containsString("NORMAL")))
                 .andExpect(content().string(containsString(
                         "nicole-status--disabled"
                 )))
@@ -94,5 +109,18 @@ class DeviceStatusWebIntegrationTests {
                 .andExpect(content().string(containsString(
                         "gamma-pro-status DISCONNECTED"
                 )));
+    }
+
+    @Test
+    void devicesPageShowsEmergencyScenarioStatusAfterScenarioAlert()
+            throws Exception {
+        measurementEmulatorService.toggleCheck("nicole-ok");
+
+        mockMvc.perform(get("/devices/status").with(user("test-user")))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString(
+                        "scenario-status--emergency"
+                )))
+                .andExpect(content().string(containsString("EMERGENCY")));
     }
 }
