@@ -87,6 +87,17 @@ class SettingsServiceTests {
                 37569L,
                 service.getValue(SettingsService.GAMMA_PRO_PORT, Long.class)
         );
+        assertEquals(
+                "BOSON",
+                service.getValue(SettingsService.BOSON_MCA_NAME, String.class)
+        );
+        assertEquals(
+                "Ch1",
+                service.getValue(
+                        SettingsService.BOSON_CHANNEL_NAME,
+                        String.class
+                )
+        );
     }
 
     @Test

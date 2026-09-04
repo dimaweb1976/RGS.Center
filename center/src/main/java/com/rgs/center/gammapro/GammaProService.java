@@ -44,6 +44,7 @@ public class GammaProService extends AbstractQueuedDeviceService
     private volatile String channelName = "";
     private volatile int presetSeconds;
     private volatile List<String> tracts = List.of();
+    private volatile Instant tractsUpdatedAt;
     private volatile String lastResponse = "";
     private volatile String lastError = "";
     private volatile BosonHighVoltageSnapshot bosonHighVoltage =
@@ -289,6 +290,55 @@ public class GammaProService extends AbstractQueuedDeviceService
         return bosonHighVoltage;
     }
 
+    /**
+     * @return фактическое состояние TCP-сокета независимо от heartbeat
+     */
+    public GammaProConnectionStatus connectionStatus() {
+        return GammaProConnectionStatus.from(
+                communicationSnapshot().state()
+        );
+    }
+
+    /** @return данные отдельной таблицы состояния Gamma-PRO */
+    public GammaProStatusView statusView() {
+        long lastUpdatedAt = currentDataService.getValue(
+                DeviceCode.GAMMA_PRO,
+                CurrentDataService.INTERACTION_LASTDATE_OUT,
+                Long.class
+        );
+        GammaProConnectionStatus gammaProStatus = connectionStatus();
+        BosonConnectionStatus bosonStatus = gammaProStatus
+                == GammaProConnectionStatus.CONNECTED
+                ? BosonConnectionStatus.from(
+                        tracts,
+                        settingsService.getValue(
+                                SettingsService.BOSON_MCA_NAME,
+                                String.class
+                        ),
+                        settingsService.getValue(
+                                SettingsService.BOSON_CHANNEL_NAME,
+                                String.class
+                        ),
+                        tractsUpdatedAt,
+                        Duration.ofMillis(settingInt(
+                                SettingsService.BOSON_STATUS_STALE_MILLIS
+                        )),
+                        Instant.now()
+                )
+                : BosonConnectionStatus.DISCONNECTED;
+        return new GammaProStatusView(
+                gammaProStatus,
+                bosonStatus,
+                snapshot(),
+                lastUpdatedAt > 0
+                        ? Instant.ofEpochSecond(lastUpdatedAt)
+                        : null,
+                bosonStatus == BosonConnectionStatus.CONNECTED
+                        ? tractsUpdatedAt
+                        : null
+        );
+    }
+
     /** @return потокобезопасный снимок сервиса */
     public GammaProSnapshot snapshot() {
         return new GammaProSnapshot(
@@ -315,9 +365,10 @@ public class GammaProService extends AbstractQueuedDeviceService
     /** Выполняет реальный heartbeat и сохраняет список трактов. */
     private void heartbeatLocked() {
         GammaProCommandResult result = executeCommandLocked(
-                GammaProProtocol.GET_TRACTS_NAME
+                GammaProProtocol.getTractsName()
         );
         tracts = result.dataLines();
+        tractsUpdatedAt = Instant.now();
         publishSuccess();
         log.debug("Gamma-PRO heartbeat completed, dataLines={}", tracts.size());
     }

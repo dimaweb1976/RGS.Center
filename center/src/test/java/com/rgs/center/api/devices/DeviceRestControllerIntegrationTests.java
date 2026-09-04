@@ -48,6 +48,11 @@ class DeviceRestControllerIntegrationTests {
                 .andExpect(jsonPath("$.nicole.technicalStatus")
                         .value("DISABLED"))
                 .andExpect(jsonPath("$.nicole.snapshot").doesNotExist())
+                .andExpect(jsonPath("$.devices[7].code")
+                        .value("gamma-pro"))
+                .andExpect(jsonPath("$.devices[7].enabled").value(false))
+                .andExpect(jsonPath("$.devices[7].connectionStatus")
+                        .value("DISCONNECTED"))
                 .andExpect(jsonPath("$.shp.technicalStatus")
                         .value("NO_DATA"));
     }

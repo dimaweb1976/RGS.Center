@@ -36,6 +36,21 @@ class DeviceStatusWebIntegrationTests {
         mockMvc.perform(get("/devices").with(user("test-user")))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Nicole state")))
+                .andExpect(content().string(containsString("GammaPro State")))
+                .andExpect(content().string(containsString(
+                        "Measurement state"
+                )))
+                .andExpect(content().string(containsString(
+                        "Available tracts"
+                )))
+                .andExpect(content().string(containsString("BOSON status")))
+                .andExpect(content().string(containsString(
+                        "boson-status DISCONNECTED"
+                )))
+                .andExpect(content().string(containsString("gamma-pro-row")))
+                .andExpect(content().string(containsString(
+                        "gamma-pro-status DISCONNECTED"
+                )))
                 .andExpect(content().string(containsString("Cryocooler")))
                 .andExpect(content().string(containsString(
                         "nicole-status--disabled"
@@ -72,6 +87,12 @@ class DeviceStatusWebIntegrationTests {
                 .andExpect(content().contentTypeCompatibleWith("text/html"))
                 .andExpect(content().string(containsString(
                         "Nicole state"
+                )))
+                .andExpect(content().string(containsString(
+                        "GammaPro State"
+                )))
+                .andExpect(content().string(containsString(
+                        "gamma-pro-status DISCONNECTED"
                 )));
     }
 }

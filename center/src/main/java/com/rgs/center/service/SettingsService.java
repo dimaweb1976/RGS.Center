@@ -38,6 +38,10 @@ public class SettingsService {
     public static final String NICOLE_RESPONSE_TIMEOUT_MILLIS =
             "device.nicole.response-timeout-millis";
     public static final String BOSON_IP = "device.boson.ip";
+    public static final String BOSON_MCA_NAME = "device.boson.mca-name";
+    public static final String BOSON_CHANNEL_NAME = "device.boson.channel-name";
+    public static final String BOSON_STATUS_STALE_MILLIS =
+            "device.boson.status-stale-millis";
     public static final String MANIPULATOR_HOST = "device.manipulator.host";
     public static final String MANIPULATOR_COMMAND_PORT = "device.manipulator.command-port";
     public static final String MANIPULATOR_FEEDBACK_PORT = "device.manipulator.feedback-port";
@@ -116,6 +120,15 @@ public class SettingsService {
 
     @Value("${rgs.device.boson.ip:192.168.1.16}")
     private String bosonIp = "192.168.1.16";
+
+    @Value("${rgs.device.boson.mca-name:BOSON}")
+    private String bosonMcaName = "BOSON";
+
+    @Value("${rgs.device.boson.channel-name:Ch1}")
+    private String bosonChannelName = "Ch1";
+
+    @Value("${rgs.device.boson.status-stale-millis:30000}")
+    private long bosonStatusStaleMillis = 30000L;
 
     @Value("${rgs.device.manipulator.host:192.168.5.1}")
     private String manipulatorHost = "192.168.5.1";
@@ -239,6 +252,17 @@ public class SettingsService {
                 nicoleResponseTimeoutMillis
         );
         registerDefault(BOSON_IP, SettingType.STRING, bosonIp);
+        registerDefault(BOSON_MCA_NAME, SettingType.STRING, bosonMcaName);
+        registerDefault(
+                BOSON_CHANNEL_NAME,
+                SettingType.STRING,
+                bosonChannelName
+        );
+        registerDefault(
+                BOSON_STATUS_STALE_MILLIS,
+                SettingType.LONG,
+                bosonStatusStaleMillis
+        );
         registerDefault(MANIPULATOR_HOST, SettingType.STRING, manipulatorHost);
         registerDefault(MANIPULATOR_COMMAND_PORT, SettingType.LONG, manipulatorCommandPort);
         registerDefault(MANIPULATOR_FEEDBACK_PORT, SettingType.LONG, manipulatorFeedbackPort);

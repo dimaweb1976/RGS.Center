@@ -1,5 +1,6 @@
 package com.rgs.center.api.devices;
 
+import com.rgs.center.gammapro.GammaProService;
 import com.rgs.center.nicole.NicoleSnapshot;
 import com.rgs.center.nicole.NicoleStatusView;
 import com.rgs.center.objects.Device;
@@ -35,6 +36,7 @@ public class DeviceStatusQueryService {
     private final DeviceViewService deviceViewService;
     private final ShpService shpService;
     private final ShpStatusEvaluator shpStatusEvaluator;
+    private final GammaProService gammaProService;
 
     public DeviceStatusQueryService(
             CameraService cameraService,
@@ -43,7 +45,8 @@ public class DeviceStatusQueryService {
             LenovoPcService lenovoPcService,
             DeviceViewService deviceViewService,
             ShpService shpService,
-            ShpStatusEvaluator shpStatusEvaluator
+            ShpStatusEvaluator shpStatusEvaluator,
+            GammaProService gammaProService
     ) {
         this.cameraService = cameraService;
         this.bosonService = bosonService;
@@ -52,6 +55,7 @@ public class DeviceStatusQueryService {
         this.deviceViewService = deviceViewService;
         this.shpService = shpService;
         this.shpStatusEvaluator = shpStatusEvaluator;
+        this.gammaProService = gammaProService;
     }
 
     /** @return one internally consistent, immutable view of current device data */
@@ -85,7 +89,7 @@ public class DeviceStatusQueryService {
         rows.add(toResponse(DeviceCode.ROBOTIC_MANIPULATOR));
         rows.add(toResponse(DeviceCode.BARCODE_SCANNER));
         rows.add(toResponse(DeviceCode.SHP));
-        rows.add(toResponse(DeviceCode.GAMMA_PRO));
+        rows.add(toGammaProResponse());
         return rows;
     }
 
@@ -103,7 +107,26 @@ public class DeviceStatusQueryService {
                 device.getName(),
                 device.getIpAddress(),
                 device.getStatus() != com.rgs.center.objects.DeviceStatus.DISABLED,
-                device.getStatus(),
+                DeviceConnectionStatus.from(device.getStatus()),
+                device.getLastCheck() == null
+                        ? null
+                        : device.getLastCheck()
+                                .atZone(ZoneId.systemDefault())
+                                .toInstant()
+        );
+    }
+
+    /** Gamma-PRO reports the TCP worker state instead of PINGED. */
+    private DeviceResponse toGammaProResponse() {
+        Device device = deviceViewService.getDevice(DeviceCode.GAMMA_PRO);
+        return new DeviceResponse(
+                DeviceCode.GAMMA_PRO.getCode(),
+                device.getName(),
+                device.getIpAddress(),
+                gammaProService.isEnabled(),
+                DeviceConnectionStatus.from(
+                        gammaProService.connectionStatus()
+                ),
                 device.getLastCheck() == null
                         ? null
                         : device.getLastCheck()
