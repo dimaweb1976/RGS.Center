@@ -14,7 +14,13 @@
     </thead>
     <tbody>
     <tr th:each="device : ${devices}">
-        <td th:text="${device.name}">Camera</td>
+        <td>
+            <a th:if="${device.name == 'Robotic manipulator'}"
+               href="/manipulator"
+               th:text="${device.name}">Robotic manipulator</a>
+            <span th:unless="${device.name == 'Robotic manipulator'}"
+                  th:text="${device.name}">Camera</span>
+        </td>
         <td th:text="${device.ipAddress}">192.168.1.13</td>
         <td th:text="${device.status}"
             th:class="${device.status}">
@@ -34,6 +40,65 @@
     </tr>
     </tbody>
 </table>
+
+<section class="manipulator-state">
+    <h2>Robotic manipulator state</h2>
+    <div class="manipulator-state-scroll">
+        <table>
+            <thead>
+            <tr>
+                <th>Connection status</th>
+                <th>Robot mode</th>
+                <th>Position</th>
+                <th>Orientation</th>
+                <th>Motion</th>
+                <th>Command ID</th>
+                <th>Digital inputs</th>
+                <th>Digital outputs</th>
+                <th>Hatch analogue input</th>
+                <th>Spectrometer hatch</th>
+                <th>Safety</th>
+                <th>Last feedback</th>
+                <th>Technical status</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td class="manipulator-status-cell">
+                    <span class="manipulator-connection-indicator"
+                          th:classappend="${manipulatorStatus.connectionStatus.cssClass}"
+                          aria-hidden="true"></span>
+                    <strong class="manipulator-connection-text"
+                            th:classappend="${manipulatorStatus.connectionStatus.cssClass}"
+                            th:text="${manipulatorStatus.connectionStatus.label}">Offline</strong>
+                </td>
+                <td th:text="${manipulatorStatus.robotMode}">-</td>
+                <td th:text="${manipulatorStatus.position}">-</td>
+                <td th:text="${manipulatorStatus.orientation}">-</td>
+                <td th:text="${manipulatorStatus.motion}">-</td>
+                <td th:text="${manipulatorStatus.commandId}">-</td>
+                <td th:text="${manipulatorStatus.digitalInputs}">-</td>
+                <td th:text="${manipulatorStatus.digitalOutputs}">-</td>
+                <td th:text="${manipulatorStatus.analogInput}">-</td>
+                <td th:text="${manipulatorStatus.hatch}">Unknown</td>
+                <td th:text="${manipulatorStatus.safety}">-</td>
+                <td th:text="${manipulatorStatus.lastFeedback}">-</td>
+                <td class="manipulator-status-cell">
+                    <span class="manipulator-readiness-indicator"
+                          th:classappend="${manipulatorStatus.readiness.cssClass}"
+                          aria-hidden="true"></span>
+                    <strong class="manipulator-readiness-text"
+                            th:classappend="${manipulatorStatus.readiness.cssClass}"
+                            th:text="${manipulatorStatus.readiness.label}">No data</strong>
+                    <span class="manipulator-status-details"
+                          th:if="${manipulatorStatus.details != '-'}"
+                          th:text="${manipulatorStatus.details}">Details</span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
 
 <section class="nicole-state">
     <h2>Nicole state</h2>

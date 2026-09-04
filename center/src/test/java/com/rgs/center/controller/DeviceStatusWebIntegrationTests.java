@@ -46,6 +46,18 @@ class DeviceStatusWebIntegrationTests {
         mockMvc.perform(get("/devices").with(user("test-user")))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Nicole state")))
+                .andExpect(content().string(containsString(
+                        "Robotic manipulator state"
+                )))
+                .andExpect(content().string(containsString(
+                        "Spectrometer hatch"
+                )))
+                .andExpect(content().string(containsString(
+                        "manipulator-connection--disabled"
+                )))
+                .andExpect(content().string(containsString(
+                        "manipulator-status--disabled"
+                )))
                 .andExpect(content().string(containsString("GammaPro State")))
                 .andExpect(content().string(containsString(
                         "Measurement state"
@@ -104,6 +116,9 @@ class DeviceStatusWebIntegrationTests {
                         "Nicole state"
                 )))
                 .andExpect(content().string(containsString(
+                        "Robotic manipulator state"
+                )))
+                .andExpect(content().string(containsString(
                         "GammaPro State"
                 )))
                 .andExpect(content().string(containsString(
@@ -122,5 +137,33 @@ class DeviceStatusWebIntegrationTests {
                         "scenario-status--emergency"
                 )))
                 .andExpect(content().string(containsString("EMERGENCY")));
+    }
+
+    @Test
+    void manipulatorPageAndPollingFragmentRenderWithoutTelemetry()
+            throws Exception {
+        mockMvc.perform(get("/manipulator").with(user("test-user")))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString(
+                        "Robotic manipulator state"
+                )))
+                .andExpect(content().string(containsString(
+                        "setInterval(loadManipulatorStatus, 1000)"
+                )))
+                .andExpect(content().string(containsString(
+                        "192.168.5.1:30006"
+                )))
+                .andExpect(content().string(containsString(
+                        "Spectrometer hatch"
+                )))
+                .andExpect(content().string(containsString(
+                        "Transport diagnostics"
+                )));
+
+        mockMvc.perform(get("/manipulator/status").with(user("test-user")))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString(
+                        "manipulator-status--disabled"
+                )));
     }
 }

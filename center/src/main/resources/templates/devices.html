@@ -55,6 +55,84 @@
             margin-top: 24px;
         }
 
+        .manipulator-state {
+            margin-top: 24px;
+        }
+
+        .manipulator-state-scroll {
+            overflow-x: auto;
+        }
+
+        .manipulator-state table {
+            max-width: none;
+            min-width: 1800px;
+        }
+
+        .manipulator-state th,
+        .manipulator-state td {
+            vertical-align: top;
+        }
+
+        .manipulator-status-cell {
+            min-width: 150px;
+        }
+
+        .manipulator-connection-indicator,
+        .manipulator-readiness-indicator {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            margin-right: 8px;
+            border-radius: 50%;
+            vertical-align: middle;
+            background-color: #777777;
+        }
+
+        .manipulator-connection-indicator.manipulator-connection--online,
+        .manipulator-readiness-indicator.manipulator-status--ready {
+            background-color: #24ad5f;
+        }
+
+        .manipulator-connection-indicator.manipulator-connection--offline,
+        .manipulator-readiness-indicator.manipulator-status--alert {
+            background-color: #ed1c2e;
+        }
+
+        .manipulator-connection-indicator.manipulator-connection--connecting,
+        .manipulator-readiness-indicator.manipulator-status--busy {
+            background-color: #d99800;
+        }
+
+        .manipulator-connection-text.manipulator-connection--online,
+        .manipulator-readiness-text.manipulator-status--ready {
+            color: #168347;
+        }
+
+        .manipulator-connection-text.manipulator-connection--offline,
+        .manipulator-readiness-text.manipulator-status--alert {
+            color: #d7192d;
+        }
+
+        .manipulator-connection-text.manipulator-connection--connecting,
+        .manipulator-readiness-text.manipulator-status--busy {
+            color: #946700;
+        }
+
+        .manipulator-connection-text.manipulator-connection--disabled,
+        .manipulator-readiness-text.manipulator-status--disabled,
+        .manipulator-readiness-text.manipulator-status--no-data {
+            color: #777777;
+        }
+
+        .manipulator-status-details {
+            display: block;
+            margin-top: 6px;
+            max-width: 280px;
+            color: #555555;
+            font-size: 0.85rem;
+            white-space: normal;
+        }
+
         .nicole-state {
             margin-top: 24px;
         }
