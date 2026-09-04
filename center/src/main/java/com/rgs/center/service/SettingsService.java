@@ -51,6 +51,10 @@ public class SettingsService {
     public static final String MANIPULATOR_TELEMETRY_STALE_MILLIS = "device.manipulator.telemetry-stale-millis";
     public static final String MANIPULATOR_HATCH_CLOSED_DI_BIT = "device.manipulator.hatch-closed-di-bit";
     public static final String MANIPULATOR_HATCH_OPEN_DI_BIT = "device.manipulator.hatch-open-di-bit";
+    public static final String MANIPULATOR_HATCH_AI_ENABLED =
+            "device.manipulator.hatch-ai-enabled";
+    public static final String MANIPULATOR_HATCH_AI_INDEX =
+            "device.manipulator.hatch-ai-index";
     public static final String BARCODE_SCANNER_PORT = "device.barcode-scanner.port";
     public static final String BARCODE_SCANNER_BAUD_RATE =
             "device.barcode-scanner.baud-rate";
@@ -146,8 +150,8 @@ public class SettingsService {
     @Value("${rgs.device.manipulator.command-port:29999}")
     private long manipulatorCommandPort = 29999L;
 
-    @Value("${rgs.device.manipulator.feedback-port:30005}")
-    private long manipulatorFeedbackPort = 30005L;
+    @Value("${rgs.device.manipulator.feedback-port:30006}")
+    private long manipulatorFeedbackPort = 30006L;
 
     @Value("${rgs.device.manipulator.connect-timeout-millis:2000}")
     private long manipulatorConnectTimeoutMillis = 2000L;
@@ -158,14 +162,20 @@ public class SettingsService {
     @Value("${rgs.device.manipulator.response-timeout-millis:3000}")
     private long manipulatorResponseTimeoutMillis = 3000L;
 
-    @Value("${rgs.device.manipulator.telemetry-stale-millis:2000}")
-    private long manipulatorTelemetryStaleMillis = 2000L;
+    @Value("${rgs.device.manipulator.telemetry-stale-millis:3500}")
+    private long manipulatorTelemetryStaleMillis = 3500L;
 
     @Value("${rgs.device.manipulator.hatch-closed-di-bit:0}")
     private long manipulatorHatchClosedDiBit = 0L;
 
     @Value("${rgs.device.manipulator.hatch-open-di-bit:1}")
     private long manipulatorHatchOpenDiBit = 1L;
+
+    @Value("${rgs.device.manipulator.hatch-ai-enabled:false}")
+    private boolean manipulatorHatchAiEnabled;
+
+    @Value("${rgs.device.manipulator.hatch-ai-index:1}")
+    private long manipulatorHatchAiIndex = 1L;
 
     @Value("${rgs.device.barcode-scanner.port:}")
     private String barcodeScannerPort = "";
@@ -297,6 +307,16 @@ public class SettingsService {
         registerDefault(MANIPULATOR_TELEMETRY_STALE_MILLIS, SettingType.LONG, manipulatorTelemetryStaleMillis);
         registerDefault(MANIPULATOR_HATCH_CLOSED_DI_BIT, SettingType.LONG, manipulatorHatchClosedDiBit);
         registerDefault(MANIPULATOR_HATCH_OPEN_DI_BIT, SettingType.LONG, manipulatorHatchOpenDiBit);
+        registerDefault(
+                MANIPULATOR_HATCH_AI_ENABLED,
+                SettingType.BOOLEAN,
+                manipulatorHatchAiEnabled
+        );
+        registerDefault(
+                MANIPULATOR_HATCH_AI_INDEX,
+                SettingType.LONG,
+                manipulatorHatchAiIndex
+        );
         registerDefault(
                 BARCODE_SCANNER_PORT,
                 SettingType.STRING,

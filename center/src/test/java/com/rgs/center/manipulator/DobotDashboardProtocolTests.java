@@ -33,4 +33,13 @@ class DobotDashboardProtocolTests {
                 () -> protocol.parse("not-a-response;".getBytes(StandardCharsets.US_ASCII))
         );
     }
+
+    @Test
+    void parsesFractionalAnalogInputValue() {
+        DobotCommandResponse response = protocol.parse(
+                "0,{127.25},AI(1);".getBytes(StandardCharsets.US_ASCII)
+        );
+
+        assertEquals(127.25, response.firstDoubleValue().orElseThrow());
+    }
 }

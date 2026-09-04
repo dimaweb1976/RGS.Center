@@ -138,6 +138,38 @@ class SettingsServiceTests {
     }
 
     @Test
+    void providesDobotStreamAndOptionalAnalogInputDefaults() {
+        assertEquals(
+                30006L,
+                service.getValue(
+                        SettingsService.MANIPULATOR_FEEDBACK_PORT,
+                        Long.class
+                )
+        );
+        assertEquals(
+                3500L,
+                service.getValue(
+                        SettingsService.MANIPULATOR_TELEMETRY_STALE_MILLIS,
+                        Long.class
+                )
+        );
+        assertEquals(
+                false,
+                service.getValue(
+                        SettingsService.MANIPULATOR_HATCH_AI_ENABLED,
+                        Boolean.class
+                )
+        );
+        assertEquals(
+                1L,
+                service.getValue(
+                        SettingsService.MANIPULATOR_HATCH_AI_INDEX,
+                        Long.class
+                )
+        );
+    }
+
+    @Test
     void loadsAndDumpsDatabaseShapedRecords() {
         service.load(List.of(
                 new SettingRecord(

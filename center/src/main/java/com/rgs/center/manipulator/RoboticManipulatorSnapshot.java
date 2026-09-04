@@ -11,6 +11,7 @@ public record RoboticManipulatorSnapshot(
         IncomingFrameRouterSnapshot router,
         DobotFeedbackFrame latestFeedback,
         long latestFeedbackReceivedAtEpochMillis,
+        ManipulatorAnalogInputSnapshot hatchAnalogInput,
         String lastError
 ) {
 }

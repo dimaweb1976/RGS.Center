@@ -215,6 +215,70 @@ public final class ByteRingBuffer {
     }
 
     /**
+     * Извлекает фиксированный двоичный кадр с восстановлением синхронизации.
+     *
+     * <p>Все байты до стартового маркера удаляются. После его обнаружения
+     * дополнительно проверяется контрольный маркер внутри предполагаемого
+     * кадра. Если он не совпал, поиск продолжается со следующего байта. Метод
+     * сохраняет неполный стартовый маркер в конце буфера и поэтому безопасен
+     * при любом разбиении TCP-потока на порции.</p>
+     *
+     * @param frameLength полная длина кадра
+     * @param startMarker маркер начала кадра
+     * @param validationOffset смещение внутреннего контрольного маркера
+     * @param validationMarker внутренний контрольный маркер
+     * @return полный синхронизированный кадр либо {@code null}
+     */
+    public byte[] pollSynchronizedFrame(
+            int frameLength,
+            byte[] startMarker,
+            int validationOffset,
+            byte[] validationMarker
+    ) {
+        if (frameLength <= 0) {
+            throw new IllegalArgumentException("Frame length must be positive");
+        }
+        if (startMarker == null || startMarker.length == 0) {
+            throw new IllegalArgumentException("Start marker must not be empty");
+        }
+        if (validationMarker == null || validationMarker.length == 0) {
+            throw new IllegalArgumentException(
+                    "Validation marker must not be empty"
+            );
+        }
+        if (validationOffset < 0
+                || validationOffset + validationMarker.length > frameLength) {
+            throw new IllegalArgumentException(
+                    "Validation marker must fit inside the frame"
+            );
+        }
+
+        lock.lock();
+        try {
+            int bytesNeededForValidation = validationOffset
+                    + validationMarker.length;
+            while (true) {
+                // Keep a possible partial start marker until the next TCP read.
+                while (size >= startMarker.length
+                        && !matchesAt(0, startMarker)) {
+                    discardOne();
+                }
+                if (size < startMarker.length
+                        || size < bytesNeededForValidation) {
+                    return null;
+                }
+                if (!matchesAt(validationOffset, validationMarker)) {
+                    discardOne();
+                    continue;
+                }
+                return size < frameLength ? null : remove(frameLength);
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
      * Извлекает кадр до однобайтового терминатора включительно.
      *
      * <p>Метод предназначен для протоколов наподобие Dobot Dashboard, где
