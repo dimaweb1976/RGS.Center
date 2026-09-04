@@ -184,6 +184,12 @@ public abstract class AbstractQueuedDeviceService
         return worker.awaitFrame(timeout);
     }
 
+    /** Удаляет устаревшие готовые кадры перед новой протокольной операцией. */
+    protected final void clearQueuedFrames() {
+        ensureCommunication();
+        worker.clearFrames();
+    }
+
     /**
      * Гарантирует готовность worker перед прикладной операцией.
      */
