@@ -19,6 +19,11 @@ public final class GammaProProtocol {
     private GammaProProtocol() {
     }
 
+    /** @return команда чтения трактов с обязательными пустыми скобками */
+    public static String getTractsName() {
+        return GET_TRACTS_NAME + "()";
+    }
+
     /** @return команда выбора текущего спектрометрического тракта */
     public static String setTract(String mcaName, String channelName) {
         requireParameter(mcaName, "MCA name");

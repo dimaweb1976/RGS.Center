@@ -1,6 +1,9 @@
-package com.rgs.center.service;
+package com.rgs.center.barcodescanner;
 
 import com.rgs.center.objects.DeviceCode;
+import com.rgs.center.service.CurrentDataService;
+import com.rgs.center.service.GetDataAdapter;
+import com.rgs.center.service.SettingsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -83,7 +86,10 @@ public class BarcodeScannerGetDataAdapter implements GetDataAdapter<String> {
             String barcode = scannerPort.readCode(
                     portName,
                     toInt(SettingsService.BARCODE_SCANNER_BAUD_RATE),
-                    toInt(SettingsService.BARCODE_SCANNER_READ_TIMEOUT_MILLIS),
+                    toInt(
+                            SettingsService
+                                    .BARCODE_SCANNER_SCAN_ATTEMPT_TIMEOUT_MILLIS
+                    ),
                     toInt(SettingsService.BARCODE_SCANNER_MAX_CODE_LENGTH)
             );
             currentDataService.setValue(
@@ -129,11 +135,14 @@ public class BarcodeScannerGetDataAdapter implements GetDataAdapter<String> {
      * @param exception исходная ошибка чтения
      */
     private void recordFailure(RuntimeException exception) {
-        currentDataService.setValue(
-                deviceCode(),
-                CurrentDataService.PINGED,
-                false
-        );
+        if (!(exception instanceof BarcodeScannerException scannerException)
+                || scannerException.isConnectionFailure()) {
+            currentDataService.setValue(
+                    deviceCode(),
+                    CurrentDataService.PINGED,
+                    false
+            );
+        }
         currentDataService.recordDataFailure(
                 deviceCode(),
                 exception.getMessage()

@@ -4,7 +4,6 @@ import com.rgs.center.connection.ManagedDeviceConnection;
 import com.rgs.center.connection.DeviceEnablementService;
 import com.rgs.center.connection.TcpDeviceConnection;
 import com.rgs.center.objects.DeviceCode;
-import com.rgs.center.peripheral.FixedLengthFrameDecoder;
 import com.rgs.center.peripheral.IncomingFrameRoute;
 import com.rgs.center.peripheral.IncomingFrameRouter;
 import com.rgs.center.peripheral.PeripheralCommunicationException;
@@ -24,6 +23,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.ExecutorService;
@@ -68,6 +69,12 @@ public class RoboticManipulatorStreamService
     private final AtomicReference<DobotFeedbackFrame> latestFeedback =
             new AtomicReference<>();
     private final AtomicLong latestFeedbackAt = new AtomicLong();
+    private final AtomicLong connectionStartedAt = new AtomicLong();
+    private final AtomicReference<Double> latestHatchAnalogInput =
+            new AtomicReference<>();
+    private final AtomicLong latestHatchAnalogInputAt = new AtomicLong();
+    private final AtomicReference<String> lastAnalogInputError =
+            new AtomicReference<>("");
     private final AtomicReference<String> lastError =
             new AtomicReference<>("");
     private final ReentrantLock commandLock = new ReentrantLock();
@@ -96,7 +103,7 @@ public class RoboticManipulatorStreamService
                 FEEDBACK_SOURCE,
                 tcpConnection(FEEDBACK_SOURCE, SettingsService.MANIPULATOR_FEEDBACK_PORT),
                 new PeripheralWorkerConfiguration(16384, 8, 64, 4096, 1440, false),
-                new FixedLengthFrameDecoder(DobotFeedbackParser.FRAME_LENGTH)
+                new DobotFeedbackFrameDecoder()
         );
         router = new IncomingFrameRouter(
                 (sourceId, frame) -> switch (sourceId) {
@@ -160,8 +167,11 @@ public class RoboticManipulatorStreamService
         stopWorkerIfNecessary(feedbackWorker);
         router.clear();
         try {
+            latestFeedback.set(null);
+            latestFeedbackAt.set(0L);
             commandWorker.start();
             feedbackWorker.start();
+            connectionStartedAt.set(System.currentTimeMillis());
             started.set(true);
             routerExecutor = Executors.newFixedThreadPool(
                     3,
@@ -210,6 +220,15 @@ public class RoboticManipulatorStreamService
                 router.snapshot(),
                 latestFeedback.get(),
                 latestFeedbackAt.get(),
+                new ManipulatorAnalogInputSnapshot(
+                        settingBoolean(
+                                SettingsService.MANIPULATOR_HATCH_AI_ENABLED
+                        ),
+                        settingInt(SettingsService.MANIPULATOR_HATCH_AI_INDEX),
+                        latestHatchAnalogInput.get(),
+                        latestHatchAnalogInputAt.get(),
+                        lastAnalogInputError.get()
+                ),
                 lastError.get()
         );
     }
@@ -221,6 +240,15 @@ public class RoboticManipulatorStreamService
     public DobotCommandResponse executeCommand(
             String command,
             Duration timeout
+    ) {
+        return exchangeCommand(command, timeout, true);
+    }
+
+    /** Выполняет один сериализованный Dashboard-обмен. */
+    private DobotCommandResponse exchangeCommand(
+            String command,
+            Duration timeout,
+            boolean affectsConnectionStatus
     ) {
         requirePositive(timeout);
         commandLock.lock();
@@ -247,7 +275,9 @@ public class RoboticManipulatorStreamService
             }
             return response;
         } catch (RuntimeException exception) {
-            recordError(exception);
+            if (affectsConnectionStatus) {
+                recordError(exception);
+            }
             throw exception;
         } finally {
             commandLock.unlock();
@@ -358,36 +388,37 @@ public class RoboticManipulatorStreamService
     private void publish(DobotFeedbackFrame value) {
         DeviceCode device = deviceCode();
         CartesianPose pose = value.pose();
-        currentData.setValue(device, "x", pose.x());
-        currentData.setValue(device, "y", pose.y());
-        currentData.setValue(device, "z", pose.z());
-        currentData.setValue(device, "rx", pose.rx());
-        currentData.setValue(device, "ry", pose.ry());
-        currentData.setValue(device, "rz", pose.rz());
+        Map<String, Object> values = new LinkedHashMap<>();
+        values.put("x", pose.x());
+        values.put("y", pose.y());
+        values.put("z", pose.z());
+        values.put("rx", pose.rx());
+        values.put("ry", pose.ry());
+        values.put("rz", pose.rz());
         for (int index = 0; index < value.actualJointPositions().size(); index++) {
-            currentData.setValue(
-                    device,
+            values.put(
                     "joint_" + (index + 1),
                     value.actualJointPositions().get(index)
             );
         }
-        currentData.setValue(device, "digital_inputs", value.digitalInputs());
-        currentData.setValue(device, "digital_outputs", value.digitalOutputs());
-        currentData.setValue(device, "robot_mode", value.robotMode());
-        currentData.setValue(device, "queue_running", value.queuedCommandRunning());
-        currentData.setValue(device, "enabled", value.enabled());
-        currentData.setValue(device, "running", value.running());
-        currentData.setValue(device, "error_status", value.error());
-        currentData.setValue(device, "current_command_id", value.currentCommandId());
-        currentData.setValue(device, "safety_state", value.safetyState());
-        currentData.setValue(device, "telemetry_stale", false);
+        values.put("digital_inputs", value.digitalInputs());
+        values.put("digital_outputs", value.digitalOutputs());
+        values.put("robot_mode", value.robotMode());
+        values.put("queue_running", value.queuedCommandRunning());
+        values.put("enabled", value.enabled());
+        values.put("running", value.running());
+        values.put("error_status", value.error());
+        values.put("current_command_id", value.currentCommandId());
+        values.put("safety_state", value.safetyState());
+        values.put("telemetry_stale", false);
         int closedBit = settingInt(SettingsService.MANIPULATOR_HATCH_CLOSED_DI_BIT);
         int openBit = settingInt(SettingsService.MANIPULATOR_HATCH_OPEN_DI_BIT);
-        currentData.setValue(device, "di_" + closedBit, bit(value.digitalInputs(), closedBit));
-        currentData.setValue(device, "di_" + openBit, bit(value.digitalInputs(), openBit));
-        currentData.setValue(device, "spectrometer_hatch_closed", bit(value.digitalInputs(), closedBit));
-        currentData.setValue(device, "spectrometer_hatch_open", bit(value.digitalInputs(), openBit));
-        currentData.setValue(device, CurrentDataService.PINGED, true);
+        values.put("di_" + closedBit, bit(value.digitalInputs(), closedBit));
+        values.put("di_" + openBit, bit(value.digitalInputs(), openBit));
+        values.put("spectrometer_hatch_closed", bit(value.digitalInputs(), closedBit));
+        values.put("spectrometer_hatch_open", bit(value.digitalInputs(), openBit));
+        values.put(CurrentDataService.PINGED, true);
+        currentData.setValues(device, values);
         currentData.recordDataSuccess(device, value);
         lastError.set("");
     }
@@ -414,14 +445,80 @@ public class RoboticManipulatorStreamService
             return;
         }
         long last = latestFeedbackAt.get();
+        long freshnessBase = last == 0L ? connectionStartedAt.get() : last;
         long staleAfter = settingLong(SettingsService.MANIPULATOR_TELEMETRY_STALE_MILLIS);
-        if (last == 0 || System.currentTimeMillis() - last > staleAfter) {
+        if (freshnessBase > 0L
+                && System.currentTimeMillis() - freshnessBase > staleAfter) {
             currentData.setValue(deviceCode(), "telemetry_stale", true);
             currentData.setValue(deviceCode(), CurrentDataService.PINGED, false);
+            String error = "Dobot telemetry timeout after " + staleAfter + " ms";
+            lastError.set(error);
+            currentData.recordDataFailure(deviceCode(), error);
+            log.warn("{}; feedback connection will be restarted", error);
+            stopCommunication();
+            return;
         }
         if (commandWorker.snapshot().state() == PeripheralWorkerState.FAILED
                 || feedbackWorker.snapshot().state() == PeripheralWorkerState.FAILED) {
             started.set(false);
+        }
+    }
+
+    /**
+     * Низкоприоритетно читает AI(index) через Dashboard-канал. Опрос
+     * пропускается, если канал занят командой движения или сервисной командой.
+     */
+    @Scheduled(
+            fixedDelayString = "${rgs.device.manipulator.hatch-ai-poll-interval-millis:2000}",
+            initialDelayString = "${rgs.device.manipulator.hatch-ai-poll-initial-delay-millis:4000}"
+    )
+    public void pollHatchAnalogInput() {
+        if (!isEnabled()
+                || !settingBoolean(SettingsService.MANIPULATOR_HATCH_AI_ENABLED)
+                || !started.get()
+                || !commandLock.tryLock()) {
+            return;
+        }
+        try {
+            int index = settingInt(SettingsService.MANIPULATOR_HATCH_AI_INDEX);
+            if (index < 1 || index > 2) {
+                throw new IllegalStateException(
+                        "Dobot controller AI index must be 1 or 2"
+                );
+            }
+            DobotCommandResponse response = exchangeCommand(
+                    "AI(" + index + ")",
+                    Duration.ofMillis(settingLong(
+                            SettingsService.MANIPULATOR_RESPONSE_TIMEOUT_MILLIS
+                    )),
+                    false
+            );
+            double value = response.firstDoubleValue().orElseThrow(
+                    () -> new PeripheralCommunicationException(
+                            "Dobot AI response contains no numeric value"
+                    )
+            );
+            latestHatchAnalogInput.set(value);
+            latestHatchAnalogInputAt.set(System.currentTimeMillis());
+            String previousError = lastAnalogInputError.getAndSet("");
+            currentData.setValue(deviceCode(), "hatch_analog_input_index", index);
+            currentData.setValue(deviceCode(), "hatch_analog_input", value);
+            currentData.setValue(
+                    deviceCode(),
+                    "hatch_analog_input_lastdate_out",
+                    Instant.now().getEpochSecond()
+            );
+            if (!previousError.isBlank()) {
+                log.info("Dobot analogue input communication recovered");
+            }
+        } catch (RuntimeException exception) {
+            String error = message(exception);
+            String previousError = lastAnalogInputError.getAndSet(error);
+            if (!error.equals(previousError)) {
+                log.warn("Dobot analogue input query failed: {}", error);
+            }
+        } finally {
+            commandLock.unlock();
         }
     }
 
@@ -461,6 +558,10 @@ public class RoboticManipulatorStreamService
 
     private long settingLong(String code) {
         return settings.getValue(code, Long.class);
+    }
+
+    private boolean settingBoolean(String code) {
+        return settings.getValue(code, Boolean.class);
     }
 
     private static boolean bit(long mask, int bit) {

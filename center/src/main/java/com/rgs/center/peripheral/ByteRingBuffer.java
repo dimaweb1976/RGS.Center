@@ -121,6 +121,68 @@ public final class ByteRingBuffer {
     }
 
     /**
+     * Извлекает строку до явно заданной последовательности завершения.
+     * Последовательность в возвращаемый кадр не включается.
+     *
+     * <p>Ведущие CR/LF от предыдущего кадра отбрасываются. Для окончания LF
+     * допускается предшествующий CR, поэтому режим LF безопасно принимает и
+     * стандартную пару CRLF.</p>
+     *
+     * @param ending непустая последовательность завершения
+     * @param maxLength максимальная длина полезных данных
+     * @return кадр без окончания либо {@code null}
+     */
+    public byte[] pollLineEnding(byte[] ending, int maxLength) {
+        if (ending == null || ending.length == 0) {
+            throw new IllegalArgumentException(
+                    "Line ending must not be empty"
+            );
+        }
+        if (maxLength <= 0) {
+            throw new IllegalArgumentException(
+                    "Maximum frame length must be positive"
+            );
+        }
+
+        lock.lock();
+        try {
+            discardLeadingLineEndings();
+            int lastStart = size - ending.length;
+            for (int offset = 0; offset <= lastStart; offset++) {
+                if (!matchesAt(offset, ending)) {
+                    continue;
+                }
+                int payloadLength = offset;
+                int consumedEndingLength = ending.length;
+                if (ending.length == 1
+                        && ending[0] == '\n'
+                        && payloadLength > 0
+                        && valueAt(payloadLength - 1) == '\r') {
+                    payloadLength--;
+                    consumedEndingLength++;
+                }
+                if (payloadLength > maxLength) {
+                    throw frameTooLong(maxLength);
+                }
+                byte[] frame = remove(payloadLength);
+                for (int index = 0;
+                        index < consumedEndingLength;
+                        index++) {
+                    discardOne();
+                }
+                return frame;
+            }
+            // Keep a possible partial multi-byte ending beyond maxLength.
+            if (size > maxLength + ending.length - 1) {
+                throw frameTooLong(maxLength);
+            }
+            return null;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
      * @return число ещё не обработанных входящих байтов
      */
     public int size() {
@@ -147,6 +209,70 @@ public final class ByteRingBuffer {
         lock.lock();
         try {
             return size < length ? null : remove(length);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Извлекает фиксированный двоичный кадр с восстановлением синхронизации.
+     *
+     * <p>Все байты до стартового маркера удаляются. После его обнаружения
+     * дополнительно проверяется контрольный маркер внутри предполагаемого
+     * кадра. Если он не совпал, поиск продолжается со следующего байта. Метод
+     * сохраняет неполный стартовый маркер в конце буфера и поэтому безопасен
+     * при любом разбиении TCP-потока на порции.</p>
+     *
+     * @param frameLength полная длина кадра
+     * @param startMarker маркер начала кадра
+     * @param validationOffset смещение внутреннего контрольного маркера
+     * @param validationMarker внутренний контрольный маркер
+     * @return полный синхронизированный кадр либо {@code null}
+     */
+    public byte[] pollSynchronizedFrame(
+            int frameLength,
+            byte[] startMarker,
+            int validationOffset,
+            byte[] validationMarker
+    ) {
+        if (frameLength <= 0) {
+            throw new IllegalArgumentException("Frame length must be positive");
+        }
+        if (startMarker == null || startMarker.length == 0) {
+            throw new IllegalArgumentException("Start marker must not be empty");
+        }
+        if (validationMarker == null || validationMarker.length == 0) {
+            throw new IllegalArgumentException(
+                    "Validation marker must not be empty"
+            );
+        }
+        if (validationOffset < 0
+                || validationOffset + validationMarker.length > frameLength) {
+            throw new IllegalArgumentException(
+                    "Validation marker must fit inside the frame"
+            );
+        }
+
+        lock.lock();
+        try {
+            int bytesNeededForValidation = validationOffset
+                    + validationMarker.length;
+            while (true) {
+                // Keep a possible partial start marker until the next TCP read.
+                while (size >= startMarker.length
+                        && !matchesAt(0, startMarker)) {
+                    discardOne();
+                }
+                if (size < startMarker.length
+                        || size < bytesNeededForValidation) {
+                    return null;
+                }
+                if (!matchesAt(validationOffset, validationMarker)) {
+                    discardOne();
+                    continue;
+                }
+                return size < frameLength ? null : remove(frameLength);
+            }
         } finally {
             lock.unlock();
         }
@@ -188,6 +314,58 @@ public final class ByteRingBuffer {
             if (size > maxLength) {
                 throw new PeripheralCommunicationException(
                         "Received terminated frame exceeds maximum length of "
+                                + maxLength
+                );
+            }
+            return null;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Извлекает первый из двух видов кадров: строку CR/LF либо кадр вместе с
+     * однобайтовым терминатором.
+     *
+     * <p>Нужно устройствам, у которых служебные ответы и прикладные строки
+     * используют разные окончания в одном последовательном потоке.</p>
+     *
+     * @param terminator терминатор служебного ответа
+     * @param maxLength максимальная длина любого кадра
+     * @return ближайший полный кадр либо {@code null}
+     */
+    public byte[] pollLineOrTerminated(byte terminator, int maxLength) {
+        if (maxLength <= 0) {
+            throw new IllegalArgumentException(
+                    "Maximum mixed frame length must be positive"
+            );
+        }
+        lock.lock();
+        try {
+            discardLeadingLineEndings();
+            for (int offset = 0; offset < size; offset++) {
+                if (offset + 1 > maxLength) {
+                    throw new PeripheralCommunicationException(
+                            "Received mixed frame exceeds maximum length of "
+                                    + maxLength
+                    );
+                }
+                byte value = valueAt(offset);
+                if (isLineEnding(value)) {
+                    byte[] frame = remove(offset);
+                    discardOne();
+                    if (value == '\r' && size > 0 && valueAt(0) == '\n') {
+                        discardOne();
+                    }
+                    return frame;
+                }
+                if (value == terminator) {
+                    return remove(offset + 1);
+                }
+            }
+            if (size > maxLength) {
+                throw new PeripheralCommunicationException(
+                        "Received mixed frame exceeds maximum length of "
                                 + maxLength
                 );
             }
@@ -298,6 +476,22 @@ public final class ByteRingBuffer {
      */
     private byte valueAt(int offset) {
         return data[(head + offset) % data.length];
+    }
+
+    /** Проверяет последовательность по логическому смещению кольца. */
+    private boolean matchesAt(int offset, byte[] expected) {
+        for (int index = 0; index < expected.length; index++) {
+            if (valueAt(offset + index) != expected[index]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private PeripheralCommunicationException frameTooLong(int maxLength) {
+        return new PeripheralCommunicationException(
+                "Received frame exceeds maximum length of " + maxLength
+        );
     }
 
     /**

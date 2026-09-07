@@ -259,6 +259,18 @@ public final class PeripheralDeviceWorker implements AutoCloseable {
     }
 
     /**
+     * Удаляет уже собранные, но ещё не обработанные кадры.
+     *
+     * <p>Используется перед началом транзакции с пассивным устройством, чтобы
+     * данные от предыдущего ручного действия не стали ответом нового
+     * запроса.</p>
+     */
+    public void clearFrames() {
+        requireRunning();
+        frameQueue.clear();
+    }
+
+    /**
      * Последовательно выполняет один обмен «команда → ответ».
      *
      * <p>{@code exchangeLock} гарантирует, что два вызывающих потока не заберут
@@ -411,6 +423,7 @@ public final class PeripheralDeviceWorker implements AutoCloseable {
                     );
                 }
                 if (read == 0) {
+                    publishAvailableFrames(true);
                     continue;
                 }
                 bytesReceived.addAndGet(read);
@@ -423,25 +436,7 @@ public final class PeripheralDeviceWorker implements AutoCloseable {
                         receiveBuffer.size()
                 );
 
-                byte[] frame;
-                while ((frame = frameDecoder.pollFrame(receiveBuffer)) != null) {
-                    framesReceived.incrementAndGet();
-                    // При заполнении сохраняем самое новое состояние устройства.
-                    if (!frameQueue.offer(frame)) {
-                        frameQueue.poll();
-                        frameQueue.offer(frame);
-                        long dropped = framesDropped.incrementAndGet();
-                        // Preserve visibility of data loss without writing one
-                        // warning for every frame in a sustained overload.
-                        if (dropped == 1 || dropped % 1000 == 0) {
-                            log.warn(
-                                    "Frame queue full for peripheral {}; oldest frame dropped, totalDropped={}",
-                                    deviceId,
-                                    dropped
-                            );
-                        }
-                    }
-                }
+                publishAvailableFrames(false);
             } catch (RuntimeException exception) {
                 if (running.get()) {
                     fail(exception);
@@ -450,6 +445,31 @@ public final class PeripheralDeviceWorker implements AutoCloseable {
             }
         }
         log.debug("RX loop stopped for peripheral {}", deviceId);
+    }
+
+    /** Публикует все кадры, которые декодер может выделить сейчас. */
+    private void publishAvailableFrames(boolean transportIdle) {
+        byte[] frame;
+        while ((frame = transportIdle
+                ? frameDecoder.pollIdleFrame(receiveBuffer)
+                : frameDecoder.pollFrame(receiveBuffer)) != null) {
+            framesReceived.incrementAndGet();
+            // При заполнении сохраняем самое новое состояние устройства.
+            if (!frameQueue.offer(frame)) {
+                frameQueue.poll();
+                frameQueue.offer(frame);
+                long dropped = framesDropped.incrementAndGet();
+                // Preserve visibility of data loss without writing one
+                // warning for every frame in a sustained overload.
+                if (dropped == 1 || dropped % 1000 == 0) {
+                    log.warn(
+                            "Frame queue full for peripheral {}; oldest frame dropped, totalDropped={}",
+                            deviceId,
+                            dropped
+                    );
+                }
+            }
+        }
     }
 
     /**

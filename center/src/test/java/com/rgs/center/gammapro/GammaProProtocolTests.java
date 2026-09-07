@@ -24,6 +24,10 @@ class GammaProProtocolTests {
     @Test
     void buildsStageSevenCommands() {
         assertEquals(
+                "GET_TRACTS_NAME()",
+                GammaProProtocol.getTractsName()
+        );
+        assertEquals(
                 "SET_TRACT(BOSON1,GCD-4020)",
                 GammaProProtocol.setTract("BOSON1", "GCD-4020")
         );

@@ -43,8 +43,41 @@ class SettingsServiceTests {
     @Test
     void providesComPortSettingsForTargetPeripheralDevices() {
         assertEquals(
+                250L,
+                service.getValue(
+                        SettingsService.BARCODE_SCANNER_READ_TIMEOUT_MILLIS,
+                        Long.class
+                )
+        );
+        assertEquals(
+                5000L,
+                service.getValue(
+                        SettingsService
+                                .BARCODE_SCANNER_SCAN_ATTEMPT_TIMEOUT_MILLIS,
+                        Long.class
+                )
+        );
+        assertEquals(
+                "AUTO",
+                service.getValue(
+                        SettingsService.BARCODE_SCANNER_DATA_SUFFIX,
+                        String.class
+                )
+        );
+        assertEquals(
                 "",
                 service.getValue(SettingsService.SCALES_PORT, String.class)
+        );
+        assertEquals(
+                9600L,
+                service.getValue(SettingsService.SCALES_BAUD_RATE, Long.class)
+        );
+        assertEquals(
+                700L,
+                service.getValue(
+                        SettingsService.SCALES_RESPONSE_TIMEOUT_MILLIS,
+                        Long.class
+                )
         );
         assertEquals(
                 "COM5",
@@ -76,6 +109,17 @@ class SettingsServiceTests {
                 37569L,
                 service.getValue(SettingsService.GAMMA_PRO_PORT, Long.class)
         );
+        assertEquals(
+                "BOSON",
+                service.getValue(SettingsService.BOSON_MCA_NAME, String.class)
+        );
+        assertEquals(
+                "Ch1",
+                service.getValue(
+                        SettingsService.BOSON_CHANNEL_NAME,
+                        String.class
+                )
+        );
     }
 
     @Test
@@ -88,6 +132,38 @@ class SettingsServiceTests {
                 3000L,
                 service.getValue(
                         SettingsService.NICOLE_RESPONSE_TIMEOUT_MILLIS,
+                        Long.class
+                )
+        );
+    }
+
+    @Test
+    void providesDobotStreamAndOptionalAnalogInputDefaults() {
+        assertEquals(
+                30006L,
+                service.getValue(
+                        SettingsService.MANIPULATOR_FEEDBACK_PORT,
+                        Long.class
+                )
+        );
+        assertEquals(
+                3500L,
+                service.getValue(
+                        SettingsService.MANIPULATOR_TELEMETRY_STALE_MILLIS,
+                        Long.class
+                )
+        );
+        assertEquals(
+                false,
+                service.getValue(
+                        SettingsService.MANIPULATOR_HATCH_AI_ENABLED,
+                        Boolean.class
+                )
+        );
+        assertEquals(
+                1L,
+                service.getValue(
+                        SettingsService.MANIPULATOR_HATCH_AI_INDEX,
                         Long.class
                 )
         );

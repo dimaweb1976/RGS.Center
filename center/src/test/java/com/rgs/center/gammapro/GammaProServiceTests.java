@@ -1,12 +1,15 @@
 package com.rgs.center.service;
 
 import com.rgs.center.gammapro.BosonHighVoltageSnapshot;
+import com.rgs.center.gammapro.BosonConnectionStatus;
+import com.rgs.center.gammapro.GammaProConnectionStatus;
 import com.rgs.center.gammapro.GammaProHighVoltageValueType;
 import com.rgs.center.gammapro.GammaProMeasurementRequest;
 import com.rgs.center.gammapro.GammaProMeasurementState;
 import com.rgs.center.gammapro.GammaProProtocol;
 import com.rgs.center.gammapro.GammaProService;
 import com.rgs.center.gammapro.GammaProSnapshot;
+import com.rgs.center.gammapro.GammaProStatusView;
 import com.rgs.center.objects.DeviceCode;
 import org.junit.jupiter.api.Test;
 
@@ -24,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class GammaProServiceTests {
@@ -65,7 +69,12 @@ class GammaProServiceTests {
 
             try {
                 service.startCommunication();
+                assertEquals(
+                        GammaProConnectionStatus.CONNECTED,
+                        service.connectionStatus()
+                );
                 service.pollGammaPro();
+                GammaProStatusView statusView = service.statusView();
                 BosonHighVoltageSnapshot highVoltage =
                         service.applyBosonHighVoltage(
                                 "BOSON1",
@@ -93,6 +102,17 @@ class GammaProServiceTests {
                         completed.measurementState()
                 );
                 assertTrue(completed.connected());
+                assertEquals(
+                        GammaProConnectionStatus.CONNECTED,
+                        statusView.connectionStatus()
+                );
+                assertEquals(
+                        BosonConnectionStatus.CONNECTED,
+                        statusView.bosonConnectionStatus()
+                );
+                assertTrue(!statusView.snapshot().tracts().isEmpty());
+                assertNotNull(statusView.bosonLastConfirmedAt());
+                assertNotNull(statusView.lastUpdatedAt());
                 assertTrue(highVoltage.commandAccepted());
                 assertEquals(2500, highVoltage.requestedValue());
                 assertEquals(
@@ -113,7 +133,7 @@ class GammaProServiceTests {
                 );
                 assertEquals(
                         List.of(
-                                "GET_TRACTS_NAME",
+                                "GET_TRACTS_NAME()",
                                 "SET_TRACT(BOSON1,GCD-4020)",
                                 "SET_HV(1,2500,0)",
                                 "SET_TRACT(BOSON1,GCD-4020)",
@@ -125,6 +145,10 @@ class GammaProServiceTests {
                 );
             } finally {
                 service.stopCommunication();
+                assertEquals(
+                        GammaProConnectionStatus.DISCONNECTED,
+                        service.connectionStatus()
+                );
             }
 
             server.get(2, TimeUnit.SECONDS);
@@ -148,7 +172,7 @@ class GammaProServiceTests {
                         respond(
                                 output,
                                 "GET_TRACTS_NAME> DATA "
-                                        + "TRACT1(BOSON1,GCD-4020)"
+                                        + "TRACT1(BOSON,Ch1),"
                         );
                         respond(output, "GET_TRACTS_NAME=OK");
                     }

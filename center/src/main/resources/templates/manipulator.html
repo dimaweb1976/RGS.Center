@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>RGSCenter — Robotic manipulator</title>
+    <style>
+        :root {
+            font-family: Arial, sans-serif;
+            color: #172333;
+            background: #eef3f7;
+        }
+
+        body {
+            margin: 0;
+        }
+
+        nav, .auth-status, main {
+            padding-left: 24px;
+            padding-right: 24px;
+        }
+
+        main {
+            max-width: 1500px;
+            margin: 24px auto 48px;
+        }
+
+        h1 {
+            margin-bottom: 6px;
+        }
+
+        .subtitle {
+            margin-top: 0;
+            color: #536579;
+        }
+
+        .panel {
+            margin-top: 18px;
+            padding: 18px;
+            border: 1px solid #d2dde6;
+            border-radius: 10px;
+            background: white;
+            box-shadow: 0 2px 8px rgb(24 43 61 / 7%);
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 12px;
+        }
+
+        .summary-item {
+            padding: 14px;
+            border: 1px solid #d8e1e8;
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+
+        .label {
+            display: block;
+            margin-bottom: 7px;
+            color: #607185;
+            font-size: 0.85rem;
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            margin-right: 7px;
+            border-radius: 50%;
+            vertical-align: -1px;
+            background: #7a838c;
+        }
+
+        .manipulator-connection--online,
+        .manipulator-status--ready {
+            color: #087a45;
+        }
+
+        .status-dot.manipulator-connection--online,
+        .status-dot.manipulator-status--ready {
+            background: #20a768;
+        }
+
+        .manipulator-connection--offline,
+        .manipulator-status--alert {
+            color: #c51e31;
+        }
+
+        .status-dot.manipulator-connection--offline,
+        .status-dot.manipulator-status--alert {
+            background: #e3263d;
+        }
+
+        .manipulator-connection--connecting,
+        .manipulator-status--busy {
+            color: #8b6200;
+        }
+
+        .status-dot.manipulator-connection--connecting,
+        .status-dot.manipulator-status--busy {
+            background: #d79a00;
+        }
+
+        .table-scroll {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccd6df;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background: #f2f6f9;
+        }
+
+        .fault {
+            color: #c51e31;
+            font-weight: bold;
+        }
+
+        .muted {
+            color: #6e7d8c;
+        }
+
+        .reason-list {
+            margin-bottom: 0;
+        }
+    </style>
+    <script>
+        async function loadManipulatorStatus() {
+            try {
+                const response = await fetch("/manipulator/status", {
+                    cache: "no-store"
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                document.getElementById("manipulator-status").innerHTML =
+                    await response.text();
+            } catch (error) {
+                console.error("Failed to update manipulator status", error);
+            }
+        }
+
+        setInterval(loadManipulatorStatus, 1000);
+    </script>
+</head>
+<body>
+<div th:replace="~{fragments/menu :: menu}"></div>
+<main>
+    <h1>Robotic manipulator state</h1>
+    <p class="subtitle">Dobot TCP telemetry and spectrometer hatch diagnostics</p>
+    <div id="manipulator-status">
+        <div th:replace="~{fragments/manipulator-status :: status}"></div>
+    </div>
+</main>
+</body>
+</html>

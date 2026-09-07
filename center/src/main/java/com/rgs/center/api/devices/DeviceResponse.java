@@ -1,7 +1,5 @@
 package com.rgs.center.api.devices;
 
-import com.rgs.center.objects.DeviceStatus;
-
 import java.time.Instant;
 
 /**
@@ -19,7 +17,7 @@ public record DeviceResponse(
         String name,
         String address,
         boolean enabled,
-        DeviceStatus connectionStatus,
+        DeviceConnectionStatus connectionStatus,
         Instant lastCheck
 ) {
 }

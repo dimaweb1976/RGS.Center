@@ -1,5 +1,11 @@
 package com.rgs.center.controller;
 
+import com.rgs.center.gammapro.GammaProDeviceView;
+import com.rgs.center.gammapro.GammaProService;
+import com.rgs.center.manipulator.ManipulatorStatusEvaluator;
+import com.rgs.center.manipulator.RoboticManipulatorStreamService;
+import com.rgs.center.manipulator.RoboticManipulatorViewModel;
+import com.rgs.center.measurement.ScenarioStatusService;
 import com.rgs.center.objects.Device;
 import com.rgs.center.objects.DeviceCode;
 import com.rgs.center.service.BosonService;
@@ -44,6 +50,14 @@ public class HomeController {
     private final ShpService shpService;
     /** Рассчитывает READY/ALERT по последнему снимку SHP. */
     private final ShpStatusEvaluator shpStatusEvaluator;
+    /** Источник фактического состояния TCP-сокета Gamma-PRO. */
+    private final GammaProService gammaProService;
+    /** Источник состояния автоматического сценария. */
+    private final ScenarioStatusService scenarioStatusService;
+    /** Источник последнего согласованного snapshot манипулятора Dobot. */
+    private final RoboticManipulatorStreamService roboticManipulatorStreamService;
+    /** Вычисляет состояние связи и техническую готовность манипулятора. */
+    private final ManipulatorStatusEvaluator manipulatorStatusEvaluator;
 
     /**
      * Создаёт контроллер страниц состояния.
@@ -55,6 +69,10 @@ public class HomeController {
      * @param deviceViewService представление состояния COM-устройств
      * @param shpService фоновый сервис предусилителя SHP
      * @param shpStatusEvaluator расчёт технологического статуса SHP
+     * @param gammaProService фактическое состояние TCP-соединения Gamma-PRO
+     * @param scenarioStatusService состояние автоматического сценария
+     * @param roboticManipulatorStreamService фоновый сервис каналов Dobot
+     * @param manipulatorStatusEvaluator расчёт статуса манипулятора
      */
     public HomeController(
             CameraService cameraService,
@@ -63,7 +81,11 @@ public class HomeController {
             LenovoPcService lenovoPcService,
             DeviceViewService deviceViewService,
             ShpService shpService,
-            ShpStatusEvaluator shpStatusEvaluator
+            ShpStatusEvaluator shpStatusEvaluator,
+            GammaProService gammaProService,
+            ScenarioStatusService scenarioStatusService,
+            RoboticManipulatorStreamService roboticManipulatorStreamService,
+            ManipulatorStatusEvaluator manipulatorStatusEvaluator
     ) {
         this.cameraService = cameraService;
         this.bosonService = bosonService;
@@ -72,6 +94,10 @@ public class HomeController {
         this.deviceViewService = deviceViewService;
         this.shpService = shpService;
         this.shpStatusEvaluator = shpStatusEvaluator;
+        this.gammaProService = gammaProService;
+        this.scenarioStatusService = scenarioStatusService;
+        this.roboticManipulatorStreamService = roboticManipulatorStreamService;
+        this.manipulatorStatusEvaluator = manipulatorStatusEvaluator;
     }
 
     /**
@@ -117,7 +143,27 @@ public class HomeController {
     /** Добавляет общий список устройств и последние снимки NICOLE и SHP. */
     private void addDeviceStatus(Model model) {
         model.addAttribute("devices", getVisibleDevices());
+        model.addAttribute(
+                "gammaProDevice",
+                GammaProDeviceView.from(
+                        deviceViewService.getDevice(DeviceCode.GAMMA_PRO),
+                        gammaProService.connectionStatus()
+                )
+        );
+        model.addAttribute("gammaProStatus", gammaProService.statusView());
         model.addAttribute("nicoleStatus", nicoleService.statusView());
+        model.addAttribute("scenarioStatus", scenarioStatusService.currentStatus());
+        var manipulatorSnapshot = roboticManipulatorStreamService.snapshot();
+        model.addAttribute(
+                "manipulatorStatus",
+                RoboticManipulatorViewModel.from(
+                        manipulatorSnapshot,
+                        manipulatorStatusEvaluator.evaluate(
+                                roboticManipulatorStreamService.isEnabled(),
+                                manipulatorSnapshot
+                        )
+                )
+        );
         var shpSnapshot = shpService.snapshot();
         model.addAttribute(
                 "shpStatus",
@@ -141,8 +187,8 @@ public class HomeController {
         devices.add(bosonService.getBoson());
         devices.add(deviceViewService.getDevice(DeviceCode.ROBOTIC_MANIPULATOR));
         devices.add(deviceViewService.getDevice(DeviceCode.BARCODE_SCANNER));
+        devices.add(deviceViewService.getDevice(DeviceCode.SCALES));
         devices.add(deviceViewService.getDevice(DeviceCode.SHP));
-        devices.add(deviceViewService.getDevice(DeviceCode.GAMMA_PRO));
         return devices;
     }
 }

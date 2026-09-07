@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.time.Instant;
 
@@ -63,6 +64,30 @@ public class CurrentDataService {
      */
     public void setValue(DeviceCode device, String parameter, Object value) {
         deviceData(device).put(parameter, value);
+    }
+
+    /**
+     * Атомарно публикует согласованный набор параметров одного устройства.
+     * Читатель увидит либо предыдущую, либо целиком новую версию карты.
+     *
+     * @param device код устройства
+     * @param values параметры одного согласованного снимка
+     */
+    public void setValues(DeviceCode device, Map<String, ?> values) {
+        Objects.requireNonNull(device, "device");
+        Objects.requireNonNull(values, "values");
+        currentData.compute(device.getCode(), (code, existing) -> {
+            if (existing == null) {
+                throw new NoSuchElementException("Unknown device: " + code);
+            }
+            Map<String, Object> replacement =
+                    new ConcurrentHashMap<>(existing);
+            values.forEach((parameter, value) -> replacement.put(
+                    Objects.requireNonNull(parameter, "parameter"),
+                    Objects.requireNonNull(value, "value")
+            ));
+            return replacement;
+        });
     }
 
     /**

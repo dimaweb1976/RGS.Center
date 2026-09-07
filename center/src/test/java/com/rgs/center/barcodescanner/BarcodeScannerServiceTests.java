@@ -1,8 +1,11 @@
-package com.rgs.center.service;
+package com.rgs.center.barcodescanner;
 
 import com.rgs.center.objects.DeviceCode;
+import com.rgs.center.service.CurrentDataService;
+import com.rgs.center.service.SettingsService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -15,9 +18,9 @@ class BarcodeScannerServiceTests {
     @BeforeEach
     void setUp() {
         settings = new SettingsService();
-        settings.initializeDefaults();
+        ReflectionTestUtils.invokeMethod(settings, "initializeDefaults");
         currentData = new CurrentDataService();
-        currentData.initializeDevices();
+        ReflectionTestUtils.invokeMethod(currentData, "initializeDevices");
     }
 
     @Test
@@ -113,6 +116,39 @@ class BarcodeScannerServiceTests {
                 currentData.getValue(
                         DeviceCode.BARCODE_SCANNER,
                         CurrentDataService.PINGED,
+                        Boolean.class
+                )
+        );
+    }
+
+    @Test
+    void noReadDoesNotMarkResponsiveScannerOffline() {
+        settings.setValue(SettingsService.BARCODE_SCANNER_PORT, "COM8");
+        currentData.setValue(
+                DeviceCode.BARCODE_SCANNER,
+                CurrentDataService.PINGED,
+                true
+        );
+        BarcodeScannerService service = serviceWith(
+                (port, baud, timeout, maxLength) -> {
+                    throw new BarcodeScannerNoReadException("no barcode");
+                }
+        );
+
+        assertThrows(BarcodeScannerNoReadException.class, service::readBarcode);
+        assertEquals(
+                true,
+                currentData.getValue(
+                        DeviceCode.BARCODE_SCANNER,
+                        CurrentDataService.PINGED,
+                        Boolean.class
+                )
+        );
+        assertEquals(
+                false,
+                currentData.getValue(
+                        DeviceCode.BARCODE_SCANNER,
+                        CurrentDataService.DATA_AVAILABLE,
                         Boolean.class
                 )
         );

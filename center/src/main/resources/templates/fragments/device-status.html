@@ -14,7 +14,13 @@
     </thead>
     <tbody>
     <tr th:each="device : ${devices}">
-        <td th:text="${device.name}">Camera</td>
+        <td>
+            <a th:if="${device.name == 'Robotic manipulator'}"
+               href="/manipulator"
+               th:text="${device.name}">Robotic manipulator</a>
+            <span th:unless="${device.name == 'Robotic manipulator'}"
+                  th:text="${device.name}">Camera</span>
+        </td>
         <td th:text="${device.ipAddress}">192.168.1.13</td>
         <td th:text="${device.status}"
             th:class="${device.status}">
@@ -22,8 +28,77 @@
         </td>
         <td th:text="${device.lastCheck}">-</td>
     </tr>
+    <tr class="gamma-pro-row">
+        <td th:text="${gammaProDevice.name}">Gamma-PRO</td>
+        <td th:text="${gammaProDevice.address}">127.0.0.1:37569</td>
+        <td class="gamma-pro-status"
+            th:text="${gammaProDevice.connectionStatus}"
+            th:classappend="${gammaProDevice.connectionStatus}">
+            DISCONNECTED
+        </td>
+        <td th:text="${gammaProDevice.lastCheck}">-</td>
+    </tr>
     </tbody>
 </table>
+
+<section class="manipulator-state">
+    <h2>Robotic manipulator state</h2>
+    <div class="manipulator-state-scroll">
+        <table>
+            <thead>
+            <tr>
+                <th>Connection status</th>
+                <th>Robot mode</th>
+                <th>Position</th>
+                <th>Orientation</th>
+                <th>Motion</th>
+                <th>Command ID</th>
+                <th>Digital inputs</th>
+                <th>Digital outputs</th>
+                <th>Hatch analogue input</th>
+                <th>Spectrometer hatch</th>
+                <th>Safety</th>
+                <th>Last feedback</th>
+                <th>Technical status</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td class="manipulator-status-cell">
+                    <span class="manipulator-connection-indicator"
+                          th:classappend="${manipulatorStatus.connectionStatus.cssClass}"
+                          aria-hidden="true"></span>
+                    <strong class="manipulator-connection-text"
+                            th:classappend="${manipulatorStatus.connectionStatus.cssClass}"
+                            th:text="${manipulatorStatus.connectionStatus.label}">Offline</strong>
+                </td>
+                <td th:text="${manipulatorStatus.robotMode}">-</td>
+                <td th:text="${manipulatorStatus.position}">-</td>
+                <td th:text="${manipulatorStatus.orientation}">-</td>
+                <td th:text="${manipulatorStatus.motion}">-</td>
+                <td th:text="${manipulatorStatus.commandId}">-</td>
+                <td th:text="${manipulatorStatus.digitalInputs}">-</td>
+                <td th:text="${manipulatorStatus.digitalOutputs}">-</td>
+                <td th:text="${manipulatorStatus.analogInput}">-</td>
+                <td th:text="${manipulatorStatus.hatch}">Unknown</td>
+                <td th:text="${manipulatorStatus.safety}">-</td>
+                <td th:text="${manipulatorStatus.lastFeedback}">-</td>
+                <td class="manipulator-status-cell">
+                    <span class="manipulator-readiness-indicator"
+                          th:classappend="${manipulatorStatus.readiness.cssClass}"
+                          aria-hidden="true"></span>
+                    <strong class="manipulator-readiness-text"
+                            th:classappend="${manipulatorStatus.readiness.cssClass}"
+                            th:text="${manipulatorStatus.readiness.label}">No data</strong>
+                    <span class="manipulator-status-details"
+                          th:if="${manipulatorStatus.details != '-'}"
+                          th:text="${manipulatorStatus.details}">Details</span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
 
 <section class="nicole-state">
     <h2>Nicole state</h2>
@@ -39,6 +114,7 @@
             <th>Warnings</th>
             <th>Connection status</th>
             <th>Technical status</th>
+            <th>Scenario status</th>
         </tr>
         </thead>
         <tbody>
@@ -103,9 +179,83 @@
                         th:classappend="${nicoleStatus.readiness.cssClass}"
                         th:text="${nicoleStatus.readiness.label}">Alert</strong>
             </td>
+            <td class="scenario-status-cell">
+                <span class="scenario-status-indicator"
+                      th:classappend="${scenarioStatus.cssClass}"
+                      aria-hidden="true"></span>
+                <strong class="scenario-status-text"
+                        th:classappend="${scenarioStatus.cssClass}"
+                        th:text="${scenarioStatus.label}">NORMAL</strong>
+            </td>
         </tr>
         </tbody>
     </table>
+</section>
+
+<section class="gamma-pro-state">
+    <h2>GammaPro State</h2>
+    <div class="gamma-pro-state-scroll">
+        <table>
+            <thead>
+            <tr>
+                <th>Connection status</th>
+                <th>Host / port</th>
+                <th>Measurement state</th>
+                <th>Analyser / MCA</th>
+                <th>Channel</th>
+                <th>Preset</th>
+                <th>Available tracts</th>
+                <th>BOSON status</th>
+                <th>Last response</th>
+                <th>Last error</th>
+                <th>Last update</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td class="gamma-pro-status"
+                    th:text="${gammaProStatus.connectionStatus}"
+                    th:classappend="${gammaProStatus.connectionStatus}">
+                    DISCONNECTED
+                </td>
+                <td th:text="${gammaProStatus.snapshot.host
+                        + ':' + gammaProStatus.snapshot.port}">
+                    127.0.0.1:37569
+                </td>
+                <td th:text="${gammaProStatus.snapshot.measurementState}">
+                    IDLE
+                </td>
+                <td th:text="${#strings.isEmpty(
+                        gammaProStatus.snapshot.mcaName)
+                        ? '-' : gammaProStatus.snapshot.mcaName}">-</td>
+                <td th:text="${#strings.isEmpty(
+                        gammaProStatus.snapshot.channelName)
+                        ? '-' : gammaProStatus.snapshot.channelName}">-</td>
+                <td th:text="${gammaProStatus.snapshot.presetSeconds > 0
+                        ? gammaProStatus.snapshot.presetSeconds + ' s'
+                        : '-'}">-</td>
+                <td class="gamma-pro-state-value"
+                    th:text="${#lists.isEmpty(gammaProStatus.snapshot.tracts)
+                        ? '-' : gammaProStatus.snapshot.tracts}">-</td>
+                <td class="boson-status"
+                    th:text="${gammaProStatus.bosonConnectionStatus}"
+                    th:classappend="${gammaProStatus.bosonConnectionStatus}">
+                    DISCONNECTED
+                </td>
+                <td class="gamma-pro-state-value"
+                    th:text="${#strings.isEmpty(
+                        gammaProStatus.snapshot.lastResponse)
+                        ? '-' : gammaProStatus.snapshot.lastResponse}">-</td>
+                <td class="gamma-pro-state-value"
+                    th:text="${#strings.isEmpty(
+                        gammaProStatus.snapshot.lastError)
+                        ? '-' : gammaProStatus.snapshot.lastError}">-</td>
+                <td th:text="${gammaProStatus.lastUpdatedAt != null
+                        ? gammaProStatus.lastUpdatedAt : '-'}">-</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
 </section>
 
 <section class="shp-measurements">

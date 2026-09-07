@@ -38,6 +38,10 @@ public class SettingsService {
     public static final String NICOLE_RESPONSE_TIMEOUT_MILLIS =
             "device.nicole.response-timeout-millis";
     public static final String BOSON_IP = "device.boson.ip";
+    public static final String BOSON_MCA_NAME = "device.boson.mca-name";
+    public static final String BOSON_CHANNEL_NAME = "device.boson.channel-name";
+    public static final String BOSON_STATUS_STALE_MILLIS =
+            "device.boson.status-stale-millis";
     public static final String MANIPULATOR_HOST = "device.manipulator.host";
     public static final String MANIPULATOR_COMMAND_PORT = "device.manipulator.command-port";
     public static final String MANIPULATOR_FEEDBACK_PORT = "device.manipulator.feedback-port";
@@ -47,13 +51,27 @@ public class SettingsService {
     public static final String MANIPULATOR_TELEMETRY_STALE_MILLIS = "device.manipulator.telemetry-stale-millis";
     public static final String MANIPULATOR_HATCH_CLOSED_DI_BIT = "device.manipulator.hatch-closed-di-bit";
     public static final String MANIPULATOR_HATCH_OPEN_DI_BIT = "device.manipulator.hatch-open-di-bit";
+    public static final String MANIPULATOR_HATCH_AI_ENABLED =
+            "device.manipulator.hatch-ai-enabled";
+    public static final String MANIPULATOR_HATCH_AI_INDEX =
+            "device.manipulator.hatch-ai-index";
     public static final String BARCODE_SCANNER_PORT = "device.barcode-scanner.port";
     public static final String BARCODE_SCANNER_BAUD_RATE =
             "device.barcode-scanner.baud-rate";
     public static final String BARCODE_SCANNER_READ_TIMEOUT_MILLIS =
             "device.barcode-scanner.read-timeout-millis";
+    public static final String BARCODE_SCANNER_SCAN_ATTEMPT_TIMEOUT_MILLIS =
+            "device.barcode-scanner.scan-attempt-timeout-millis";
     public static final String BARCODE_SCANNER_MAX_CODE_LENGTH =
             "device.barcode-scanner.max-code-length";
+    public static final String BARCODE_SCANNER_RESPONSE_TIMEOUT_MILLIS =
+            "device.barcode-scanner.response-timeout-millis";
+    public static final String BARCODE_SCANNER_MAX_SCAN_ATTEMPTS =
+            "device.barcode-scanner.max-scan-attempts";
+    public static final String BARCODE_SCANNER_RETRY_DELAY_MILLIS =
+            "device.barcode-scanner.retry-delay-millis";
+    public static final String BARCODE_SCANNER_DATA_SUFFIX =
+            "device.barcode-scanner.data-suffix";
     public static final String GDRM_PORT = "device.gdrm.port";
     public static final String GDRM_INITIAL_BAUD_RATE =
             "device.gdrm.initial-baud-rate";
@@ -62,6 +80,12 @@ public class SettingsService {
     public static final String GDRM_RESPONSE_TIMEOUT_MILLIS =
             "device.gdrm.response-timeout-millis";
     public static final String SCALES_PORT = "device.scales.port";
+    public static final String SCALES_BAUD_RATE =
+            "device.scales.baud-rate";
+    public static final String SCALES_READ_TIMEOUT_MILLIS =
+            "device.scales.read-timeout-millis";
+    public static final String SCALES_RESPONSE_TIMEOUT_MILLIS =
+            "device.scales.response-timeout-millis";
     public static final String SHP_PORT = "device.shp.port";
     public static final String SHP_BAUD_RATE = "device.shp.baud-rate";
     public static final String SHP_READ_TIMEOUT_MILLIS =
@@ -111,14 +135,23 @@ public class SettingsService {
     @Value("${rgs.device.boson.ip:192.168.1.16}")
     private String bosonIp = "192.168.1.16";
 
+    @Value("${rgs.device.boson.mca-name:BOSON}")
+    private String bosonMcaName = "BOSON";
+
+    @Value("${rgs.device.boson.channel-name:Ch1}")
+    private String bosonChannelName = "Ch1";
+
+    @Value("${rgs.device.boson.status-stale-millis:30000}")
+    private long bosonStatusStaleMillis = 30000L;
+
     @Value("${rgs.device.manipulator.host:192.168.5.1}")
     private String manipulatorHost = "192.168.5.1";
 
     @Value("${rgs.device.manipulator.command-port:29999}")
     private long manipulatorCommandPort = 29999L;
 
-    @Value("${rgs.device.manipulator.feedback-port:30005}")
-    private long manipulatorFeedbackPort = 30005L;
+    @Value("${rgs.device.manipulator.feedback-port:30006}")
+    private long manipulatorFeedbackPort = 30006L;
 
     @Value("${rgs.device.manipulator.connect-timeout-millis:2000}")
     private long manipulatorConnectTimeoutMillis = 2000L;
@@ -129,8 +162,8 @@ public class SettingsService {
     @Value("${rgs.device.manipulator.response-timeout-millis:3000}")
     private long manipulatorResponseTimeoutMillis = 3000L;
 
-    @Value("${rgs.device.manipulator.telemetry-stale-millis:2000}")
-    private long manipulatorTelemetryStaleMillis = 2000L;
+    @Value("${rgs.device.manipulator.telemetry-stale-millis:3500}")
+    private long manipulatorTelemetryStaleMillis = 3500L;
 
     @Value("${rgs.device.manipulator.hatch-closed-di-bit:0}")
     private long manipulatorHatchClosedDiBit = 0L;
@@ -138,17 +171,38 @@ public class SettingsService {
     @Value("${rgs.device.manipulator.hatch-open-di-bit:1}")
     private long manipulatorHatchOpenDiBit = 1L;
 
+    @Value("${rgs.device.manipulator.hatch-ai-enabled:false}")
+    private boolean manipulatorHatchAiEnabled;
+
+    @Value("${rgs.device.manipulator.hatch-ai-index:1}")
+    private long manipulatorHatchAiIndex = 1L;
+
     @Value("${rgs.device.barcode-scanner.port:}")
     private String barcodeScannerPort = "";
 
     @Value("${rgs.device.barcode-scanner.baud-rate:9600}")
     private long barcodeScannerBaudRate = 9600L;
 
-    @Value("${rgs.device.barcode-scanner.read-timeout-millis:5000}")
-    private long barcodeScannerReadTimeoutMillis = 5000L;
+    @Value("${rgs.device.barcode-scanner.read-timeout-millis:250}")
+    private long barcodeScannerReadTimeoutMillis = 250L;
+
+    @Value("${rgs.device.barcode-scanner.scan-attempt-timeout-millis:5000}")
+    private long barcodeScannerScanAttemptTimeoutMillis = 5000L;
 
     @Value("${rgs.device.barcode-scanner.max-code-length:4096}")
     private long barcodeScannerMaxCodeLength = 4096L;
+
+    @Value("${rgs.device.barcode-scanner.response-timeout-millis:1000}")
+    private long barcodeScannerResponseTimeoutMillis = 1000L;
+
+    @Value("${rgs.device.barcode-scanner.max-scan-attempts:2}")
+    private long barcodeScannerMaxScanAttempts = 2L;
+
+    @Value("${rgs.device.barcode-scanner.retry-delay-millis:250}")
+    private long barcodeScannerRetryDelayMillis = 250L;
+
+    @Value("${rgs.device.barcode-scanner.data-suffix:AUTO}")
+    private String barcodeScannerDataSuffix = "AUTO";
 
     @Value("${rgs.device.gdrm.port:COM3}")
     private String gdrmPort = "COM3";
@@ -164,6 +218,15 @@ public class SettingsService {
 
     @Value("${rgs.device.scales.port:}")
     private String scalesPort = "";
+
+    @Value("${rgs.device.scales.baud-rate:9600}")
+    private long scalesBaudRate = 9600L;
+
+    @Value("${rgs.device.scales.read-timeout-millis:250}")
+    private long scalesReadTimeoutMillis = 250L;
+
+    @Value("${rgs.device.scales.response-timeout-millis:700}")
+    private long scalesResponseTimeoutMillis = 700L;
 
     @Value("${rgs.device.shp.port:COM5}")
     private String shpPort = "COM5";
@@ -224,6 +287,17 @@ public class SettingsService {
                 nicoleResponseTimeoutMillis
         );
         registerDefault(BOSON_IP, SettingType.STRING, bosonIp);
+        registerDefault(BOSON_MCA_NAME, SettingType.STRING, bosonMcaName);
+        registerDefault(
+                BOSON_CHANNEL_NAME,
+                SettingType.STRING,
+                bosonChannelName
+        );
+        registerDefault(
+                BOSON_STATUS_STALE_MILLIS,
+                SettingType.LONG,
+                bosonStatusStaleMillis
+        );
         registerDefault(MANIPULATOR_HOST, SettingType.STRING, manipulatorHost);
         registerDefault(MANIPULATOR_COMMAND_PORT, SettingType.LONG, manipulatorCommandPort);
         registerDefault(MANIPULATOR_FEEDBACK_PORT, SettingType.LONG, manipulatorFeedbackPort);
@@ -233,6 +307,16 @@ public class SettingsService {
         registerDefault(MANIPULATOR_TELEMETRY_STALE_MILLIS, SettingType.LONG, manipulatorTelemetryStaleMillis);
         registerDefault(MANIPULATOR_HATCH_CLOSED_DI_BIT, SettingType.LONG, manipulatorHatchClosedDiBit);
         registerDefault(MANIPULATOR_HATCH_OPEN_DI_BIT, SettingType.LONG, manipulatorHatchOpenDiBit);
+        registerDefault(
+                MANIPULATOR_HATCH_AI_ENABLED,
+                SettingType.BOOLEAN,
+                manipulatorHatchAiEnabled
+        );
+        registerDefault(
+                MANIPULATOR_HATCH_AI_INDEX,
+                SettingType.LONG,
+                manipulatorHatchAiIndex
+        );
         registerDefault(
                 BARCODE_SCANNER_PORT,
                 SettingType.STRING,
@@ -249,9 +333,34 @@ public class SettingsService {
                 barcodeScannerReadTimeoutMillis
         );
         registerDefault(
+                BARCODE_SCANNER_SCAN_ATTEMPT_TIMEOUT_MILLIS,
+                SettingType.LONG,
+                barcodeScannerScanAttemptTimeoutMillis
+        );
+        registerDefault(
                 BARCODE_SCANNER_MAX_CODE_LENGTH,
                 SettingType.LONG,
                 barcodeScannerMaxCodeLength
+        );
+        registerDefault(
+                BARCODE_SCANNER_RESPONSE_TIMEOUT_MILLIS,
+                SettingType.LONG,
+                barcodeScannerResponseTimeoutMillis
+        );
+        registerDefault(
+                BARCODE_SCANNER_MAX_SCAN_ATTEMPTS,
+                SettingType.LONG,
+                barcodeScannerMaxScanAttempts
+        );
+        registerDefault(
+                BARCODE_SCANNER_RETRY_DELAY_MILLIS,
+                SettingType.LONG,
+                barcodeScannerRetryDelayMillis
+        );
+        registerDefault(
+                BARCODE_SCANNER_DATA_SUFFIX,
+                SettingType.STRING,
+                barcodeScannerDataSuffix
         );
         registerDefault(GDRM_PORT, SettingType.STRING, gdrmPort);
         registerDefault(
@@ -270,6 +379,17 @@ public class SettingsService {
                 gdrmResponseTimeoutMillis
         );
         registerDefault(SCALES_PORT, SettingType.STRING, scalesPort);
+        registerDefault(SCALES_BAUD_RATE, SettingType.LONG, scalesBaudRate);
+        registerDefault(
+                SCALES_READ_TIMEOUT_MILLIS,
+                SettingType.LONG,
+                scalesReadTimeoutMillis
+        );
+        registerDefault(
+                SCALES_RESPONSE_TIMEOUT_MILLIS,
+                SettingType.LONG,
+                scalesResponseTimeoutMillis
+        );
         registerDefault(SHP_PORT, SettingType.STRING, shpPort);
         registerDefault(SHP_BAUD_RATE, SettingType.LONG, shpBaudRate);
         registerDefault(
