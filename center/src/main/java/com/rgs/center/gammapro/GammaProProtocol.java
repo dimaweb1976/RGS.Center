@@ -1,6 +1,7 @@
 package com.rgs.center.gammapro;
 
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -14,7 +15,13 @@ public final class GammaProProtocol {
     public static final String WAIT_MEAS_END = "WAIT_MEAS_END";
     public static final String SET_HV = "SET_HV";
 
-    private static final String LINE_ENDING = "\n\r";
+    /*
+     * Gamma-PRO expects the command body and its CR/LF terminator as two
+     * consecutive TCP writes. This is intentionally not appended to the
+     * command byte array: the real program did not process the LF/CR form
+     * that had previously been used here.
+     */
+    private static final byte[] COMMAND_TERMINATOR = {0x0D, 0x0A};
 
     private GammaProProtocol() {
     }
@@ -24,7 +31,12 @@ public final class GammaProProtocol {
         return GET_TRACTS_NAME + "()";
     }
 
-    /** @return команда выбора текущего спектрометрического тракта */
+    /**
+     * Формирует выбор текущего спектрометрического тракта. Значения должны
+     * совпадать с парой из GET_TRACTS_NAME, например BOSON и Ch1.
+     *
+     * @return команда SET_TRACT(MCA,Channel)
+     */
     public static String setTract(String mcaName, String channelName) {
         requireParameter(mcaName, "MCA name");
         requireParameter(channelName, "Channel name");
@@ -45,9 +57,9 @@ public final class GammaProProtocol {
      * Формирует документированную команду управления высоким напряжением
      * текущего тракта Gamma-PRO.
      *
-     * @param enabled {@code true} для включения, {@code false} для выключения
-     * @param value целевое целочисленное значение напряжения
-     * @param valueType физический смысл передаваемого значения
+     * @param enabled IsOn: {@code true} передаётся как 1, {@code false} как 0
+     * @param value Value_HV: целевое целочисленное значение напряжения
+     * @param valueType Type_value: физический смысл передаваемого значения
      * @return команда {@code SET_HV(IsOn,Value_HV,Type_value)}
      */
     public static String setHighVoltage(
@@ -65,8 +77,11 @@ public final class GammaProProtocol {
                 + valueType.protocolCode() + ")";
     }
 
-    /** Добавляет документированный конец строки LF CR и кодирует команду. */
-    public static byte[] encode(String command, Charset charset) {
+    /**
+     * Кодирует только тело исходящей команды, без символов конца строки.
+     * Терминатор {@code CR LF} передаётся отдельной записью сразу после тела.
+     */
+    public static byte[] encodeCommandBody(String command, Charset charset) {
         Objects.requireNonNull(charset, "Charset must not be null");
         String value = Objects.requireNonNull(
                 command,
@@ -76,7 +91,15 @@ public final class GammaProProtocol {
                 || value.indexOf('\n') >= 0) {
             throw new IllegalArgumentException("Invalid Gamma-PRO command");
         }
-        return (value + LINE_ENDING).getBytes(charset);
+        return value.getBytes(charset);
+    }
+
+    /**
+     * Возвращает отдельную пару байтов {@code CR LF}, завершающую команду.
+     * Копия защищает протокольную константу от изменения вызывающим кодом.
+     */
+    public static byte[] commandTerminator() {
+        return Arrays.copyOf(COMMAND_TERMINATOR, COMMAND_TERMINATOR.length);
     }
 
     /** Выделяет имя команды до первой открывающей скобки. */

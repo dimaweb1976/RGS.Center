@@ -27,6 +27,24 @@ class ByteRingBufferTests {
     }
 
     @Test
+    void acceptsGammaProLfCrResponsesSplitBetweenReads() {
+        ByteRingBuffer buffer = new ByteRingBuffer(64);
+
+        // Gamma-PRO replies end with LF CR. The TCP reader may deliver the
+        // two terminator bytes in different read operations.
+        write(buffer, "GET_TRACTS_NAME=OK\n");
+        assertArrayEquals(
+                bytes("GET_TRACTS_NAME=OK"),
+                buffer.pollLine(32)
+        );
+
+        write(buffer, "\rSET_TRACT=OK\n\r");
+        assertArrayEquals(bytes("SET_TRACT=OK"), buffer.pollLine(32));
+        assertNull(buffer.pollLine(32));
+        assertEquals(0, buffer.size());
+    }
+
+    @Test
     void readsFrameAfterBufferWrapAround() {
         ByteRingBuffer buffer = new ByteRingBuffer(8);
 

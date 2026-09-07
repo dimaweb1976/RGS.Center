@@ -45,6 +45,7 @@ public class GammaProService extends AbstractQueuedDeviceService
     private volatile int presetSeconds;
     private volatile List<String> tracts = List.of();
     private volatile Instant tractsUpdatedAt;
+    private volatile String lastCommand = "";
     private volatile String lastResponse = "";
     private volatile String lastError = "";
     private volatile BosonHighVoltageSnapshot bosonHighVoltage =
@@ -222,6 +223,17 @@ public class GammaProService extends AbstractQueuedDeviceService
                         "Cannot change BOSON HV while acquisition is running"
                 );
             }
+            log.info(
+                    "Sending Gamma-PRO BOSON HV request: enabled={}, value={}, type={}, tract={}/{}",
+                    enabled,
+                    value,
+                    valueType,
+                    requestedMcaName,
+                    requestedChannelName
+            );
+            // SET_TRACT обязательно повторяется непосредственно перед SET_HV.
+            // Иначе команда может попасть в тракт, выбранный другим сценарием
+            // после отдельного ручного нажатия SET_TRACT.
             executeCommandLocked(GammaProProtocol.setTract(
                     requestedMcaName,
                     requestedChannelName
@@ -256,7 +268,7 @@ public class GammaProService extends AbstractQueuedDeviceService
             );
             publishSuccess();
             log.info(
-                    "Gamma-PRO accepted BOSON HV command: enabled={}, value={}, type={}, tract={}/{}",
+                    "Gamma-PRO accepted requested HV command: enabled={}, value={}, type={}, tract={}/{}",
                     enabled,
                     value,
                     valueType,
@@ -268,6 +280,7 @@ public class GammaProService extends AbstractQueuedDeviceService
             String message = exception.getMessage() == null
                     ? exception.getClass().getSimpleName()
                     : exception.getMessage();
+            lastError = message;
             bosonHighVoltage = new BosonHighVoltageSnapshot(
                     requestedMcaName,
                     requestedChannelName,
@@ -279,6 +292,71 @@ public class GammaProService extends AbstractQueuedDeviceService
                     message
             );
             currentDataService.recordDataFailure(DeviceCode.BOSON, message);
+            log.warn(
+                    "Gamma-PRO rejected or did not complete requested BOSON HV command: {}",
+                    message
+            );
+            throw exception;
+        } finally {
+            protocolLock.unlock();
+        }
+    }
+
+    /**
+     * Выбирает тракт BOSON отдельной командой SET_TRACT.
+     *
+     * <p>Операция использует ту же блокировку, что heartbeat и измерительный
+     * сценарий. Благодаря этому один потребитель не сможет принять строку
+     * ответа, предназначенную другому. Во время набора спектра ручное изменение
+     * текущего тракта запрещено.</p>
+     */
+    @Override
+    public GammaProCommandResult selectTract(
+            String requestedMcaName,
+            String requestedChannelName
+    ) {
+        protocolLock.lock();
+        try {
+            if (measurementState == GammaProMeasurementState.RUNNING) {
+                throw new GammaProProtocolException(
+                        "Cannot select BOSON tract while acquisition is running"
+                );
+            }
+            log.info(
+                    "Sending Gamma-PRO SET_TRACT request: tract={}/{}",
+                    requestedMcaName,
+                    requestedChannelName
+            );
+            GammaProCommandResult result = executeCommandLocked(
+                    GammaProProtocol.setTract(
+                            requestedMcaName,
+                            requestedChannelName
+                    )
+            );
+            mcaName = requestedMcaName;
+            channelName = requestedChannelName;
+            currentDataService.setValue(
+                    DeviceCode.BOSON,
+                    CurrentDataService.INTERACTION_LASTDATE_IN,
+                    Instant.now().getEpochSecond()
+            );
+            publishSuccess();
+            log.info(
+                    "Gamma-PRO accepted SET_TRACT request: tract={}/{}",
+                    requestedMcaName,
+                    requestedChannelName
+            );
+            return result;
+        } catch (RuntimeException exception) {
+            String message = exception.getMessage() == null
+                    ? exception.getClass().getSimpleName()
+                    : exception.getMessage();
+            lastError = message;
+            currentDataService.recordDataFailure(DeviceCode.BOSON, message);
+            log.warn(
+                    "Gamma-PRO rejected or did not complete SET_TRACT request: {}",
+                    message
+            );
             throw exception;
         } finally {
             protocolLock.unlock();
@@ -357,6 +435,7 @@ public class GammaProService extends AbstractQueuedDeviceService
                 channelName,
                 presetSeconds,
                 tracts,
+                lastCommand,
                 lastResponse,
                 lastError
         );
@@ -370,7 +449,11 @@ public class GammaProService extends AbstractQueuedDeviceService
         tracts = result.dataLines();
         tractsUpdatedAt = Instant.now();
         publishSuccess();
-        log.debug("Gamma-PRO heartbeat completed, dataLines={}", tracts.size());
+        log.debug(
+                "Gamma-PRO GET_TRACTS_NAME completed: dataLines={}, bosonTractCandidate={}",
+                tracts.size(),
+                tracts
+        );
     }
 
     /** Принимает уже ожидаемый асинхронный результат WAIT_MEAS_END. */
@@ -408,15 +491,27 @@ public class GammaProService extends AbstractQueuedDeviceService
                         expectedName
                 );
                 case OK -> {
+                    log.info(
+                            "Gamma-PRO command accepted: command={}, terminal={}",
+                            command,
+                            response.raw()
+                    );
                     return new GammaProCommandResult(
                             command,
                             data,
                             response.raw()
                     );
                 }
-                case ERROR -> throw new GammaProProtocolException(
-                        "Gamma-PRO rejected command " + command
-                );
+                case ERROR -> {
+                    log.warn(
+                            "Gamma-PRO command rejected: command={}, terminal={}",
+                            command,
+                            response.raw()
+                    );
+                    throw new GammaProProtocolException(
+                            "Gamma-PRO rejected command " + command
+                    );
+                }
                 case UNKNOWN -> log.debug(
                         "Ignoring unknown Gamma-PRO response: {}",
                         response.raw()
@@ -425,15 +520,25 @@ public class GammaProService extends AbstractQueuedDeviceService
         }
     }
 
-    /** Ставит одну строку команды в общую TX-очередь. */
+    /**
+     * Ставит команду в TX-очередь двумя последовательными элементами.
+     *
+     * <p>Реальная Gamma-PRO принимает тело команды и завершающие байты
+     * {@code 0D 0A} как две последовательные операции записи. Обе части
+     * ставятся под {@link #protocolLock}: другая команда этого сервиса не
+     * может оказаться между телом и терминатором. TX-worker сохраняет порядок
+     * очереди и отдельно вызывает write/flush для каждого элемента.</p>
+     */
     private void submitCommandLocked(String command) {
+        lastCommand = command;
         currentDataService.setValue(
                 DeviceCode.GAMMA_PRO,
                 CurrentDataService.INTERACTION_LASTDATE_IN,
                 Instant.now().getEpochSecond()
         );
-        submitQueued(GammaProProtocol.encode(command, charset));
-        log.debug("Gamma-PRO command queued: {}", command);
+        submitQueued(GammaProProtocol.encodeCommandBody(command, charset));
+        submitQueued(GammaProProtocol.commandTerminator());
+        log.info("Gamma-PRO command queued: {}", command);
     }
 
     /** Ожидает следующую строку, относящуюся к указанной команде. */

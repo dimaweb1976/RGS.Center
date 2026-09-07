@@ -14,10 +14,14 @@ class GammaProProtocolTests {
             Charset.forName("windows-1251");
 
     @Test
-    void encodesCommandWithDocumentedLfCrEnding() {
+    void encodesCommandBodyAndCrLfTerminatorSeparately() {
         assertArrayEquals(
-                new byte[]{'S', 'T', 'A', 'R', 'T', 0x0A, 0x0D},
-                GammaProProtocol.encode("START", WINDOWS_1251)
+                new byte[]{'S', 'T', 'A', 'R', 'T'},
+                GammaProProtocol.encodeCommandBody("START", WINDOWS_1251)
+        );
+        assertArrayEquals(
+                new byte[]{0x0D, 0x0A},
+                GammaProProtocol.commandTerminator()
         );
     }
 

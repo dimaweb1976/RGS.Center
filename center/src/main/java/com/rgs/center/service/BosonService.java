@@ -1,6 +1,7 @@
 package com.rgs.center.service;
 
 import com.rgs.center.gammapro.BosonHighVoltageSnapshot;
+import com.rgs.center.gammapro.GammaProCommandResult;
 import com.rgs.center.gammapro.GammaProHighVoltageControl;
 import com.rgs.center.gammapro.GammaProHighVoltageValueType;
 import com.rgs.center.objects.Device;
@@ -16,6 +17,9 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class BosonService extends AbstractNetworkDeviceService {
+
+    /** Значение HV из утверждённых ручных команд страницы GammaPro_BOSON. */
+    public static final int MANUAL_HIGH_VOLTAGE = 1000;
 
     /** Команды BOSON проходят через TCP-сервер Gamma-PRO. */
     private final GammaProHighVoltageControl highVoltageControl;
@@ -57,6 +61,17 @@ public class BosonService extends AbstractNetworkDeviceService {
     }
 
     /**
+     * Выбирает настроенный тракт BOSON в Gamma-PRO без изменения HV.
+     * Ответ SET_TRACT=OK подтверждает только выбор логического тракта.
+     */
+    public GammaProCommandResult selectTract(
+            String mcaName,
+            String channelName
+    ) {
+        return highVoltageControl.selectTract(mcaName, channelName);
+    }
+
+    /**
      * Включает HV на BOSON командой, переданной через Gamma-PRO.
      *
      * @param mcaName имя анализатора в Gamma-PRO
@@ -87,7 +102,7 @@ public class BosonService extends AbstractNetworkDeviceService {
                 mcaName,
                 channelName,
                 false,
-                0,
+                MANUAL_HIGH_VOLTAGE,
                 GammaProHighVoltageValueType.HIGH_VOLTAGE
         );
     }

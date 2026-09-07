@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<body>
+<section th:fragment="status">
+    <table class="status-grid">
+        <tbody>
+        <tr>
+            <th>GammaPRO socket</th>
+            <td class="connection-status"
+                th:text="${gammaProBosonStatus.connectionStatus}"
+                th:classappend="${gammaProBosonStatus.connectionStatus}">DISCONNECTED</td>
+        </tr>
+        <tr>
+            <th>Host / port</th>
+            <td th:text="${gammaProBosonStatus.snapshot.host + ':' + gammaProBosonStatus.snapshot.port}">127.0.0.1:37569</td>
+        </tr>
+        <tr>
+            <th>BOSON process</th>
+            <td class="boson-process-status"
+                th:text="${gammaProBosonStatus.bosonConnectionStatus}"
+                th:classappend="${gammaProBosonStatus.bosonConnectionStatus}">DISCONNECTED</td>
+        </tr>
+        <tr>
+            <th>Configured tract</th>
+            <td th:text="${bosonMcaName + ' / ' + bosonChannelName}">BOSON / Ch1</td>
+        </tr>
+        <tr>
+            <th>Available tracts</th>
+            <td class="raw-value"
+                th:text="${#lists.isEmpty(gammaProBosonStatus.snapshot.tracts) ? '-' : gammaProBosonStatus.snapshot.tracts}">-</td>
+        </tr>
+        <tr>
+            <th>Measurement state</th>
+            <td th:text="${gammaProBosonStatus.snapshot.measurementState}">IDLE</td>
+        </tr>
+        <tr>
+            <th>Last command</th>
+            <td class="raw-value"
+                th:text="${#strings.isEmpty(gammaProBosonStatus.snapshot.lastCommand) ? '-' : gammaProBosonStatus.snapshot.lastCommand}">-</td>
+        </tr>
+        <tr>
+            <th>Last response</th>
+            <td class="raw-value"
+                th:text="${#strings.isEmpty(gammaProBosonStatus.snapshot.lastResponse) ? '-' : gammaProBosonStatus.snapshot.lastResponse}">-</td>
+        </tr>
+        <tr>
+            <th>Last error</th>
+            <td class="raw-value"
+                th:text="${#strings.isEmpty(gammaProBosonStatus.snapshot.lastError) ? '-' : gammaProBosonStatus.snapshot.lastError}">-</td>
+        </tr>
+        <tr>
+            <th>Last update</th>
+            <td th:text="${gammaProBosonStatus.lastUpdatedAt != null ? gammaProBosonStatus.lastUpdatedAt : '-'}">-</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div class="command-panel">
+        <button id="set-track-button" type="button"
+                th:disabled="${!gammaProBosonControlsEnabled}"
+                onclick="gammaProBosonAction('tract')"
+                th:text="${'SET_TRACT(' + bosonMcaName + ',' + bosonChannelName + ')'}">SET_TRACT(BOSON,Ch1)</button>
+        <button id="hv-on-button" type="button"
+                th:disabled="${!gammaProBosonControlsEnabled}"
+                onclick="gammaProBosonAction('hv/on')"
+                th:text="${'BTN_ON — SET_HV(1,' + bosonManualHighVoltage + ',0)'}">BTN_ON — SET_HV(1,1000,0)</button>
+        <button id="hv-off-button" type="button"
+                th:disabled="${!gammaProBosonControlsEnabled}"
+                onclick="gammaProBosonAction('hv/off')"
+                th:text="${'BTN_OFF — SET_HV(0,' + bosonManualHighVoltage + ',0)'}">BTN_OFF — SET_HV(0,1000,0)</button>
+    </div>
+
+    <p class="protocol-note">
+        SET_HV=OK подтверждает принятие запрошенной команды программой Gamma-PRO.
+        Фактическое напряжение BOSON не считывается.
+    </p>
+    <p th:if="${actionMessage != null}"
+       th:text="${actionMessage}"
+       th:class="${actionError ? 'action-message error' : 'action-message'}"
+       role="status" aria-live="polite"></p>
+</section>
+</body>
+</html>

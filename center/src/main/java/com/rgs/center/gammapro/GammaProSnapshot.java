@@ -13,6 +13,8 @@ import java.util.List;
  * @param channelName выбранный канал
  * @param presetSeconds заданная экспозиция, с
  * @param tracts последний ответ GET_TRACTS_NAME
+ * @param lastCommand последняя переданная в Gamma-PRO команда; это может быть
+ *                    как ручная команда, так и периодический heartbeat
  * @param lastResponse последняя принятая строка протокола
  * @param lastError последняя ошибка
  */
@@ -25,6 +27,7 @@ public record GammaProSnapshot(
         String channelName,
         int presetSeconds,
         List<String> tracts,
+        String lastCommand,
         String lastResponse,
         String lastError
 ) {
