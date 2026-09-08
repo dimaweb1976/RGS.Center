@@ -71,7 +71,8 @@
                     credentials: "same-origin",
                     headers: {
                         Accept: "text/html",
-                        ...emulatorCsrfHeaders()
+                        ...emulatorCsrfHeaders(),
+                        ...(window.rgsLockHeaders ? window.rgsLockHeaders() : {})
                     }
                 });
                 if (response.redirected || response.status === 401) {

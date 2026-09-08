@@ -53,7 +53,10 @@
                 credentials: "same-origin",
                 headers: {
                     Accept: "text/html",
-                    ...(method === "POST" ? gammaProBosonCsrfHeaders() : {})
+                    ...(method === "POST" ? gammaProBosonCsrfHeaders() : {}),
+                    ...(method === "POST" && window.rgsLockHeaders
+                        ? window.rgsLockHeaders()
+                        : {})
                 }
             });
             if (response.redirected || response.status === 401) {

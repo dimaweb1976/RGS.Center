@@ -1,0 +1,89 @@
+# RGSCenter exclusive-access API
+# VS Code extension: REST Client (humao.rest-client)
+#
+# Usage:
+# 1. Start RGSCenter on port 8080.
+# 2. Install the REST Client extension in VS Code.
+# 3. Open this file and click "Send Request" above each request in order.
+# 4. POST /enter creates the token. The named response "enter" makes the
+#    token available to later requests as {{enter.response.body.$.token}}.
+#
+# These requests use the real Spring backend and its configured PostgreSQL DB.
+
+@baseUrl = http://localhost:8080
+# /enter expects the plain password. The BCrypt hash stays only in backend configuration.
+@masterPassword = masterpass
+@clientIp = localhost
+@lockToken = {{enter.response.body.$.token}}
+
+### Step 0 — Check whether the singleton lock is free
+# @name checkBusyBefore
+GET {{baseUrl}}/api/onlyOne/checkBusy
+Accept: application/json
+
+### Step 1 — Acquire the lock and receive a token
+# @name enter
+POST {{baseUrl}}/api/onlyOne/enter
+Content-Type: application/json
+Accept: application/json
+X-Forwarded-For: {{clientIp}}
+
+{
+  "password": "{{masterPassword}}"
+}
+
+### Step 2 — Validate the token captured from the enter response
+# @name checkMe
+GET {{baseUrl}}/api/onlyOne/checkMe
+Accept: application/json
+X-Lock-Token: {{lockToken}}
+
+### Step 3 — Confirm that the database lock is busy
+# @name checkBusyActive
+GET {{baseUrl}}/api/onlyOne/checkBusy
+Accept: application/json
+
+### Step 4 — Extend the active lease
+# @name updateBusy
+POST {{baseUrl}}/api/onlyOne/updateBusy
+Accept: application/json
+X-Lock-Token: {{lockToken}}
+
+### Optional — A second client must receive HTTP 423 while the lease is active
+# @name competingEnter
+POST {{baseUrl}}/api/onlyOne/enter
+Content-Type: application/json
+Accept: application/json
+X-Forwarded-For: 192.168.1.20
+
+{
+  "password": "{{masterPassword}}"
+}
+
+### Step 5 — Release the lock
+# @name exit
+POST {{baseUrl}}/api/onlyOne/exit
+Accept: application/json
+X-Lock-Token: {{lockToken}}
+
+### Step 6 — Confirm that the database lock is free again
+# @name checkBusyAfterExit
+GET {{baseUrl}}/api/onlyOne/checkBusy
+Accept: application/json
+
+### Negative test — Invalid master password must return HTTP 401
+# @name invalidPassword
+POST {{baseUrl}}/api/onlyOne/enter
+Content-Type: application/json
+Accept: application/json
+X-Forwarded-For: {{clientIp}}
+
+{
+  "password": "wrong-password"
+}
+
+### Negative test — Invalid token must return HTTP 401
+# @name invalidToken
+GET {{baseUrl}}/api/onlyOne/checkMe
+Accept: application/json
+X-Lock-Token: invalid-token

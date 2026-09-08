@@ -42,7 +42,10 @@
                 credentials: "same-origin",
                 headers: {
                     Accept: "text/html",
-                    ...(method === "POST" ? scannerCsrfHeaders() : {})
+                    ...(method === "POST" ? scannerCsrfHeaders() : {}),
+                    ...(method === "POST" && window.rgsLockHeaders
+                        ? window.rgsLockHeaders()
+                        : {})
                 }
             });
             if (response.redirected || response.status === 401) {

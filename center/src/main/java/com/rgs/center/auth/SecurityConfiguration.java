@@ -85,7 +85,10 @@ class SecurityConfiguration {
                         .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
                         // Logout only revokes the current SameSite=Strict cookie token.
                         // Ignoring CSRF here also makes logout reliable from an older tab.
-                        .ignoringRequestMatchers("/auth/logout"))
+                        .ignoringRequestMatchers(
+                                "/auth/logout",
+                                "/api/onlyOne/**"
+                        ))
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .requestCache(cache -> cache.requestCache(new NullRequestCache()))
@@ -93,6 +96,7 @@ class SecurityConfiguration {
                         .requestMatchers(
                                 "/login",
                                 "/auth/login",
+                                "/api/onlyOne/**",
                                 "/css/**",
                                 "/js/**",
                                 "/favicon.ico",
