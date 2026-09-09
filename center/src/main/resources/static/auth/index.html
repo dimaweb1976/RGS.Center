@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Robotic Gamma Spectrometer</title>
+  <link rel="stylesheet" href="/common/css/styles.css" />
+</head>
+<body>
+  <main class="authPage">
+    <section class="authShell">
+      <header class="brandHeader">
+        <div class="brandBadge">
+          <img src="/common/images/logo.svg" alt="Logo" />
+        </div>
+
+        <div class="brandTitle">
+          <h1>ROBOTIC GAMMA<br />SPECTROMETER</h1>
+          <div class="deviceId">
+            Spectrometer №3
+          </div>
+        </div>
+      </header>
+
+      <div class="authCard">
+        <div id="formView">
+          <form id="authForm" autocomplete="off">
+            <div class="inputGroup">
+              <label for="password">Password</label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                placeholder="Enter your password"
+                autocomplete="current-password"
+              />
+            </div>
+
+            <button class="primaryButton" type="submit">Sign in</button>
+            <p id="errorMessage" class="errorMessage" hidden></p>
+          </form>
+        </div>
+
+        <div id="busyView" class="busyView" hidden>
+          <p class="busyMessage">Web interface is already in use from the IP</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="./js/script.js"></script>
+</body>
+</html>

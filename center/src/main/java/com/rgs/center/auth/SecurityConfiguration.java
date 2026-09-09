@@ -65,7 +65,7 @@ class SecurityConfiguration {
                 delegatedAccessDeniedHandlers,
                 new AccessDeniedHandlerImpl()
         );
-        var htmlEntryPoint = new LoginUrlAuthenticationEntryPoint("/login");
+        var htmlEntryPoint = new LoginUrlAuthenticationEntryPoint("/auth/index.html");
         AuthenticationEntryPoint authenticationEntryPoint =
                 (request, response, exception) -> {
                     if (apiMatcher.matches(request)) {
@@ -93,7 +93,19 @@ class SecurityConfiguration {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .requestCache(cache -> cache.requestCache(new NullRequestCache()))
                 .authorizeHttpRequests(authorize -> authorize
+                        
+                        /*
+                         * In the future. If we'll need to raise security - we'll split:
+                         * all pages - permitAll, all APIs - only 4 authenticated (but all calls for API in front should be done with 'AUTH' line in header)
+                         * 
+                         */
+                        /*
                         .requestMatchers(
+                                //BY
+                                "/auth/**",                                
+                                "/common/**",
+                                "/process/**",
+                                
                                 "/login",
                                 "/auth/login",
                                 "/api/onlyOne/**",
@@ -101,10 +113,15 @@ class SecurityConfiguration {
                                 "/js/**",
                                 "/favicon.ico",
                                 "/error"
-                        ).permitAll()
-                        // Role authorities are attached by AuthTokenFilter. At present all
+                        ).permitAll()*/
+                        
+                        // Role authorities are attached by AuthTokenFilter. At present all                        
                         // authenticated roles have access to the same protected endpoints.
-                        .anyRequest().authenticated())
+                        //.anyRequest().authenticated())
+                        
+                        //BUT HERE WE'LL ALLOW ALL FOR ALL!
+                        .anyRequest().permitAll())
+                
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler))
