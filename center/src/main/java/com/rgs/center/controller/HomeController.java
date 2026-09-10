@@ -1,5 +1,6 @@
 package com.rgs.center.controller;
 
+import com.rgs.center.dashboard.DashboardSnapshotService;
 import com.rgs.center.gammapro.GammaProDeviceView;
 import com.rgs.center.gammapro.GammaProService;
 import com.rgs.center.manipulator.ManipulatorStatusEvaluator;
@@ -58,6 +59,8 @@ public class HomeController {
     private final RoboticManipulatorStreamService roboticManipulatorStreamService;
     /** Вычисляет состояние связи и техническую готовность манипулятора. */
     private final ManipulatorStatusEvaluator manipulatorStatusEvaluator;
+    /** Единый нормализованный снимок для Thymeleaf и других потребителей. */
+    private final DashboardSnapshotService dashboardSnapshotService;
 
     /**
      * Создаёт контроллер страниц состояния.
@@ -73,6 +76,7 @@ public class HomeController {
      * @param scenarioStatusService состояние автоматического сценария
      * @param roboticManipulatorStreamService фоновый сервис каналов Dobot
      * @param manipulatorStatusEvaluator расчёт статуса манипулятора
+     * @param dashboardSnapshotService единая модель состояния оборудования
      */
     public HomeController(
             CameraService cameraService,
@@ -85,7 +89,8 @@ public class HomeController {
             GammaProService gammaProService,
             ScenarioStatusService scenarioStatusService,
             RoboticManipulatorStreamService roboticManipulatorStreamService,
-            ManipulatorStatusEvaluator manipulatorStatusEvaluator
+            ManipulatorStatusEvaluator manipulatorStatusEvaluator,
+            DashboardSnapshotService dashboardSnapshotService
     ) {
         this.cameraService = cameraService;
         this.bosonService = bosonService;
@@ -98,6 +103,7 @@ public class HomeController {
         this.scenarioStatusService = scenarioStatusService;
         this.roboticManipulatorStreamService = roboticManipulatorStreamService;
         this.manipulatorStatusEvaluator = manipulatorStatusEvaluator;
+        this.dashboardSnapshotService = dashboardSnapshotService;
     }
 
     /**
@@ -142,6 +148,10 @@ public class HomeController {
 
     /** Добавляет общий список устройств и последние снимки NICOLE и SHP. */
     private void addDeviceStatus(Model model) {
+        model.addAttribute(
+                "dashboardSnapshot",
+                dashboardSnapshotService.snapshot()
+        );
         model.addAttribute("devices", getVisibleDevices());
         model.addAttribute(
                 "gammaProDevice",

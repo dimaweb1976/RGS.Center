@@ -62,7 +62,7 @@ class EquipmentSnapshotImmutabilityTests {
                 2,
                 3,
                 4,
-                5,
+                5L,
                 null,
                 0,
                 1,

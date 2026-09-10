@@ -16,7 +16,7 @@ public record NicoleEquipmentSnapshot(
         Integer currentNitrogenPressure,
         Integer lowerLevelVoltage,
         Integer upperLevelVoltage,
-        Integer nitrogenLevelFrequency,
+        Long nitrogenLevelFrequency,
         Instant controllerTime,
         Integer coolerErrorCode,
         Integer warningFlags,
