@@ -103,6 +103,13 @@ class AuthWebIntegrationTests {
     }
 
     @Test
+    void browserGetOnLoginSubmissionUrlRedirectsToLoginPage() throws Exception {
+        mockMvc.perform(get("/auth/login"))
+                .andExpect(status().isFound())
+                .andExpect(redirectedUrl("/login"));
+    }
+
+    @Test
     void javascriptCanPostUsingCurrentXsrfCookieValue() throws Exception {
         String authToken = loginAndGetToken();
         Cookie authCookie = new Cookie(AuthCookieService.COOKIE_NAME, authToken);

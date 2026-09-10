@@ -45,6 +45,12 @@ class AuthController {
         return "login";
     }
 
+    /** Redirects accidental browser GET requests to the actual login page. */
+    @GetMapping("/auth/login")
+    String loginPageAlias() {
+        return "redirect:/login";
+    }
+
     /**
      * Revokes the token already present in this browser, checks credentials,
      * creates a new server-side session and writes its raw token to the cookie.
