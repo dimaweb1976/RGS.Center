@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -111,6 +112,49 @@ public class DeviceConnectionManager implements SmartLifecycle {
     @Override
     public boolean isRunning() {
         return running.get();
+    }
+
+    /**
+     * Stops and reopens one device so transports backed by SettingsService read
+     * the values most recently saved in PostgreSQL.
+     */
+    public synchronized DeviceReconfigurationResult reconfigure(String deviceCode) {
+        ManagedDeviceConnection device = devices.stream()
+                .filter(candidate -> candidate.deviceCode().getCode().equals(deviceCode))
+                .findFirst()
+                .orElseThrow(() -> new NoSuchElementException(
+                        "Unknown managed device: " + deviceCode
+                ));
+
+        try {
+            device.stopCommunication();
+            if (!device.isEnabled()) {
+                return new DeviceReconfigurationResult(
+                        deviceCode,
+                        true,
+                        "DISABLED",
+                        "Settings saved; device is disabled by application configuration"
+                );
+            }
+            device.startCommunication();
+            return new DeviceReconfigurationResult(
+                    deviceCode,
+                    true,
+                    device.communicationSnapshot().state().name(),
+                    "Connection settings applied"
+            );
+        } catch (RuntimeException exception) {
+            String message = exception.getMessage() == null
+                    ? exception.getClass().getSimpleName()
+                    : exception.getMessage();
+            log.error("Cannot apply connection settings for {}", deviceCode, exception);
+            return new DeviceReconfigurationResult(
+                    deviceCode,
+                    false,
+                    "FAILED",
+                    message
+            );
+        }
     }
 
     /** Подключения должны открываться автоматически при запуске Spring. */

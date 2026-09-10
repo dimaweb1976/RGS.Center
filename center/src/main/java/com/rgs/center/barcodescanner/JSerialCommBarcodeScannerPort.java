@@ -33,6 +33,7 @@ public class JSerialCommBarcodeScannerPort
             LoggerFactory.getLogger(JSerialCommBarcodeScannerPort.class);
 
     private final CurrentDataService currentDataService;
+    private final SettingsService settingsService;
     private final BarcodeScannerFrameDecoder frameDecoder;
     private final String portName;
     private final int baudRate;
@@ -59,14 +60,27 @@ public class JSerialCommBarcodeScannerPort
             SettingsService settingsService,
             CurrentDataService currentDataService
     ) {
-        this(currentDataService, productionConfiguration(settingsService));
+        this(
+                settingsService,
+                currentDataService,
+                productionConfiguration(settingsService)
+        );
     }
 
     private JSerialCommBarcodeScannerPort(
             CurrentDataService currentDataService,
             ScannerConfiguration configuration
     ) {
+        this(null, currentDataService, configuration);
+    }
+
+    private JSerialCommBarcodeScannerPort(
+            SettingsService settingsService,
+            CurrentDataService currentDataService,
+            ScannerConfiguration configuration
+    ) {
         this(
+                settingsService,
                 currentDataService,
                 configuration,
                 new BarcodeScannerFrameDecoder(
@@ -77,6 +91,7 @@ public class JSerialCommBarcodeScannerPort
     }
 
     private JSerialCommBarcodeScannerPort(
+            SettingsService settingsService,
             CurrentDataService currentDataService,
             ScannerConfiguration configuration,
             BarcodeScannerFrameDecoder frameDecoder
@@ -90,6 +105,7 @@ public class JSerialCommBarcodeScannerPort
                 frameDecoder
         );
         this.currentDataService = currentDataService;
+        this.settingsService = settingsService;
         this.frameDecoder = frameDecoder;
         portName = configuration.portName();
         baudRate = configuration.baudRate();
@@ -254,7 +270,8 @@ public class JSerialCommBarcodeScannerPort
             throw exception;
         } catch (RuntimeException exception) {
             BarcodeScannerException wrapped = new BarcodeScannerException(
-                    "Cannot communicate with barcode scanner on " + portName,
+                    "Cannot communicate with barcode scanner on "
+                            + configuredPortName(),
                     exception
             );
             lastScanEpochSeconds.set(Instant.now().getEpochSecond());
@@ -273,13 +290,13 @@ public class JSerialCommBarcodeScannerPort
         boolean enabled = isEnabled();
         return new BarcodeScannerSnapshot(
                 DeviceCode.BARCODE_SCANNER.getCode(),
-                portName,
+                configuredPortName(),
                 enabled,
                 enabled
                         && responsive.get()
                         && communication.state() == PeripheralWorkerState.RUNNING,
                 initialized.get(),
-                baudRate,
+                configuredBaudRate(),
                 operationState.get(),
                 currentAttempt.get(),
                 maxScanAttempts,
@@ -313,8 +330,8 @@ public class JSerialCommBarcodeScannerPort
         initialized.set(true);
         log.info(
                 "Barcode scanner initialized on {} at {} baud",
-                portName,
-                baudRate
+                configuredPortName(),
+                configuredBaudRate()
         );
     }
 
@@ -432,7 +449,8 @@ public class JSerialCommBarcodeScannerPort
     private void requireAcknowledgement(byte[] command) {
         frameDecoder.expectCommandResponse();
         submitQueued(command);
-        long deadline = System.nanoTime() + responseTimeout.toNanos();
+        long deadline = System.nanoTime()
+                + configuredResponseTimeout().toNanos();
         while (true) {
             long remaining = deadline - System.nanoTime();
             if (remaining <= 0) {
@@ -508,8 +526,8 @@ public class JSerialCommBarcodeScannerPort
             int timeoutMillis,
             int maxCodeLength
     ) {
-        if (!portName.equals(configuredPortName)
-                || baudRate != configuredBaudRate) {
+        if (!configuredPortName().equals(configuredPortName)
+                || configuredBaudRate() != configuredBaudRate) {
             throw new BarcodeScannerException(
                     "Barcode scanner settings changed; restart is required",
                     null,
@@ -552,7 +570,21 @@ public class JSerialCommBarcodeScannerPort
                 SettingsService.BARCODE_SCANNER_MAX_CODE_LENGTH
         );
         return new ScannerConfiguration(
-                new SerialDeviceConnection(portName, baudRate, readTimeout),
+                new SerialDeviceConnection(
+                        "serial:barcode-scanner",
+                        () -> settingsService.getValue(
+                                SettingsService.BARCODE_SCANNER_PORT,
+                                String.class
+                        ),
+                        () -> settingInt(
+                                settingsService,
+                                SettingsService.BARCODE_SCANNER_BAUD_RATE
+                        ),
+                        () -> settingInt(
+                                settingsService,
+                                SettingsService.BARCODE_SCANNER_READ_TIMEOUT_MILLIS
+                        )
+                ),
                 portName,
                 baudRate,
                 maxCodeLength,
@@ -585,6 +617,33 @@ public class JSerialCommBarcodeScannerPort
                 settingCode,
                 Long.class
         ));
+    }
+
+    private String configuredPortName() {
+        return settingsService == null
+                ? portName
+                : settingsService.getValue(
+                        SettingsService.BARCODE_SCANNER_PORT,
+                        String.class
+                );
+    }
+
+    private int configuredBaudRate() {
+        return settingsService == null
+                ? baudRate
+                : settingInt(
+                        settingsService,
+                        SettingsService.BARCODE_SCANNER_BAUD_RATE
+                );
+    }
+
+    private Duration configuredResponseTimeout() {
+        return settingsService == null
+                ? responseTimeout
+                : Duration.ofMillis(settingInt(
+                        settingsService,
+                        SettingsService.BARCODE_SCANNER_RESPONSE_TIMEOUT_MILLIS
+                ));
     }
 
     private record ScannerConfiguration(

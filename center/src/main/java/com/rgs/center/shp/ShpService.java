@@ -38,8 +38,8 @@ public class ShpService extends AbstractQueuedDeviceService {
     private static final int FAILURES_BEFORE_RECONNECT = 3;
 
     private final CurrentDataService currentDataService;
+    private final SettingsService settingsService;
     private final SerialDeviceConnection connection;
-    private final Duration responseTimeout;
     private final ReentrantLock pollLock = new ReentrantLock();
     private final AtomicBoolean responsive = new AtomicBoolean();
     private final AtomicInteger consecutiveFailures = new AtomicInteger();
@@ -90,13 +90,8 @@ public class ShpService extends AbstractQueuedDeviceService {
                 )
         );
         this.currentDataService = currentDataService;
+        this.settingsService = settingsService;
         this.connection = connection;
-        responseTimeout = Duration.ofMillis(Math.toIntExact(
-                settingsService.getValue(
-                        SettingsService.SHP_RESPONSE_TIMEOUT_MILLIS,
-                        Long.class
-                )
-        ));
     }
 
     /** Выполняет один полный цикл чтения параметров SHP. */
@@ -207,7 +202,7 @@ public class ShpService extends AbstractQueuedDeviceService {
                 CurrentDataService.INTERACTION_LASTDATE_IN,
                 Instant.now().getEpochSecond()
         );
-        byte[] response = exchangeQueued(command, responseTimeout);
+        byte[] response = exchangeQueued(command, responseTimeout());
         currentDataService.setValue(
                 DeviceCode.SHP,
                 CurrentDataService.INTERACTION_LASTDATE_OUT,
@@ -253,26 +248,38 @@ public class ShpService extends AbstractQueuedDeviceService {
     private static SerialDeviceConnection createConnection(
             SettingsService settingsService
     ) {
-        String portName = settingsService.getValue(
-                SettingsService.SHP_PORT,
-                String.class
-        );
-        if (portName.isBlank()) {
-            throw new IllegalArgumentException("SHP COM port is not configured");
-        }
-        int baudRate = Math.toIntExact(settingsService.getValue(
-                SettingsService.SHP_BAUD_RATE,
-                Long.class
-        ));
-        int readTimeout = Math.toIntExact(settingsService.getValue(
-                SettingsService.SHP_READ_TIMEOUT_MILLIS,
-                Long.class
-        ));
         return new SerialDeviceConnection(
-                portName,
-                baudRate,
-                readTimeout,
+                "serial:shp",
+                () -> settingsService.getValue(
+                        SettingsService.SHP_PORT,
+                        String.class
+                ),
+                () -> settingInt(
+                        settingsService,
+                        SettingsService.SHP_BAUD_RATE
+                ),
+                () -> settingInt(
+                        settingsService,
+                        SettingsService.SHP_READ_TIMEOUT_MILLIS
+                ),
                 false
         );
+    }
+
+    private Duration responseTimeout() {
+        return Duration.ofMillis(settingInt(
+                settingsService,
+                SettingsService.SHP_RESPONSE_TIMEOUT_MILLIS
+        ));
+    }
+
+    private static int settingInt(
+            SettingsService settingsService,
+            String settingCode
+    ) {
+        return Math.toIntExact(settingsService.getValue(
+                settingCode,
+                Long.class
+        ));
     }
 }

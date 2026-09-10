@@ -57,7 +57,52 @@ CREATE INDEX IF NOT EXISTS idx_auth_sessions_active
 CREATE INDEX IF NOT EXISTS idx_auth_sessions_user
     ON auth_sessions (user_id);
 
+-- Device connection settings. Production defaults are deployed by dbscripts;
+-- this portable definition also supports H2-backed application tests.
+CREATE TABLE IF NOT EXISTS device_settings
+(
+    string_id VARCHAR(128) PRIMARY KEY,
+    device_code VARCHAR(64) NOT NULL,
+    type SMALLINT NOT NULL CHECK (type BETWEEN 1 AND 4),
+    boolean_value BOOLEAN,
+    long_value BIGINT,
+    double_value DOUBLE PRECISION,
+    string_value TEXT,
+    version BIGINT NOT NULL DEFAULT 0 CHECK (version >= 0),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_by INTEGER REFERENCES users(id),
+    CONSTRAINT ck_device_settings_typed_value CHECK
+    (
+        (type = 1 AND boolean_value IS NOT NULL
+                  AND long_value IS NULL
+                  AND double_value IS NULL
+                  AND string_value IS NULL)
+        OR
+        (type = 2 AND boolean_value IS NULL
+                  AND long_value IS NOT NULL
+                  AND double_value IS NULL
+                  AND string_value IS NULL)
+        OR
+        (type = 3 AND boolean_value IS NULL
+                  AND long_value IS NULL
+                  AND double_value IS NOT NULL
+                  AND string_value IS NULL)
+        OR
+        (type = 4 AND boolean_value IS NULL
+                  AND long_value IS NULL
+                  AND double_value IS NULL
+                  AND string_value IS NOT NULL)
+    )
+);
+
+CREATE INDEX IF NOT EXISTS idx_device_settings_device
+    ON device_settings (device_code, string_id);
+
+CREATE INDEX IF NOT EXISTS idx_device_settings_updated_by
+    ON device_settings (updated_by);
+
 COMMENT ON TABLE roles IS 'Справочник ролей пользователей RGSCenter';
 COMMENT ON TABLE users IS 'Пользователи RGSCenter';
 COMMENT ON COLUMN users.hash IS 'BCrypt-хэш пароля; пароль в открытом виде не хранится';
 COMMENT ON TABLE auth_sessions IS 'Серверные сессии токен-аутентификации RGSCenter';
+COMMENT ON TABLE device_settings IS 'Настройки подключения физических устройств';

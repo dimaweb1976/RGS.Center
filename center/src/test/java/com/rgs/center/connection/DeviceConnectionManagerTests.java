@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DeviceConnectionManagerTests {
@@ -69,6 +70,48 @@ class DeviceConnectionManagerTests {
         assertTrue(enabled.stopAttempted.get());
         assertFalse(disabled.startAttempted.get());
         assertFalse(disabled.stopAttempted.get());
+    }
+
+    @Test
+    void reconfiguresOnlyRequestedDevice() {
+        FakeManagedDevice camera = new FakeManagedDevice(
+                DeviceCode.CAMERA,
+                false
+        );
+        FakeManagedDevice scales = new FakeManagedDevice(
+                DeviceCode.SCALES,
+                false
+        );
+        DeviceConnectionManager manager = new DeviceConnectionManager(
+                List.of(camera, scales)
+        );
+
+        DeviceReconfigurationResult result = manager.reconfigure("scales");
+
+        assertTrue(result.applied());
+        assertEquals("STOPPED", result.status());
+        assertTrue(scales.stopAttempted.get());
+        assertTrue(scales.startAttempted.get());
+        assertFalse(camera.stopAttempted.get());
+        assertFalse(camera.startAttempted.get());
+    }
+
+    @Test
+    void reportsStartFailureWhenApplyingSettings() {
+        FakeManagedDevice boson = new FakeManagedDevice(
+                DeviceCode.BOSON,
+                true
+        );
+        DeviceConnectionManager manager = new DeviceConnectionManager(
+                List.of(boson)
+        );
+
+        DeviceReconfigurationResult result = manager.reconfigure("boson");
+
+        assertFalse(result.applied());
+        assertEquals("FAILED", result.status());
+        assertTrue(boson.stopAttempted.get());
+        assertTrue(boson.startAttempted.get());
     }
 
     private static final class FakeManagedDevice

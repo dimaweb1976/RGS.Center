@@ -50,9 +50,6 @@ public class GdrmService extends AbstractQueuedDeviceService {
     /** COM-транспорт, скорость которого меняется при идентификации. */
     private final SerialDeviceConnection connection;
 
-    /** Максимальное ожидание одного ответа прибора. */
-    private final Duration responseTimeout;
-
     /** Не позволяет ручному и плановому опросу выполняться одновременно. */
     private final ReentrantLock pollLock = new ReentrantLock();
 
@@ -106,12 +103,6 @@ public class GdrmService extends AbstractQueuedDeviceService {
         this.settingsService = settingsService;
         this.currentDataService = currentDataService;
         this.connection = connection;
-        responseTimeout = Duration.ofMillis(Math.toIntExact(
-                settingsService.getValue(
-                        SettingsService.GDRM_RESPONSE_TIMEOUT_MILLIS,
-                        Long.class
-                )
-        ));
     }
 
     /**
@@ -312,7 +303,7 @@ public class GdrmService extends AbstractQueuedDeviceService {
         );
         byte[] response = exchangeQueued(
                 GdrmProtocol.command(address, body),
-                responseTimeout
+                responseTimeout()
         );
         currentDataService.setValue(
                 DeviceCode.GDRM,
@@ -382,21 +373,37 @@ public class GdrmService extends AbstractQueuedDeviceService {
     private static SerialDeviceConnection createConnection(
             SettingsService settingsService
     ) {
-        String portName = settingsService.getValue(
-                SettingsService.GDRM_PORT,
-                String.class
+        return new SerialDeviceConnection(
+                "serial:gdrm",
+                () -> settingsService.getValue(
+                        SettingsService.GDRM_PORT,
+                        String.class
+                ),
+                () -> settingInt(
+                        settingsService,
+                        SettingsService.GDRM_INITIAL_BAUD_RATE
+                ),
+                () -> settingInt(
+                        settingsService,
+                        SettingsService.GDRM_READ_TIMEOUT_MILLIS
+                )
         );
-        if (portName.isBlank()) {
-            throw new IllegalArgumentException("GDRM COM port is not configured");
-        }
-        int baudRate = Math.toIntExact(settingsService.getValue(
-                SettingsService.GDRM_INITIAL_BAUD_RATE,
+    }
+
+    private Duration responseTimeout() {
+        return Duration.ofMillis(settingInt(
+                settingsService,
+                SettingsService.GDRM_RESPONSE_TIMEOUT_MILLIS
+        ));
+    }
+
+    private static int settingInt(
+            SettingsService settingsService,
+            String settingCode
+    ) {
+        return Math.toIntExact(settingsService.getValue(
+                settingCode,
                 Long.class
         ));
-        int readTimeout = Math.toIntExact(settingsService.getValue(
-                SettingsService.GDRM_READ_TIMEOUT_MILLIS,
-                Long.class
-        ));
-        return new SerialDeviceConnection(portName, baudRate, readTimeout);
     }
 }

@@ -30,6 +30,7 @@ public class ScalesService extends AbstractQueuedDeviceService {
     private static final int FAILURES_BEFORE_RECONNECT = 3;
 
     private final CurrentDataService currentDataService;
+    private final SettingsService settingsService;
     private final String portName;
     private final int baudRate;
     private final Duration responseTimeout;
@@ -48,6 +49,7 @@ public class ScalesService extends AbstractQueuedDeviceService {
             CurrentDataService currentDataService
     ) {
         this(
+                settingsService,
                 currentDataService,
                 serialConfiguration(settingsService),
                 responseTimeout(settingsService)
@@ -55,6 +57,7 @@ public class ScalesService extends AbstractQueuedDeviceService {
     }
 
     private ScalesService(
+            SettingsService settingsService,
             CurrentDataService currentDataService,
             SerialConfiguration serial,
             Duration responseTimeout
@@ -62,13 +65,24 @@ public class ScalesService extends AbstractQueuedDeviceService {
         this(
                 currentDataService,
                 new SerialDeviceConnection(
-                        serial.portName(),
-                        serial.baudRate(),
-                        serial.readTimeoutMillis()
+                        "serial:scales",
+                        () -> settingsService.getValue(
+                                SettingsService.SCALES_PORT,
+                                String.class
+                        ),
+                        () -> settingInt(
+                                settingsService,
+                                SettingsService.SCALES_BAUD_RATE
+                        ),
+                        () -> settingInt(
+                                settingsService,
+                                SettingsService.SCALES_READ_TIMEOUT_MILLIS
+                        )
                 ),
                 serial.portName(),
                 serial.baudRate(),
-                responseTimeout
+                responseTimeout,
+                settingsService
         );
     }
 
@@ -80,12 +94,31 @@ public class ScalesService extends AbstractQueuedDeviceService {
             int baudRate,
             Duration responseTimeout
     ) {
+        this(
+                currentDataService,
+                transport,
+                portName,
+                baudRate,
+                responseTimeout,
+                null
+        );
+    }
+
+    private ScalesService(
+            CurrentDataService currentDataService,
+            PeripheralTransport transport,
+            String portName,
+            int baudRate,
+            Duration responseTimeout,
+            SettingsService settingsService
+    ) {
         super(
                 DeviceCode.SCALES,
                 transport,
                 PeripheralWorkerConfiguration.lineDevice(MAX_FRAME_LENGTH)
         );
         this.currentDataService = currentDataService;
+        this.settingsService = settingsService;
         this.portName = portName;
         this.baudRate = baudRate;
         this.responseTimeout = responseTimeout;
@@ -112,7 +145,7 @@ public class ScalesService extends AbstractQueuedDeviceService {
             );
             byte[] frame = exchangeQueued(
                     ScalesProtocol.immediateMassCommand(),
-                    responseTimeout
+                    configuredResponseTimeout()
             );
             currentDataService.setValue(
                     DeviceCode.SCALES,
@@ -154,10 +187,10 @@ public class ScalesService extends AbstractQueuedDeviceService {
         var communication = communicationSnapshot();
         return new ScalesSnapshot(
                 DeviceCode.SCALES.getCode(),
-                portName,
+                configuredPortName(),
                 responsive.get()
                         && communication.state() == PeripheralWorkerState.RUNNING,
-                baudRate,
+                configuredBaudRate(),
                 currentDataService.getValue(
                         DeviceCode.SCALES,
                         CurrentDataService.INTERACTION_LASTDATE_IN,
@@ -231,6 +264,37 @@ public class ScalesService extends AbstractQueuedDeviceService {
                 SettingsService.SCALES_RESPONSE_TIMEOUT_MILLIS,
                 Long.class
         )));
+    }
+
+    private String configuredPortName() {
+        return settingsService == null
+                ? portName
+                : settingsService.getValue(
+                        SettingsService.SCALES_PORT,
+                        String.class
+                );
+    }
+
+    private int configuredBaudRate() {
+        return settingsService == null
+                ? baudRate
+                : settingInt(settingsService, SettingsService.SCALES_BAUD_RATE);
+    }
+
+    private Duration configuredResponseTimeout() {
+        return settingsService == null
+                ? responseTimeout
+                : responseTimeout(settingsService);
+    }
+
+    private static int settingInt(
+            SettingsService settingsService,
+            String settingCode
+    ) {
+        return Math.toIntExact(settingsService.getValue(
+                settingCode,
+                Long.class
+        ));
     }
 
     private record SerialConfiguration(

@@ -8,6 +8,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Objects;
+import java.util.function.IntSupplier;
+import java.util.function.Supplier;
 
 /**
  * COM-транспорт на базе jSerialComm.
@@ -21,11 +24,16 @@ public final class SerialDeviceConnection extends AbstractDeviceConnection {
     private static final Logger log =
             LoggerFactory.getLogger(SerialDeviceConnection.class);
 
-    /** Низкоуровневый объект jSerialComm. */
-    private final SerialPort port;
+    /** Sources are evaluated for every open, including an administrator apply. */
+    private final Supplier<String> portNameSupplier;
+    private final IntSupplier baudRateSupplier;
+    private final IntSupplier timeoutMillisSupplier;
+
+    /** Низкоуровневый объект jSerialComm текущего открытого порта. */
+    private SerialPort port;
 
     /** Имя порта для диагностики, например COM7. */
-    private final String portName;
+    private volatile String portName;
 
     /** Текущая скорость обмена; изменяется только через {@link #setBaudRate(int)}. */
     private volatile int baudRate;
@@ -49,7 +57,14 @@ public final class SerialDeviceConnection extends AbstractDeviceConnection {
             int baudRate,
             int timeoutMillis
     ) {
-        this(portName, baudRate, timeoutMillis, false, false);
+        this(
+                "serial:" + portName,
+                () -> portName,
+                () -> baudRate,
+                () -> timeoutMillis,
+                false,
+                false
+        );
     }
 
     /**
@@ -66,46 +81,99 @@ public final class SerialDeviceConnection extends AbstractDeviceConnection {
             int timeoutMillis,
             boolean dtrEnabled
     ) {
-        this(portName, baudRate, timeoutMillis, true, dtrEnabled);
+        this(
+                "serial:" + portName,
+                () -> portName,
+                () -> baudRate,
+                () -> timeoutMillis,
+                true,
+                dtrEnabled
+        );
+    }
+
+    /** Creates a transport that reloads COM settings whenever it is reopened. */
+    public SerialDeviceConnection(
+            String connectionId,
+            Supplier<String> portNameSupplier,
+            IntSupplier baudRateSupplier,
+            IntSupplier timeoutMillisSupplier
+    ) {
+        this(
+                connectionId,
+                portNameSupplier,
+                baudRateSupplier,
+                timeoutMillisSupplier,
+                false,
+                false
+        );
+    }
+
+    /** Creates a reloadable COM transport with an explicit DTR state. */
+    public SerialDeviceConnection(
+            String connectionId,
+            Supplier<String> portNameSupplier,
+            IntSupplier baudRateSupplier,
+            IntSupplier timeoutMillisSupplier,
+            boolean dtrEnabled
+    ) {
+        this(
+                connectionId,
+                portNameSupplier,
+                baudRateSupplier,
+                timeoutMillisSupplier,
+                true,
+                dtrEnabled
+        );
     }
 
     /** Общая инициализация COM-подключения. */
     private SerialDeviceConnection(
-            String portName,
-            int baudRate,
-            int timeoutMillis,
+            String connectionId,
+            Supplier<String> portNameSupplier,
+            IntSupplier baudRateSupplier,
+            IntSupplier timeoutMillisSupplier,
             boolean configureDtr,
             boolean dtrEnabled
     ) {
-        super("serial:" + portName);
-        this.portName = portName;
-        this.baudRate = baudRate;
+        super(connectionId);
+        this.portNameSupplier = Objects.requireNonNull(portNameSupplier);
+        this.baudRateSupplier = Objects.requireNonNull(baudRateSupplier);
+        this.timeoutMillisSupplier = Objects.requireNonNull(timeoutMillisSupplier);
+        portName = Objects.requireNonNull(portNameSupplier.get());
+        baudRate = baudRateSupplier.getAsInt();
         this.configureDtr = configureDtr;
         this.dtrEnabled = dtrEnabled;
-        port = SerialPort.getCommPort(portName);
+    }
+
+    /** Открывает COM-порт и создаёт поток чтения. */
+    @Override
+    protected void doOpen() {
+        String configuredPortName = portNameSupplier.get();
+        int configuredBaudRate = baudRateSupplier.getAsInt();
+        int configuredTimeout = timeoutMillisSupplier.getAsInt();
+        if (configuredPortName == null || configuredPortName.isBlank()) {
+            throw new PeripheralCommunicationException("COM port is not configured");
+        }
+        if (configuredBaudRate <= 0 || configuredTimeout <= 0) {
+            throw new PeripheralCommunicationException(
+                    "Invalid serial parameters for " + configuredPortName
+            );
+        }
+        portName = configuredPortName;
+        baudRate = configuredBaudRate;
+        port = SerialPort.getCommPort(configuredPortName);
         port.setComPortParameters(
-                baudRate,
+                configuredBaudRate,
                 8,
                 SerialPort.ONE_STOP_BIT,
                 SerialPort.NO_PARITY
         );
         port.setComPortTimeouts(
                 SerialPort.TIMEOUT_READ_SEMI_BLOCKING,
-                timeoutMillis,
+                configuredTimeout,
                 0
         );
-    }
-
-    /** Открывает COM-порт и создаёт поток чтения. */
-    @Override
-    protected void doOpen() {
         log.debug("Opening serial port {} at {} baud", portName, baudRate);
-        port.setComPortParameters(
-                baudRate,
-                8,
-                SerialPort.ONE_STOP_BIT,
-                SerialPort.NO_PARITY
-        );
         if (!port.openPort()) {
             log.error("Cannot open serial port {}", portName);
             throw new PeripheralCommunicationException(
@@ -226,14 +294,16 @@ public final class SerialDeviceConnection extends AbstractDeviceConnection {
             throw new IllegalArgumentException("Baud rate must be positive");
         }
         baudRate = value;
-        port.setComPortParameters(
-                value,
-                8,
-                SerialPort.ONE_STOP_BIT,
-                SerialPort.NO_PARITY
-        );
-        if (port.isOpen()) {
-            port.flushIOBuffers();
+        if (port != null) {
+            port.setComPortParameters(
+                    value,
+                    8,
+                    SerialPort.ONE_STOP_BIT,
+                    SerialPort.NO_PARITY
+            );
+            if (port.isOpen()) {
+                port.flushIOBuffers();
+            }
         }
         log.info("Serial port {} configured for {} baud", portName, value);
     }
@@ -246,7 +316,7 @@ public final class SerialDeviceConnection extends AbstractDeviceConnection {
     /** Закрывает поток и COM-порт. Повторный вызов безопасен. */
     @Override
     protected void doClose() {
-        if (port.isOpen()) {
+        if (port != null && port.isOpen()) {
             try {
                 if (inputStream != null) {
                     inputStream.close();
@@ -266,6 +336,7 @@ public final class SerialDeviceConnection extends AbstractDeviceConnection {
             }
         }
         inputStream = null;
+        port = null;
     }
 
 }
