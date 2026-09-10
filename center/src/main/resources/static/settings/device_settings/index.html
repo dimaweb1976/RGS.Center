@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Настройки приборов — RGSCenter</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="pageHeader">
+    <div>
+      <p class="eyebrow">ROBOTIC GAMMA SPECTROMETER</p>
+      <h1>Параметры подключения приборов</h1>
+    </div>
+    <div class="headerLinks">
+      <a class="backLink" href="/">Вернуться в систему</a>
+      <a class="backLink" href="/login">Войти</a>
+    </div>
+  </header>
+
+  <main class="pageLayout">
+    <section class="leasePanel" aria-labelledby="leaseTitle">
+      <div>
+        <p class="eyebrow">МОНОПОЛЬНЫЙ ДОСТУП</p>
+        <h2 id="leaseTitle">Управление арендой</h2>
+        <p id="leaseStatus" class="leaseStatus">Проверка токена…</p>
+      </div>
+      <form id="leaseForm" class="leaseForm">
+        <label class="visuallyHidden" for="masterPassword">Мастер-пароль</label>
+        <input id="masterPassword" type="password" autocomplete="current-password"
+               placeholder="Мастер-пароль" required>
+        <button id="leaseButton" class="button secondary" type="submit">
+          Получить доступ
+        </button>
+      </form>
+    </section>
+
+    <div class="settingsLayout">
+      <aside class="devicePanel" aria-label="Приборы">
+        <h2>Приборы</h2>
+        <nav id="deviceList" class="deviceList"></nav>
+      </aside>
+
+      <section class="settingsPanel">
+        <div class="settingsHeading">
+          <div>
+            <p class="eyebrow">ПОДКЛЮЧЕНИЕ</p>
+            <h2 id="deviceTitle">Загрузка параметров…</h2>
+          </div>
+          <button id="reloadButton" class="button secondary" type="button">
+            Обновить
+          </button>
+        </div>
+
+        <div id="message" class="message" hidden role="status"></div>
+        <form id="settingsForm">
+          <div id="settingsFields" class="settingsFields"></div>
+          <div class="actions">
+            <button id="saveButton" class="button primary" type="submit">
+              Сохранить
+            </button>
+            <button id="applyButton" class="button warning" type="button">
+              Применить подключение
+            </button>
+          </div>
+        </form>
+
+        <p class="helpText">
+          «Сохранить» записывает значения в PostgreSQL. «Применить подключение»
+          перезапускает только выбранное подключение с последними сохранёнными
+          параметрами. Для обеих операций нужен активный монопольный доступ.
+        </p>
+      </section>
+    </div>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
