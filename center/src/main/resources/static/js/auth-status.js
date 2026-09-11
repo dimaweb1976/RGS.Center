@@ -3,6 +3,27 @@
     window.rgsAuthStatusInitialized = true;
 
     const lockTokenKey = "rgs.onlyOne.lockToken";
+    const legacyLockTokenKey = "token";
+
+    function storedLockToken() {
+        // The exclusive lease belongs to the browser, not to one tab. Keep a
+        // shared copy so a newly opened RGSCenter page can use the same lease.
+        const token = window.localStorage.getItem(lockTokenKey)
+            || window.sessionStorage.getItem(lockTokenKey)
+            || window.sessionStorage.getItem(legacyLockTokenKey);
+        if (token) {
+            window.localStorage.setItem(lockTokenKey, token);
+            window.sessionStorage.setItem(lockTokenKey, token);
+            window.sessionStorage.setItem(legacyLockTokenKey, token);
+        }
+        return token;
+    }
+
+    function storeLockToken(token) {
+        window.localStorage.setItem(lockTokenKey, token);
+        window.sessionStorage.setItem(lockTokenKey, token);
+        window.sessionStorage.setItem(legacyLockTokenKey, token);
+    }
 
     function readCookie(name) {
         const prefix = `${encodeURIComponent(name)}=`;
@@ -21,7 +42,7 @@
     };
 
     window.rgsLockHeaders = () => {
-        const token = window.sessionStorage.getItem(lockTokenKey);
+        const token = storedLockToken();
         return token ? {"X-Lock-Token": token} : {};
     };
 
@@ -37,7 +58,9 @@
     }
 
     function clearLockToken() {
+        window.localStorage.removeItem(lockTokenKey);
         window.sessionStorage.removeItem(lockTokenKey);
+        window.sessionStorage.removeItem(legacyLockTokenKey);
     }
 
     async function acquireLock() {
@@ -66,7 +89,7 @@
             }
 
             const lease = await response.json();
-            window.sessionStorage.setItem(lockTokenKey, lease.token);
+            storeLockToken(lease.token);
             passwordInput.value = "";
             updateLockControls("active", "Монопольный доступ активен");
         } catch (error) {
