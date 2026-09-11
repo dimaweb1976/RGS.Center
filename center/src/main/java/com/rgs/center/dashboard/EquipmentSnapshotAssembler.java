@@ -161,6 +161,7 @@ public class EquipmentSnapshotAssembler {
             DeviceHealth health = health(
                     code,
                     device.getName(),
+                    device.getIpAddress(),
                     enabled,
                     connection(device.getStatus()),
                     !enabled ? TechnicalState.DISABLED
@@ -194,6 +195,7 @@ public class EquipmentSnapshotAssembler {
     private NicoleEquipmentSnapshot nicole(Instant now) {
         var view = nicoleService.statusView();
         var source = view.snapshot();
+        Device nicoleDevice = nicoleService.getNicole();
         boolean enabled = view.connectionStatus()
                 != com.rgs.center.nicole.NicoleConnectionStatus.DISABLED;
         ConnectionState connection = switch (view.connectionStatus()) {
@@ -213,6 +215,7 @@ public class EquipmentSnapshotAssembler {
         DeviceHealth health = health(
                 DeviceCode.NICOLE.getCode(),
                 DeviceCode.NICOLE.getDisplayName(),
+                nicoleDevice.getIpAddress(),
                 enabled,
                 connection,
                 technical,
@@ -224,6 +227,7 @@ public class EquipmentSnapshotAssembler {
         );
         return new NicoleEquipmentSnapshot(
                 health,
+                source == null ? null : source.resetCause(),
                 source == null ? null : source.ethernetUp(),
                 source == null ? null : source.dhcpLeased(),
                 source == null ? null : source.cryoControllerCommunication(),
@@ -263,6 +267,7 @@ public class EquipmentSnapshotAssembler {
         DeviceHealth health = health(
                 source.deviceCode(),
                 DeviceCode.SHP.getDisplayName(),
+                source.portName(),
                 enabled,
                 enabled ? source.connected()
                         ? ConnectionState.ONLINE : ConnectionState.OFFLINE
@@ -305,6 +310,7 @@ public class EquipmentSnapshotAssembler {
         DeviceHealth health = health(
                 source.deviceCode(),
                 DeviceCode.SCALES.getDisplayName(),
+                source.portName(),
                 enabled,
                 enabled ? source.connected()
                         ? ConnectionState.ONLINE : ConnectionState.OFFLINE
@@ -361,6 +367,7 @@ public class EquipmentSnapshotAssembler {
         DeviceHealth health = health(
                 DeviceCode.GAMMA_PRO.getCode(),
                 DeviceCode.GAMMA_PRO.getDisplayName(),
+                source.host() + ":" + source.port(),
                 enabled,
                 connection,
                 enabled ? technical : TechnicalState.DISABLED,
@@ -406,6 +413,7 @@ public class EquipmentSnapshotAssembler {
         DeviceHealth health = health(
                 DeviceCode.BOSON.getCode(),
                 DeviceCode.BOSON.getDisplayName(),
+                settingsService.getValue(SettingsService.BOSON_IP, String.class),
                 enabled,
                 enabled ? connected ? ConnectionState.ONLINE
                         : ConnectionState.OFFLINE : ConnectionState.DISABLED,
@@ -451,6 +459,7 @@ public class EquipmentSnapshotAssembler {
         DeviceHealth health = health(
                 source.deviceCode(),
                 DeviceCode.BARCODE_SCANNER.getDisplayName(),
+                source.portName(),
                 source.enabled(),
                 source.enabled() ? source.connected()
                         ? ConnectionState.ONLINE : ConnectionState.OFFLINE
@@ -483,6 +492,11 @@ public class EquipmentSnapshotAssembler {
 
     private ManipulatorEquipmentSnapshot manipulator(Instant now) {
         boolean enabled = manipulatorService.isEnabled();
+        String host = settingsService.getValue(
+                SettingsService.MANIPULATOR_HOST, String.class
+        );
+        int commandPort = settingInt(SettingsService.MANIPULATOR_COMMAND_PORT);
+        int feedbackPort = settingInt(SettingsService.MANIPULATOR_FEEDBACK_PORT);
         RoboticManipulatorSnapshot source = manipulatorService.snapshot();
         ManipulatorStatusView status = manipulatorStatusEvaluator.evaluate(
                 enabled, source
@@ -499,6 +513,7 @@ public class EquipmentSnapshotAssembler {
         DeviceHealth health = health(
                 DeviceCode.ROBOTIC_MANIPULATOR.getCode(),
                 DeviceCode.ROBOTIC_MANIPULATOR.getDisplayName(),
+                host + ":" + commandPort,
                 enabled,
                 switch (status.connectionStatus()) {
                     case DISABLED -> ConnectionState.DISABLED;
@@ -524,11 +539,9 @@ public class EquipmentSnapshotAssembler {
         );
         return new ManipulatorEquipmentSnapshot(
                 health,
-                settingsService.getValue(
-                        SettingsService.MANIPULATOR_HOST, String.class
-                ),
-                settingInt(SettingsService.MANIPULATOR_COMMAND_PORT),
-                settingInt(SettingsService.MANIPULATOR_FEEDBACK_PORT),
+                host,
+                commandPort,
+                feedbackPort,
                 feedback == null || feedback.pose() == null
                         ? new ManipulatorEquipmentSnapshot.Pose(
                                 null, null, null, null, null, null
@@ -622,6 +635,7 @@ public class EquipmentSnapshotAssembler {
         return health(
                 code.getCode(),
                 device.getName(),
+                device.getIpAddress(),
                 enabled,
                 connection(device.getStatus()),
                 enabled && device.getStatus() == DeviceStatus.ONLINE
@@ -639,6 +653,7 @@ public class EquipmentSnapshotAssembler {
     private DeviceHealth health(
             String code,
             String name,
+            String endpoint,
             boolean enabled,
             ConnectionState connection,
             TechnicalState technical,
@@ -651,6 +666,7 @@ public class EquipmentSnapshotAssembler {
         return new DeviceHealth(
                 code,
                 name,
+                endpoint,
                 enabled,
                 connection,
                 technical,

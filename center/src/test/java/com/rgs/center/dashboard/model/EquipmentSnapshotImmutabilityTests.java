@@ -53,6 +53,7 @@ class EquipmentSnapshotImmutabilityTests {
         warnings.add("Warning 1");
         NicoleEquipmentSnapshot nicole = new NicoleEquipmentSnapshot(
                 EquipmentSnapshotTests.ready("nicole", "Nicole"),
+                0,
                 true,
                 true,
                 true,

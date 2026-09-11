@@ -7,6 +7,7 @@ import java.util.Objects;
 /** Последний нормализованный протокольный PONG контроллера Nicole. */
 public record NicoleEquipmentSnapshot(
         DeviceHealth health,
+        Integer resetCause,
         Boolean ethernetUp,
         Boolean dhcpLeased,
         Boolean cryoControllerCommunication,

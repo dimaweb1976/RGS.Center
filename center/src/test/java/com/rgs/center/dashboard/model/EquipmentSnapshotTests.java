@@ -69,6 +69,7 @@ class EquipmentSnapshotTests {
                 null,
                 null,
                 null,
+                null,
                 List.of(),
                 null
         );
@@ -201,6 +202,7 @@ class EquipmentSnapshotTests {
         return new DeviceHealth(
                 code,
                 name,
+                "test-endpoint",
                 true,
                 ConnectionState.ONLINE,
                 TechnicalState.READY,

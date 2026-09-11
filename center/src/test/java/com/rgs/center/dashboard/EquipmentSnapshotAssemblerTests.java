@@ -82,6 +82,9 @@ class EquipmentSnapshotAssemblerTests {
                         com.rgs.center.nicole.NicoleReadinessStatus.DISABLED
                 )
         );
+        Device nicoleDevice = new Device("Nicole", "192.168.1.15:5000");
+        nicoleDevice.setStatus(DeviceStatus.DISABLED);
+        when(nicole.getNicole()).thenReturn(nicoleDevice);
         when(shp.snapshot()).thenReturn(new ShpSnapshot(
                 "shp", "COM5", false, 9600, 0, 0, "", null, null
         ));
@@ -142,6 +145,8 @@ class EquipmentSnapshotAssemblerTests {
                         List.of("Device is disabled by configuration")
                 ));
         when(enablement.isEnabled(DeviceCode.BOSON)).thenReturn(true);
+        when(settings.getValue(SettingsService.BOSON_IP, String.class))
+                .thenReturn("192.168.1.14");
         when(settings.getValue(SettingsService.MANIPULATOR_HOST, String.class))
                 .thenReturn("192.168.5.1");
         when(settings.getValue(

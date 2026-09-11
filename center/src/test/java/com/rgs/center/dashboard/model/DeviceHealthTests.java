@@ -16,6 +16,7 @@ class DeviceHealthTests {
         DeviceHealth health = new DeviceHealth(
                 "nicole",
                 "Nicole",
+                "192.168.1.15:5000",
                 false,
                 ConnectionState.DISABLED,
                 TechnicalState.DISABLED,
@@ -33,6 +34,7 @@ class DeviceHealthTests {
         assertThrows(IllegalArgumentException.class, () -> new DeviceHealth(
                 "nicole",
                 "Nicole",
+                "192.168.1.15:5000",
                 false,
                 ConnectionState.OFFLINE,
                 TechnicalState.DISABLED,
@@ -49,6 +51,7 @@ class DeviceHealthTests {
         assertThrows(IllegalArgumentException.class, () -> new DeviceHealth(
                 "shp",
                 "SHP",
+                "COM5",
                 true,
                 ConnectionState.ONLINE,
                 TechnicalState.DISABLED,
@@ -65,6 +68,7 @@ class DeviceHealthTests {
         DeviceHealth health = new DeviceHealth(
                 "nicole",
                 "Nicole",
+                "192.168.1.15:5000",
                 true,
                 ConnectionState.ONLINE,
                 TechnicalState.ALERT,
@@ -87,6 +91,7 @@ class DeviceHealthTests {
         DeviceHealth health = new DeviceHealth(
                 "camera",
                 "Camera",
+                "192.168.1.13",
                 true,
                 ConnectionState.OFFLINE,
                 TechnicalState.NO_DATA,
@@ -110,6 +115,7 @@ class DeviceHealthTests {
         assertThrows(IllegalArgumentException.class, () -> new DeviceHealth(
                 " ",
                 "Camera",
+                "192.168.1.13",
                 true,
                 ConnectionState.OFFLINE,
                 TechnicalState.NO_DATA,

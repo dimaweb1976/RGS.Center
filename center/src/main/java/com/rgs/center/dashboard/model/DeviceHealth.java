@@ -9,6 +9,7 @@ import java.util.Objects;
  *
  * @param code стабильный машинный идентификатор
  * @param name отображаемое имя
+ * @param endpoint IP-адрес, TCP endpoint или имя COM-порта
  * @param enabled разрешено ли обслуживание устройства
  * @param connection состояние связи
  * @param technical техническая готовность
@@ -21,6 +22,7 @@ import java.util.Objects;
 public record DeviceHealth(
         String code,
         String name,
+        String endpoint,
         boolean enabled,
         ConnectionState connection,
         TechnicalState technical,
@@ -33,6 +35,7 @@ public record DeviceHealth(
     public DeviceHealth {
         requireText(code, "code");
         requireText(name, "name");
+        endpoint = Objects.requireNonNull(endpoint, "endpoint");
         Objects.requireNonNull(connection, "connection");
         Objects.requireNonNull(technical, "technical");
         Objects.requireNonNull(operation, "operation");
