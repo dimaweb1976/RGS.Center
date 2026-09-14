@@ -193,6 +193,28 @@ CREATE INDEX IF NOT EXISTS idx_automatic_measurements_sample
 CREATE INDEX IF NOT EXISTS idx_automatic_measurements_started
     ON automatic_measurements (started_at);
 
+-- Safety interlock state and immutable operator attribution for recovery.
+CREATE TABLE IF NOT EXISTS scenario_incidents
+(
+    id UUID PRIMARY KEY,
+    severity VARCHAR(16) NOT NULL,
+    status VARCHAR(32) NOT NULL,
+    source VARCHAR(128) NOT NULL,
+    code VARCHAR(128) NOT NULL,
+    message TEXT NOT NULL,
+    run_id UUID,
+    object_number INTEGER,
+    workflow_step VARCHAR(64),
+    raised_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    acknowledged_by VARCHAR(255),
+    acknowledged_at TIMESTAMP WITH TIME ZONE,
+    cleared_by VARCHAR(255),
+    cleared_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE INDEX IF NOT EXISTS idx_scenario_incidents_status
+    ON scenario_incidents (status, raised_at);
+
 COMMENT ON TABLE roles IS 'Справочник ролей пользователей RGSCenter';
 COMMENT ON TABLE users IS 'Пользователи RGSCenter';
 COMMENT ON COLUMN users.hash IS 'BCrypt-хэш пароля; пароль в открытом виде не хранится';
@@ -202,3 +224,4 @@ COMMENT ON TABLE device_settings_audit IS 'Неизменяемая истори
 COMMENT ON TABLE measurement_parameters IS 'Текущие параметры автоматического и ручного измерения';
 COMMENT ON TABLE manual_measurements IS 'Результаты измерений, запущенных оператором в ручном режиме';
 COMMENT ON TABLE automatic_measurements IS 'Результаты объектов автоматического производственного цикла';
+COMMENT ON TABLE scenario_incidents IS 'Аварии сценария и подтверждения операторов';

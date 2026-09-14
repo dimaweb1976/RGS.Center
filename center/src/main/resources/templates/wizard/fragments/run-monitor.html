@@ -23,6 +23,35 @@
         <span th:style="|width:${workflowView.progressPercent}%|"></span>
     </div>
 
+    <section class="wizard-incident"
+             th:if="${scenarioIncident.present()}"
+             th:classappend="| wizard-incident--${#strings.toLowerCase(scenarioIncident.severity.name())}|"
+             role="alert">
+        <header>
+            <div>
+                <p class="wizard-eyebrow"
+                   th:text="|${scenarioIncident.severity} · ${scenarioIncident.status}|">EMERGENCY · ACTIVE</p>
+                <h2 th:text="${scenarioIncident.code}">DEVICE_CONNECTION_LOST</h2>
+            </div>
+            <strong th:text="${scenarioIncident.source}">device</strong>
+        </header>
+        <p th:text="${scenarioIncident.message}">The automatic run was stopped.</p>
+        <dl>
+            <div><dt>Incident</dt><dd th:text="${scenarioIncident.id}">—</dd></div>
+            <div><dt>Object</dt><dd th:text="${scenarioIncident.objectNumber != null ? scenarioIncident.objectNumber : '—'}">—</dd></div>
+            <div><dt>Step</dt><dd th:text="${scenarioIncident.step != null ? scenarioIncident.step.label() : '—'}">—</dd></div>
+            <div><dt>Acknowledged by</dt><dd th:text="${#strings.isEmpty(scenarioIncident.acknowledgedBy) ? '—' : scenarioIncident.acknowledgedBy}">—</dd></div>
+        </dl>
+        <div class="wizard-incident-actions">
+            <button class="wizard-button wizard-button--danger" type="button"
+                    data-workflow-action="acknowledge"
+                    th:if="${scenarioIncident.canAcknowledge()}">Acknowledge emergency</button>
+            <button class="wizard-button wizard-button--primary" type="button"
+                    data-workflow-action="reset"
+                    th:if="${scenarioIncident.canReset()}">Validate equipment and reset</button>
+        </div>
+    </section>
+
     <dl class="wizard-run-metrics">
         <div><dt>State</dt><dd th:text="${workflowView.state}">IDLE</dd></div>
         <div><dt>Active object</dt><dd th:text="${workflowView.activeObject}">—</dd></div>

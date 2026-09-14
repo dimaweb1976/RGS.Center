@@ -7,12 +7,15 @@ import com.rgs.center.dashboard.DashboardSnapshotService;
 import com.rgs.center.dashboard.model.DashboardSnapshot;
 import com.rgs.center.measurement.workflow.MeasurementObjectRequest;
 import com.rgs.center.measurement.workflow.ProductionMeasurementOrchestrator;
+import com.rgs.center.measurement.safety.ScenarioIncidentService;
+import com.rgs.center.measurement.safety.ScenarioSafetyMonitor;
 import com.rgs.center.web.wizard.WizardAutomaticViewFactory;
 import com.rgs.center.web.wizard.WizardHomeViewFactory;
 import com.rgs.center.web.wizard.WizardWorkflowViewFactory;
 import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,6 +37,8 @@ public class WizardAutomaticController {
     private final WizardWorkflowViewFactory workflowViewFactory;
     private final CameraImagingOperations cameraImaging;
     private final ProductionMeasurementOrchestrator orchestrator;
+    private final ScenarioIncidentService incidentService;
+    private final ScenarioSafetyMonitor safetyMonitor;
 
     public WizardAutomaticController(
             DashboardSnapshotService dashboardService,
@@ -41,7 +46,9 @@ public class WizardAutomaticController {
             WizardAutomaticViewFactory automaticViewFactory,
             WizardWorkflowViewFactory workflowViewFactory,
             CameraImagingOperations cameraImaging,
-            ProductionMeasurementOrchestrator orchestrator
+            ProductionMeasurementOrchestrator orchestrator,
+            ScenarioIncidentService incidentService,
+            ScenarioSafetyMonitor safetyMonitor
     ) {
         this.dashboardService = dashboardService;
         this.homeViewFactory = homeViewFactory;
@@ -49,6 +56,8 @@ public class WizardAutomaticController {
         this.workflowViewFactory = workflowViewFactory;
         this.cameraImaging = cameraImaging;
         this.orchestrator = orchestrator;
+        this.incidentService = incidentService;
+        this.safetyMonitor = safetyMonitor;
     }
 
     /** @return полная страница подготовки автоматического режима */
@@ -111,6 +120,34 @@ public class WizardAutomaticController {
         return controlResponse(orchestrator.cancel(), "There is no active run to stop.");
     }
 
+    /** Records the authenticated operator's acknowledgement of an incident. */
+    @PostMapping("/run/acknowledge")
+    @ResponseBody
+    public ResponseEntity<String> acknowledgeIncident(Authentication authentication) {
+        try {
+            safetyMonitor.acknowledge(actor(authentication));
+            return ResponseEntity.ok("acknowledged");
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.badRequest().body(errorMessage(exception));
+        } catch (IllegalStateException exception) {
+            return ResponseEntity.status(409).body(errorMessage(exception));
+        }
+    }
+
+    /** Clears the interlock only after all required equipment is ready again. */
+    @PostMapping("/run/reset")
+    @ResponseBody
+    public ResponseEntity<String> resetIncident(Authentication authentication) {
+        try {
+            safetyMonitor.resetAfterRecovery(actor(authentication));
+            return ResponseEntity.ok("reset");
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.badRequest().body(errorMessage(exception));
+        } catch (IllegalStateException exception) {
+            return ResponseEntity.status(409).body(errorMessage(exception));
+        }
+    }
+
     /** Фрагмент для периодического обновления монитора без чтения приборов из HTTP-потока. */
     @GetMapping("/run/status")
     public String runStatus(Model model) {
@@ -164,6 +201,7 @@ public class WizardAutomaticController {
                 "workflowView",
                 workflowViewFactory.create(orchestrator.snapshot(), camera.bottles())
         );
+        model.addAttribute("scenarioIncident", incidentService.snapshot());
     }
 
     private ResponseEntity<byte[]> imageResponse(CameraImagePayload image) {
@@ -194,5 +232,13 @@ public class WizardAutomaticController {
         return exception.getMessage() == null
                 ? exception.getClass().getSimpleName()
                 : exception.getMessage();
+    }
+
+    private static String actor(Authentication authentication) {
+        if (authentication == null || authentication.getName() == null
+                || authentication.getName().isBlank()) {
+            throw new IllegalStateException("Authenticated operator is required");
+        }
+        return authentication.getName();
     }
 }

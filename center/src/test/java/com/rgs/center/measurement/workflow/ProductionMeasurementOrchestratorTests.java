@@ -115,6 +115,9 @@ class ProductionMeasurementOrchestratorTests {
         assertThat(snapshot.lastError()).contains("SHP is offline");
         assertThat(gateway.calls).containsExactly("preflight");
         assertThat(scenario.currentStatus()).isEqualTo(ScenarioStatus.EMERGENCY);
+        assertThatThrownBy(() -> orchestrator.start(List.of(
+                new MeasurementObjectRequest(2, 3, 4)
+        ))).hasMessageContaining("Resolve the current safety incident");
     }
 
     @Test
@@ -148,6 +151,25 @@ class ProductionMeasurementOrchestratorTests {
         assertThat(snapshot.objects().getFirst().status()).isEqualTo("CANCELLED");
         assertThat(gateway.cancelCalled).isTrue();
         assertThat(scenario.currentStatus()).isEqualTo(ScenarioStatus.NORMAL);
+    }
+
+    @Test
+    void emergencyStopFailsRunAndKeepsEmergencyInterlock() throws Exception {
+        FakeGateway gateway = new FakeGateway();
+        gateway.blockBarcode = true;
+        ScenarioStatusService scenario = new ScenarioStatusService();
+        orchestrator = orchestrator(gateway, scenario, 2);
+        orchestrator.start(List.of(new MeasurementObjectRequest(1, 1, 2)));
+        assertThat(gateway.barcodeEntered.await(2, TimeUnit.SECONDS)).isTrue();
+
+        assertThat(orchestrator.emergencyStop("Nicole: cooler stopped")).isTrue();
+
+        MeasurementWorkflowSnapshot snapshot = awaitTerminal();
+        assertThat(snapshot.state()).isEqualTo(MeasurementWorkflowState.FAILED);
+        assertThat(snapshot.lastError()).isEqualTo("Nicole: cooler stopped");
+        assertThat(snapshot.objects().getFirst().status()).isEqualTo("FAILED");
+        assertThat(gateway.cancelCalled).isTrue();
+        assertThat(scenario.currentStatus()).isEqualTo(ScenarioStatus.EMERGENCY);
     }
 
     @Test

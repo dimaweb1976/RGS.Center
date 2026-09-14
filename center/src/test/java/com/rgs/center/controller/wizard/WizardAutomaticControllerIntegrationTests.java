@@ -10,6 +10,8 @@ import com.rgs.center.measurement.manual.ManualMeasurementSnapshot;
 import com.rgs.center.measurement.manual.ManualMeasurementState;
 import com.rgs.center.measurement.parameters.MeasurementParametersService;
 import com.rgs.center.measurement.parameters.SampleGeometry;
+import com.rgs.center.measurement.safety.ScenarioIncidentService;
+import com.rgs.center.measurement.safety.ScenarioIncidentSeverity;
 import com.rgs.center.measurement.workflow.MeasurementObjectRequest;
 import com.rgs.center.measurement.workflow.MeasurementObjectSnapshot;
 import com.rgs.center.measurement.workflow.MeasurementWorkflowSnapshot;
@@ -39,6 +41,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -63,6 +66,9 @@ class WizardAutomaticControllerIntegrationTests {
 
     @Autowired
     private MeasurementParametersService parametersService;
+
+    @Autowired
+    private ScenarioIncidentService incidentService;
 
     @MockitoBean
     private CameraImagingService cameraImaging;
@@ -236,6 +242,43 @@ class WizardAutomaticControllerIntegrationTests {
                 .andExpect(content().string(org.hamcrest.Matchers.not(
                         containsString("<!DOCTYPE html>")
                 )));
+    }
+
+    @Test
+    void rendersAndAcknowledgesSafetyIncidentWithOperatorIdentity() throws Exception {
+        incidentService.raise(
+                ScenarioIncidentSeverity.EMERGENCY,
+                "shp",
+                "SHP_TECHNICAL_ALERT",
+                "SHP leakage current threshold exceeded",
+                null,
+                1,
+                MeasurementWorkflowStep.ACQUIRE_SPECTRUM
+        );
+        try {
+            mockMvc.perform(get("/wizard/automatic/run/status")
+                            .with(user("operator")))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(containsString(
+                            "SHP leakage current threshold exceeded"
+                    )))
+                    .andExpect(content().string(containsString(
+                            "data-workflow-action=\"acknowledge\""
+                    )));
+
+            mockMvc.perform(post("/wizard/automatic/run/acknowledge")
+                            .with(user("operator"))
+                            .with(csrf()))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string("acknowledged"));
+        } finally {
+            if (incidentService.snapshot().canAcknowledge()) {
+                incidentService.acknowledge("test-cleanup");
+            }
+            if (incidentService.snapshot().canReset()) {
+                incidentService.reset("test-cleanup");
+            }
+        }
     }
 
     @Test

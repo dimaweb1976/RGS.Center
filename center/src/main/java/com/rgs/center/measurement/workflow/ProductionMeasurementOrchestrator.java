@@ -6,6 +6,8 @@ import com.rgs.center.measurement.MeasurementExecutionCoordinator;
 import com.rgs.center.measurement.history.MeasurementHistoryRepository;
 import com.rgs.center.measurement.parameters.MeasurementParameters;
 import com.rgs.center.measurement.parameters.MeasurementParametersService;
+import com.rgs.center.measurement.safety.ScenarioIncidentService;
+import com.rgs.center.measurement.safety.ScenarioIncidentSeverity;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +51,7 @@ public class ProductionMeasurementOrchestrator {
     private final MeasurementExecutionCoordinator executionCoordinator;
     private final MeasurementWorkflowConfiguration configuration;
     private final MeasurementHistoryRepository historyRepository;
+    private final ScenarioIncidentService incidentService;
     private final Clock clock;
     private final ExecutorService runExecutor;
     private final ExecutorService operationExecutor;
@@ -65,10 +68,10 @@ public class ProductionMeasurementOrchestrator {
     private String lastError = "";
     private boolean cancellationRequested;
     private boolean pauseRequested;
+    private String emergencyStopReason = "";
     private Future<?> runTask;
     private Future<?> activeOperation;
 
-    @Autowired
     public ProductionMeasurementOrchestrator(
             MeasurementWorkflowDeviceGateway gateway,
             MeasurementParametersService parametersService,
@@ -78,12 +81,30 @@ public class ProductionMeasurementOrchestrator {
             MeasurementHistoryRepository historyRepository
     ) {
         this(
+                gateway, parametersService, scenarioStatusService,
+                executionCoordinator, configuration, historyRepository,
+                new ScenarioIncidentService(scenarioStatusService)
+        );
+    }
+
+    @Autowired
+    public ProductionMeasurementOrchestrator(
+            MeasurementWorkflowDeviceGateway gateway,
+            MeasurementParametersService parametersService,
+            ScenarioStatusService scenarioStatusService,
+            MeasurementExecutionCoordinator executionCoordinator,
+            MeasurementWorkflowConfiguration configuration,
+            MeasurementHistoryRepository historyRepository,
+            ScenarioIncidentService incidentService
+    ) {
+        this(
                 gateway,
                 parametersService,
                 scenarioStatusService,
                 executionCoordinator,
                 configuration,
                 historyRepository,
+                incidentService,
                 Clock.systemUTC(),
                 Executors.newSingleThreadExecutor(runnable -> daemon(
                         runnable,
@@ -107,6 +128,7 @@ public class ProductionMeasurementOrchestrator {
         this(
                 gateway, parametersService, scenarioStatusService,
                 executionCoordinator, configuration, null,
+                new ScenarioIncidentService(scenarioStatusService),
                 Clock.systemUTC(),
                 Executors.newSingleThreadExecutor(runnable -> daemon(
                         runnable, "measurement-workflow"
@@ -128,6 +150,26 @@ public class ProductionMeasurementOrchestrator {
             ExecutorService runExecutor,
             ExecutorService operationExecutor
     ) {
+        this(
+                gateway, parametersService, scenarioStatusService,
+                executionCoordinator, configuration, historyRepository,
+                new ScenarioIncidentService(scenarioStatusService), clock,
+                runExecutor, operationExecutor
+        );
+    }
+
+    ProductionMeasurementOrchestrator(
+            MeasurementWorkflowDeviceGateway gateway,
+            MeasurementParametersService parametersService,
+            ScenarioStatusService scenarioStatusService,
+            MeasurementExecutionCoordinator executionCoordinator,
+            MeasurementWorkflowConfiguration configuration,
+            MeasurementHistoryRepository historyRepository,
+            ScenarioIncidentService incidentService,
+            Clock clock,
+            ExecutorService runExecutor,
+            ExecutorService operationExecutor
+    ) {
         this.gateway = Objects.requireNonNull(gateway, "gateway");
         this.parametersService = Objects.requireNonNull(parametersService, "parametersService");
         this.scenarioStatusService = Objects.requireNonNull(scenarioStatusService, "scenarioStatusService");
@@ -136,6 +178,7 @@ public class ProductionMeasurementOrchestrator {
         );
         this.configuration = Objects.requireNonNull(configuration, "configuration");
         this.historyRepository = historyRepository;
+        this.incidentService = Objects.requireNonNull(incidentService, "incidentService");
         this.clock = Objects.requireNonNull(clock, "clock");
         this.runExecutor = Objects.requireNonNull(runExecutor, "runExecutor");
         this.operationExecutor = Objects.requireNonNull(operationExecutor, "operationExecutor");
@@ -154,6 +197,11 @@ public class ProductionMeasurementOrchestrator {
         if (requests.isEmpty()) {
             throw new IllegalArgumentException("At least one object is required");
         }
+        if (incidentService.blocksWorkflowStart()) {
+            throw new IllegalStateException(
+                    "Resolve the current safety incident before starting a new run"
+            );
+        }
         configuration.validate();
         List<MeasurementObjectRequest> queue = List.copyOf(requests);
         ensureUniqueNumbers(queue);
@@ -170,6 +218,7 @@ public class ProductionMeasurementOrchestrator {
             lastError = "";
             cancellationRequested = false;
             pauseRequested = false;
+            emergencyStopReason = "";
             objects.clear();
             queue.stream().map(MutableObject::new).forEach(objects::add);
             events.clear();
@@ -254,6 +303,38 @@ public class ProductionMeasurementOrchestrator {
         return true;
     }
 
+    /** Stops a run because continuing with the observed equipment state is unsafe. */
+    public boolean emergencyStop(String reason) {
+        if (reason == null || reason.isBlank()) {
+            throw new IllegalArgumentException("Emergency stop reason is required");
+        }
+        Future<?> operation;
+        synchronized (this) {
+            if (!isActive() || !emergencyStopReason.isBlank()) {
+                return false;
+            }
+            emergencyStopReason = reason.trim();
+            cancellationRequested = true;
+            pauseRequested = false;
+            state = MeasurementWorkflowState.CANCELLING;
+            event(activeObjectNumber, activeStep, 0,
+                    "Emergency stop requested: " + emergencyStopReason);
+            operation = activeOperation;
+            notifyAll();
+        }
+        scenarioStatusService.updateStatus(ScenarioStatus.EMERGENCY, reason);
+        if (operation != null) {
+            operation.cancel(true);
+        }
+        gateway.cancelActiveOperation();
+        return true;
+    }
+
+    /** @return whether a production run currently owns or is stopping equipment */
+    public synchronized boolean isRunActive() {
+        return isActive();
+    }
+
     /** @return a consistent snapshot without touching any device port */
     public synchronized MeasurementWorkflowSnapshot snapshot() {
         return new MeasurementWorkflowSnapshot(
@@ -311,9 +392,15 @@ public class ProductionMeasurementOrchestrator {
             persistTerminalRun();
             log.info("Production measurement workflow completed: runId={}", runId);
         } catch (WorkflowCancelledException | CancellationException exception) {
-            finishCancelled();
+            if (hasEmergencyStopReason()) {
+                finishEmergency();
+            } else {
+                finishCancelled();
+            }
         } catch (RuntimeException exception) {
-            if (isCancellationRequested()) {
+            if (hasEmergencyStopReason()) {
+                finishEmergency();
+            } else if (isCancellationRequested()) {
                 finishCancelled();
             } else {
                 finishFailed(exception);
@@ -499,6 +586,10 @@ public class ProductionMeasurementOrchestrator {
         return cancellationRequested;
     }
 
+    private synchronized boolean hasEmergencyStopReason() {
+        return !emergencyStopReason.isBlank();
+    }
+
     private void checkCancellation() {
         if (isCancellationRequested() || Thread.currentThread().isInterrupted()) {
             throw new WorkflowCancelledException();
@@ -515,17 +606,23 @@ public class ProductionMeasurementOrchestrator {
                     .forEach(value -> value.status = "CANCELLED");
             event(null, null, 0, "Run cancelled safely");
         }
-        scenarioStatusService.updateStatus(
-                ScenarioStatus.NORMAL,
-                "production workflow cancelled"
-        );
+        if (!incidentService.blocksWorkflowStart()) {
+            scenarioStatusService.updateStatus(
+                    ScenarioStatus.NORMAL,
+                    "production workflow cancelled"
+            );
+        }
         persistTerminalRun();
         log.info("Production measurement workflow cancelled: runId={}", runId);
     }
 
     private void finishFailed(RuntimeException exception) {
         String message = errorMessage(exception);
+        MeasurementWorkflowStep failedStep;
+        Integer failedObject;
         synchronized (this) {
+            failedStep = activeStep;
+            failedObject = activeObjectNumber;
             state = MeasurementWorkflowState.FAILED;
             lastError = message;
             finishedAt = clock.instant();
@@ -538,9 +635,32 @@ public class ProductionMeasurementOrchestrator {
             activeStep = null;
             activeObjectNumber = null;
         }
-        scenarioStatusService.updateStatus(ScenarioStatus.EMERGENCY, message);
+        gateway.cancelActiveOperation();
+        ScenarioIncidentSeverity severity = failedStep == MeasurementWorkflowStep.PRECHECK
+                ? ScenarioIncidentSeverity.ALERT
+                : ScenarioIncidentSeverity.EMERGENCY;
+        if (!incidentService.blocksWorkflowStart()) {
+            incidentService.raise(
+                    severity,
+                    "production-workflow",
+                    failedStep == MeasurementWorkflowStep.PRECHECK
+                            ? "PREFLIGHT_FAILED" : "WORKFLOW_OPERATION_FAILED",
+                    message,
+                    runId,
+                    failedObject,
+                    failedStep
+            );
+        }
         persistTerminalRun();
         log.error("Production measurement workflow failed: runId={}, error={}", runId, message, exception);
+    }
+
+    private void finishEmergency() {
+        String reason;
+        synchronized (this) {
+            reason = emergencyStopReason;
+        }
+        finishFailed(new IllegalStateException(reason));
     }
 
     /** History failures are reported but never rewrite the physical run outcome. */
