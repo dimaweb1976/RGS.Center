@@ -147,6 +147,95 @@
     margin-bottom: 18px;
 }
 
+.wizard-cycle {
+    margin: 0 0 18px;
+    border: 1px solid var(--wizard-border-soft);
+    border-radius: 11px;
+    background: var(--wizard-surface);
+}
+
+.wizard-cycle summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 15px 18px;
+    cursor: pointer;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.wizard-cycle summary small {
+    color: var(--wizard-text-muted);
+    font-size: .8rem;
+    font-weight: 400;
+}
+
+.wizard-cycle-steps {
+    display: grid;
+    gap: 7px;
+    margin: 0;
+    padding: 0 18px 18px;
+    list-style: none;
+}
+
+.wizard-cycle-steps li {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr) 105px;
+    gap: 10px;
+    align-items: center;
+    min-height: 42px;
+    padding: 7px 11px;
+    border-left: 4px solid var(--wizard-border);
+    border-radius: 7px;
+    background: var(--wizard-bg-soft);
+}
+
+.wizard-cycle-step-number {
+    display: grid;
+    width: 26px;
+    height: 26px;
+    place-items: center;
+    border-radius: 50%;
+    color: var(--wizard-text-muted);
+    background: var(--wizard-surface);
+    font-size: .78rem;
+    font-weight: 700;
+}
+
+.wizard-cycle-steps strong {
+    color: var(--wizard-text-muted);
+    font-size: .76rem;
+    text-align: right;
+}
+
+.wizard-cycle-step--running {
+    border-left-color: var(--wizard-primary) !important;
+    background: #e8f2ff !important;
+}
+
+.wizard-cycle-step--running strong {
+    color: var(--wizard-primary-dark);
+}
+
+.wizard-cycle-step--completed {
+    border-left-color: var(--wizard-ready) !important;
+    background: #e5f7ef !important;
+}
+
+.wizard-cycle-step--completed strong {
+    color: #086344;
+}
+
+.wizard-cycle-step--error {
+    border-left-color: var(--wizard-alert) !important;
+    background: #ffe5e8 !important;
+}
+
+.wizard-cycle-step--error strong {
+    color: #8b1723;
+}
+
 .wizard-run-results header {
     display: flex;
     justify-content: space-between;
@@ -439,6 +528,20 @@
     .wizard-run-metrics,
     .wizard-run-journal li {
         grid-template-columns: 1fr;
+    }
+
+    .wizard-cycle summary {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .wizard-cycle-steps li {
+        grid-template-columns: 32px minmax(0, 1fr);
+    }
+
+    .wizard-cycle-steps strong {
+        grid-column: 2;
+        text-align: left;
     }
 
     .wizard-field-actions,

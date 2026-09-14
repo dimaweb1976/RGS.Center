@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 /** Converts an orchestrator snapshot into stable Thymeleaf values. */
 @Component
@@ -86,9 +87,96 @@ public class WizardWorkflowViewFactory {
                         || state == MeasurementWorkflowState.PAUSING,
                 active(state),
                 terminal(state),
+                cycleStepViews(workflow),
                 objects,
                 eventViews(workflow.events())
         );
+    }
+
+    private static List<WizardWorkflowStepView> cycleStepViews(
+            MeasurementWorkflowSnapshot workflow
+    ) {
+        Optional<MeasurementObjectSnapshot> focus = focusedObject(workflow);
+        MeasurementWorkflowStep failedStep = failedStep(workflow, focus.orElse(null));
+        return java.util.Arrays.stream(MeasurementWorkflowStep.values())
+                .filter(step -> step != MeasurementWorkflowStep.PRECHECK)
+                .map(step -> stepView(workflow, focus.orElse(null), failedStep, step))
+                .toList();
+    }
+
+    private static WizardWorkflowStepView stepView(
+            MeasurementWorkflowSnapshot workflow,
+            MeasurementObjectSnapshot object,
+            MeasurementWorkflowStep failedStep,
+            MeasurementWorkflowStep step
+    ) {
+        String status = "WAITING";
+        if (object != null && ("COMPLETED".equals(object.status())
+                || completedThrough(object, step))) {
+            status = "COMPLETED";
+        } else if (step == failedStep) {
+            status = "ERROR";
+        } else if (step == workflow.activeStep()
+                && workflow.activeObjectNumber() != null
+                && object != null
+                && workflow.activeObjectNumber() == object.number()) {
+            status = "RUNNING";
+        }
+        return new WizardWorkflowStepView(
+                step.ordinal(),
+                step.label(),
+                status,
+                "wizard-cycle-step--" + status.toLowerCase(Locale.ROOT)
+        );
+    }
+
+    private static Optional<MeasurementObjectSnapshot> focusedObject(
+            MeasurementWorkflowSnapshot workflow
+    ) {
+        if (workflow.activeObjectNumber() != null) {
+            Optional<MeasurementObjectSnapshot> active = workflow.objects().stream()
+                    .filter(object -> object.number() == workflow.activeObjectNumber())
+                    .findFirst();
+            if (active.isPresent()) return active;
+        }
+        Optional<MeasurementObjectSnapshot> failed = workflow.objects().stream()
+                .filter(object -> "FAILED".equals(object.status()))
+                .findFirst();
+        if (failed.isPresent()) return failed;
+        return workflow.objects().stream()
+                .filter(object -> "COMPLETED".equals(object.status()))
+                .reduce((first, second) -> second);
+    }
+
+    private static MeasurementWorkflowStep failedStep(
+            MeasurementWorkflowSnapshot workflow,
+            MeasurementObjectSnapshot object
+    ) {
+        if (workflow.state() != MeasurementWorkflowState.FAILED
+                || object == null
+                || !"FAILED".equals(object.status())) {
+            return null;
+        }
+        return workflow.events().stream()
+                .filter(event -> event.step() != null)
+                .filter(event -> java.util.Objects.equals(
+                        event.objectNumber(), object.number()
+                ))
+                .filter(event -> event.message().startsWith("Run failed:")
+                        || event.message().startsWith("Operation failed:"))
+                .max(Comparator.comparing(MeasurementWorkflowEvent::occurredAt))
+                .map(MeasurementWorkflowEvent::step)
+                .orElse(null);
+    }
+
+    private static boolean completedThrough(
+            MeasurementObjectSnapshot object,
+            MeasurementWorkflowStep step
+    ) {
+        MeasurementWorkflowStep completed = object.lastCompletedStep();
+        return completed != null
+                && completed != MeasurementWorkflowStep.PRECHECK
+                && completed.ordinal() >= step.ordinal();
     }
 
     private WizardWorkflowObjectView objectView(MeasurementObjectSnapshot value) {

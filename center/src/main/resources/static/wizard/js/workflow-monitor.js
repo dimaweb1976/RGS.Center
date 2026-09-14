@@ -29,6 +29,8 @@
         if (!monitor) return;
         refreshInProgress = true;
         try {
+            const cycleDetails = monitor.querySelector("[data-cycle-details]");
+            const cycleDetailsOpen = cycleDetails ? cycleDetails.open : null;
             const response = await fetch("/wizard/automatic/run/status", {
                 headers: {"X-Requested-With": "XMLHttpRequest"},
                 cache: "no-store"
@@ -39,6 +41,12 @@
             }
             if (!response.ok) throw new Error(`Monitor refresh failed: HTTP ${response.status}`);
             monitor.outerHTML = await response.text();
+            const refreshedCycleDetails = document.querySelector(
+                "#wizard-run-monitor [data-cycle-details]"
+            );
+            if (refreshedCycleDetails && cycleDetailsOpen !== null) {
+                refreshedCycleDetails.open = cycleDetailsOpen;
+            }
         } catch (error) {
             console.warn(error.message);
         } finally {

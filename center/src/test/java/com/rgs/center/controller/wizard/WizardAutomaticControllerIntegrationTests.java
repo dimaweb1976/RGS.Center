@@ -186,6 +186,16 @@ class WizardAutomaticControllerIntegrationTests {
                 .andExpect(content().string(containsString(
                         "Read and validate barcode"
                 )))
+                .andExpect(content().string(containsString("Cycle body")))
+                .andExpect(content().string(containsString(
+                        "wizard-cycle-step--completed"
+                )))
+                .andExpect(content().string(containsString(
+                        "wizard-cycle-step--running"
+                )))
+                .andExpect(content().string(containsString(
+                        "wizard-cycle-step--waiting"
+                )))
                 .andExpect(content().string(containsString(
                         "data-workflow-action=\"pause\""
                 )));

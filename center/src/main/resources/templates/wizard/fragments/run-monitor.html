@@ -59,6 +59,21 @@
         <div><dt>Estimated completion</dt><dd th:text="${workflowView.estimatedCompletion}">—</dd></div>
     </dl>
 
+    <details class="wizard-cycle" data-cycle-details open>
+        <summary>
+            <span><span class="wizard-eyebrow">OBJECT WORKFLOW</span> Cycle body</span>
+            <small>9 sequential operations for each object</small>
+        </summary>
+        <ol class="wizard-cycle-steps">
+            <li th:each="step : ${workflowView.cycleSteps}"
+                th:classappend="${step.statusCssClass}">
+                <span class="wizard-cycle-step-number" th:text="${step.number}">1</span>
+                <span class="wizard-cycle-step-label" th:text="${step.label}">Pick object</span>
+                <strong th:text="${step.status}">WAITING</strong>
+            </li>
+        </ol>
+    </details>
+
     <article class="wizard-object-card wizard-run-results">
         <header>
             <div><p class="wizard-eyebrow">LIVE RESULTS</p><h2>Object queue</h2></div>

@@ -18,10 +18,12 @@ public record WizardWorkflowView(
         boolean canResume,
         boolean canStop,
         boolean terminal,
+        List<WizardWorkflowStepView> cycleSteps,
         List<WizardWorkflowObjectView> objects,
         List<WizardWorkflowEventView> events
 ) {
     public WizardWorkflowView {
+        cycleSteps = List.copyOf(cycleSteps);
         objects = List.copyOf(objects);
         events = List.copyOf(events);
     }
