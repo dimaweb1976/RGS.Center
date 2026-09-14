@@ -138,45 +138,28 @@ public class ScalesService extends AbstractQueuedDeviceService {
             return;
         }
         try {
-            currentDataService.setValue(
-                    DeviceCode.SCALES,
-                    CurrentDataService.INTERACTION_LASTDATE_IN,
-                    Instant.now().getEpochSecond()
-            );
-            byte[] frame = exchangeQueued(
-                    ScalesProtocol.immediateMassCommand(),
-                    configuredResponseTimeout()
-            );
-            currentDataService.setValue(
-                    DeviceCode.SCALES,
-                    CurrentDataService.INTERACTION_LASTDATE_OUT,
-                    Instant.now().getEpochSecond()
-            );
-            ScalesReading reading = ScalesProtocol.parseImmediateMass(frame);
-            lastReading.set(reading);
-            responsive.set(true);
-            int recoveredAfterFailures = consecutiveFailures.getAndSet(0);
-            lastError.set("");
-            currentDataService.setValue(
-                    DeviceCode.SCALES,
-                    CurrentDataService.PINGED,
-                    true
-            );
-            currentDataService.recordDataSuccess(DeviceCode.SCALES, reading);
-            if (recoveredAfterFailures > 0) {
-                log.info(
-                        "Scales communication restored after {} failed poll(s)",
-                        recoveredAfterFailures
-                );
-            }
-            log.debug(
-                    "Scales data updated: mass={} {}, stability={}",
-                    reading.mass(),
-                    reading.unit(),
-                    reading.stability()
-            );
+            requestReadingLocked();
         } catch (RuntimeException exception) {
             registerFailure(exception);
+        } finally {
+            pollLock.unlock();
+        }
+    }
+
+    /**
+     * Performs one serialized request for the automatic or manual workflow.
+     * Unlike the scheduled poll, this method waits for ownership of the port.
+     */
+    public ScalesReading readWeight() {
+        if (!isEnabled()) {
+            throw new IllegalStateException("Scales are disabled");
+        }
+        pollLock.lock();
+        try {
+            return requestReadingLocked();
+        } catch (RuntimeException exception) {
+            registerFailure(exception);
+            throw exception;
         } finally {
             pollLock.unlock();
         }
@@ -205,6 +188,48 @@ public class ScalesService extends AbstractQueuedDeviceService {
                 lastReading.get(),
                 communication
         );
+    }
+
+    /** Executes the request/response exchange while {@link #pollLock} is held. */
+    private ScalesReading requestReadingLocked() {
+        currentDataService.setValue(
+                DeviceCode.SCALES,
+                CurrentDataService.INTERACTION_LASTDATE_IN,
+                Instant.now().getEpochSecond()
+        );
+        byte[] frame = exchangeQueued(
+                ScalesProtocol.immediateMassCommand(),
+                configuredResponseTimeout()
+        );
+        currentDataService.setValue(
+                DeviceCode.SCALES,
+                CurrentDataService.INTERACTION_LASTDATE_OUT,
+                Instant.now().getEpochSecond()
+        );
+        ScalesReading reading = ScalesProtocol.parseImmediateMass(frame);
+        lastReading.set(reading);
+        responsive.set(true);
+        int recoveredAfterFailures = consecutiveFailures.getAndSet(0);
+        lastError.set("");
+        currentDataService.setValue(
+                DeviceCode.SCALES,
+                CurrentDataService.PINGED,
+                true
+        );
+        currentDataService.recordDataSuccess(DeviceCode.SCALES, reading);
+        if (recoveredAfterFailures > 0) {
+            log.info(
+                    "Scales communication restored after {} failed poll(s)",
+                    recoveredAfterFailures
+            );
+        }
+        log.debug(
+                "Scales data updated: mass={} {}, stability={}",
+                reading.mass(),
+                reading.unit(),
+                reading.stability()
+        );
+        return reading;
     }
 
     private void registerFailure(RuntimeException exception) {
