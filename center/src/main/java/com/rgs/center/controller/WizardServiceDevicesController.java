@@ -115,17 +115,17 @@ public class WizardServiceDevicesController {
             @PathVariable String actionCode,
             Model model
     ) {
+        boolean reservationAcquired = false;
+        boolean releaseReservation = true;
         try {
-            executionCoordinator.acquire(MeasurementExecutionCoordinator.Owner.SERVICE);
-            try {
-                validateActionAvailable(deviceCode, actionCode);
-                model.addAttribute(
-                        "serviceActionMessage",
-                        execute(deviceCode, actionCode)
-                );
-            } finally {
-                executionCoordinator.release(MeasurementExecutionCoordinator.Owner.SERVICE);
+            if (!isActiveServiceScanCancellation(deviceCode, actionCode)) {
+                executionCoordinator.acquire(MeasurementExecutionCoordinator.Owner.SERVICE);
+                reservationAcquired = true;
             }
+            validateActionAvailable(deviceCode, actionCode);
+            ServiceActionResult result = execute(deviceCode, actionCode);
+            releaseReservation = !result.retainsReservation();
+            model.addAttribute("serviceActionMessage", result.message());
         } catch (RuntimeException exception) {
             String message = errorMessage(exception);
             log.warn(
@@ -134,6 +134,10 @@ public class WizardServiceDevicesController {
             );
             model.addAttribute("serviceActionMessage", message);
             model.addAttribute("serviceActionError", true);
+        } finally {
+            if (reservationAcquired && releaseReservation) {
+                executionCoordinator.release(MeasurementExecutionCoordinator.Owner.SERVICE);
+            }
         }
         model.addAttribute(
                 "serviceDevice",
@@ -160,10 +164,10 @@ public class WizardServiceDevicesController {
         }
     }
 
-    private String execute(String requestedDevice, String requestedAction) {
+    private ServiceActionResult execute(String requestedDevice, String requestedAction) {
         String device = normalize(requestedDevice);
         String action = normalize(requestedAction);
-        return switch (device + ":" + action) {
+        String message = switch (device + ":" + action) {
             case "camera:capture" -> "Camera: " + camera.capture().message();
             case "nicole:ping" -> {
                 nicole.poll();
@@ -179,10 +183,12 @@ public class WizardServiceDevicesController {
                         + reading.unit() + " (" + reading.stability() + ")";
             }
             case "barcode-scanner:scan" -> {
-                if (!barcode.startRead()) {
+                if (!barcode.startRead(() -> executionCoordinator.release(
+                        MeasurementExecutionCoordinator.Owner.SERVICE
+                ))) {
                     throw new IllegalStateException("Barcode scan is already active");
                 }
-                yield "Barcode scan started";
+                yield null;
             }
             case "barcode-scanner:cancel" -> {
                 if (!barcode.cancelRead()) {
@@ -217,6 +223,20 @@ public class WizardServiceDevicesController {
                             + " for device " + requestedDevice
             );
         };
+        return message == null
+                ? new ServiceActionResult("Barcode scan started", true)
+                : new ServiceActionResult(message, false);
+    }
+
+    private boolean isActiveServiceScanCancellation(
+            String deviceCode,
+            String actionCode
+    ) {
+        return normalize(deviceCode).equals("barcode-scanner")
+                && normalize(actionCode).equals("cancel")
+                && barcode.isReadActive()
+                && executionCoordinator.owner()
+                == MeasurementExecutionCoordinator.Owner.SERVICE;
     }
 
     private DashboardSnapshot addHeader(Model model, String title) {
@@ -250,5 +270,8 @@ public class WizardServiceDevicesController {
 
     private static String detailFragment() {
         return "wizard/fragments/service-device-detail :: serviceContent";
+    }
+
+    private record ServiceActionResult(String message, boolean retainsReservation) {
     }
 }

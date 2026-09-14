@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /** Application facade and asynchronous launcher for one barcode scan. */
 @Service
@@ -24,6 +26,7 @@ public class BarcodeScannerService {
                 return thread;
             });
     private Future<?> activeRead;
+    private Runnable activeReadCompletion = () -> { };
 
     @Autowired
     public BarcodeScannerService(
@@ -47,17 +50,33 @@ public class BarcodeScannerService {
 
     /** Starts a service-page scan without holding the HTTP request open. */
     public synchronized boolean startRead() {
-        requireProductionPort();
+        return startRead(() -> { });
+    }
+
+    /**
+     * Starts a scan and invokes the completion callback after the scanner has
+     * finished both reading and its trigger/illumination cleanup sequence.
+     */
+    public synchronized boolean startRead(Runnable onCompletion) {
         if (isReadActive()) {
             return false;
         }
-        activeRead = scanExecutor.submit(() -> {
-            try {
-                readBarcode();
-            } catch (BarcodeScannerException ignored) {
-                // The port snapshot and CurrentDataService expose the result.
-            }
-        });
+        Runnable completion = runOnce(onCompletion);
+        activeReadCompletion = completion;
+        try {
+            activeRead = scanExecutor.submit(() -> {
+                try {
+                    readBarcode();
+                } catch (BarcodeScannerException ignored) {
+                    // The port snapshot and CurrentDataService expose the result.
+                } finally {
+                    completion.run();
+                }
+            });
+        } catch (RuntimeException exception) {
+            activeReadCompletion = () -> { };
+            throw exception;
+        }
         return true;
     }
 
@@ -66,7 +85,16 @@ public class BarcodeScannerService {
         if (!isReadActive()) {
             return false;
         }
-        return activeRead.cancel(true);
+        boolean cancelled = activeRead.cancel(true);
+        if (cancelled) {
+            try {
+                // Runs after a currently executing read has left its cleanup block.
+                scanExecutor.execute(activeReadCompletion);
+            } catch (RejectedExecutionException exception) {
+                activeReadCompletion.run();
+            }
+        }
+        return cancelled;
     }
 
     public synchronized boolean isReadActive() {
@@ -89,5 +117,15 @@ public class BarcodeScannerService {
                     "Barcode scanner status is unavailable in an isolated test"
             );
         }
+    }
+
+    private static Runnable runOnce(Runnable callback) {
+        Runnable required = callback == null ? () -> { } : callback;
+        AtomicBoolean invoked = new AtomicBoolean();
+        return () -> {
+            if (invoked.compareAndSet(false, true)) {
+                required.run();
+            }
+        };
     }
 }

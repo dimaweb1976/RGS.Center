@@ -1,14 +1,19 @@
 package com.rgs.center.barcodescanner;
 
 import com.rgs.center.objects.DeviceCode;
+import com.rgs.center.measurement.MeasurementExecutionCoordinator;
 import com.rgs.center.service.CurrentDataService;
 import com.rgs.center.service.SettingsService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BarcodeScannerServiceTests {
 
@@ -152,6 +157,46 @@ class BarcodeScannerServiceTests {
                         Boolean.class
                 )
         );
+    }
+
+    @Test
+    void invokesAsyncCompletionOnlyAfterReadHasFinished() throws Exception {
+        settings.setValue(SettingsService.BARCODE_SCANNER_PORT, "COM7");
+        CountDownLatch allowReadToFinish = new CountDownLatch(1);
+        MeasurementExecutionCoordinator coordinator =
+                new MeasurementExecutionCoordinator();
+        coordinator.acquire(MeasurementExecutionCoordinator.Owner.SERVICE);
+        BarcodeScannerService service = serviceWith(
+                (port, baud, timeout, maxLength) -> {
+                    try {
+                        assertTrue(allowReadToFinish.await(2, TimeUnit.SECONDS));
+                    } catch (InterruptedException exception) {
+                        Thread.currentThread().interrupt();
+                        throw new BarcodeScannerException("read interrupted", exception);
+                    }
+                    return "ABC-123";
+                }
+        );
+
+        assertTrue(service.startRead(() -> coordinator.release(
+                MeasurementExecutionCoordinator.Owner.SERVICE
+        )));
+        assertEquals(
+                MeasurementExecutionCoordinator.Owner.SERVICE,
+                coordinator.owner()
+        );
+
+        allowReadToFinish.countDown();
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
+        while (coordinator.owner() != MeasurementExecutionCoordinator.Owner.NONE
+                && System.nanoTime() < deadline) {
+            Thread.onSpinWait();
+        }
+        assertEquals(
+                MeasurementExecutionCoordinator.Owner.NONE,
+                coordinator.owner()
+        );
+        service.closeExecutor();
     }
 
     private BarcodeScannerService serviceWith(BarcodeScannerPort port) {

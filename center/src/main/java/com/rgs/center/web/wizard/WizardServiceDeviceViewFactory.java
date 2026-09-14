@@ -195,7 +195,8 @@ public class WizardServiceDeviceViewFactory {
     private WizardServiceDeviceView barcode(EquipmentSnapshot equipment) {
         var value = equipment.barcodeScanner();
         BarcodeScannerSnapshot source = barcode.snapshot();
-        boolean scanning = value.scanState().name().equals("SCANNING");
+        boolean scanning = barcode.isReadActive()
+                || value.scanState().name().equals("SCANNING");
         return view(
                 card(value.health(), "RS-232 serial trigger protocol"),
                 List.of(section("Scanner",
