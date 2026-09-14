@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>RGSCenter — Manual mode</title>
+    <link rel="stylesheet" th:href="@{/wizard/css/tokens.css}">
+    <link rel="stylesheet" th:href="@{/wizard/css/layout.css}">
+    <link rel="stylesheet" th:href="@{/wizard/css/components.css}">
+    <link rel="stylesheet" th:href="@{/wizard/css/workflow.css}">
+    <script defer th:src="@{/wizard/js/status-refresh.js}"></script>
+</head>
+<body class="wizard-page">
+<div class="wizard-shell">
+    <div th:replace="~{wizard/fragments/header :: header}"></div>
+
+    <main class="wizard-main wizard-workflow-page" id="wizard-main-content">
+        <nav class="wizard-breadcrumb" aria-label="Breadcrumb">
+            <a th:href="@{/wizard}">Main menu</a><span>/</span><span>Manual mode</span>
+        </nav>
+
+        <section class="wizard-manual-summary">
+            <div class="wizard-metric">
+                <span>HV request</span><strong th:text="${manualView.highVoltageRequest}">No data</strong>
+            </div>
+            <div class="wizard-metric"
+                 th:classappend="${manualView.leakageWithinLimit} ? ' wizard-metric--ready' : ' wizard-metric--alert'">
+                <span>Leakage current</span><strong th:text="${manualView.leakageCurrent}">No data</strong>
+                <small th:text="|Limit: ${manualView.leakageLimit}|">No data</small>
+            </div>
+        </section>
+
+        <section class="wizard-parameter-summary" aria-label="Measurement parameters">
+            <span><small>Measuring time</small><strong th:text="|${manualView.parameters.measuringTimeMinutes} min|">120 min</strong></span>
+            <span><small>Volume</small><strong th:text="|${manualView.parameters.volumeMl} ml|">300 ml</strong></span>
+            <span><small>Geometry</small><strong th:text="${manualView.parameters.geometry.label}">Bottle</strong></span>
+            <span><small>Tare mass</small><strong th:text="|${manualView.parameters.tareMassGrams} g|">0 g</strong></span>
+            <a th:href="@{/wizard/measurement-parameters}">Edit parameters</a>
+        </section>
+
+        <section class="wizard-manual-panel">
+            <div>
+                <p class="wizard-eyebrow">SERVICE OPERATIONS</p>
+                <h2>Manual device control</h2>
+                <p>
+                    Each operation remains owned by its existing device service. This page does not
+                    create a second connection or bypass the command queue.
+                </p>
+            </div>
+            <div class="wizard-manual-tools">
+                <a th:href="@{/gammapro-boson}"><strong>Gamma‑PRO / BOSON</strong><small>Tract and HV service commands</small></a>
+                <a th:href="@{/barcode-scanner}"><strong>Barcode scanner</strong><small>Single scan and cancellation</small></a>
+                <a th:href="@{/scales}"><strong>Scales</strong><small>Current mass and COM state</small></a>
+                <a th:href="@{/manipulator}"><strong>Robotic manipulator</strong><small>Command and telemetry channels</small></a>
+                <a th:href="@{/devices}"><strong>Equipment state</strong><small>Detailed technical snapshots</small></a>
+            </div>
+        </section>
+
+        <section class="wizard-production-blocker">
+            <strong>Production manual measurement is not enabled yet.</strong>
+            <span>Sample parameters and the coordinated “Get spectrum” operation require the production orchestrator.</span>
+        </section>
+    </main>
+</div>
+</body>
+</html>

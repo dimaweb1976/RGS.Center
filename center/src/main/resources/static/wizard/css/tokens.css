@@ -1,0 +1,19 @@
+:root {
+    --wizard-bg: #cfe3f4;
+    --wizard-bg-soft: #eaf4fb;
+    --wizard-surface: #ffffff;
+    --wizard-surface-muted: #f3f5f7;
+    --wizard-border: #557189;
+    --wizard-border-soft: #c6d5e1;
+    --wizard-text: #142433;
+    --wizard-text-muted: #526577;
+    --wizard-primary: #2268c9;
+    --wizard-primary-dark: #174f9d;
+    --wizard-ready: #22a66f;
+    --wizard-warning: #d99a13;
+    --wizard-alert: #d93343;
+    --wizard-no-data: #8a949d;
+    --wizard-focus: #075fb8;
+    --wizard-radius: 14px;
+    --wizard-shadow: 0 8px 24px rgba(38, 69, 94, 0.12);
+}

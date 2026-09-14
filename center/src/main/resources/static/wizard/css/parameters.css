@@ -1,0 +1,79 @@
+.wizard-parameters-page {
+    padding: 18px;
+}
+
+.wizard-parameters-panel {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 26px;
+    border: 1px solid var(--wizard-border-soft);
+    border-radius: 12px;
+    background: var(--wizard-surface);
+}
+
+.wizard-parameters-panel header h2,
+.wizard-parameters-panel header p {
+    margin-top: 0;
+}
+
+.wizard-parameters-panel header > p:last-child {
+    color: var(--wizard-text-muted);
+}
+
+#wizard-measurement-parameters-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-top: 22px;
+}
+
+#wizard-measurement-parameters-form label {
+    display: grid;
+    gap: 7px;
+}
+
+#wizard-measurement-parameters-form label > span {
+    font-weight: 700;
+}
+
+#wizard-measurement-parameters-form input,
+#wizard-measurement-parameters-form select {
+    min-height: 44px;
+    box-sizing: border-box;
+    padding: 8px 11px;
+    border: 1px solid var(--wizard-border);
+    border-radius: 8px;
+    color: var(--wizard-text);
+    background: #fff;
+    font: inherit;
+}
+
+#wizard-measurement-parameters-form small {
+    color: var(--wizard-text-muted);
+}
+
+#wizard-measurement-parameters-form button {
+    grid-column: 1 / -1;
+}
+
+.wizard-form-message {
+    padding: 11px 13px;
+    border-radius: 8px;
+    font-weight: 700;
+}
+
+.wizard-form-message--success {
+    color: #096642;
+    background: #e0f6ec;
+}
+
+.wizard-form-message--error {
+    color: #8b1723;
+    background: #fff0f1;
+}
+
+@media (max-width: 640px) {
+    #wizard-measurement-parameters-form {
+        grid-template-columns: 1fr;
+    }
+}

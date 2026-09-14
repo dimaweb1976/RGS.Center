@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>RGSCenter — Automatic monitor</title>
+    <link rel="stylesheet" th:href="@{/wizard/css/tokens.css}">
+    <link rel="stylesheet" th:href="@{/wizard/css/layout.css}">
+    <link rel="stylesheet" th:href="@{/wizard/css/components.css}">
+    <link rel="stylesheet" th:href="@{/wizard/css/automatic.css}">
+    <link rel="stylesheet" th:href="@{/wizard/css/workflow.css}">
+    <script defer th:src="@{/wizard/js/status-refresh.js}"></script>
+</head>
+<body class="wizard-page">
+<div class="wizard-shell">
+    <div th:replace="~{wizard/fragments/header :: header}"></div>
+
+    <main class="wizard-main wizard-workflow-page" id="wizard-main-content">
+        <nav class="wizard-breadcrumb" aria-label="Breadcrumb">
+            <a th:href="@{/wizard}">Main menu</a><span>/</span>
+            <a th:href="@{/wizard/automatic}">Automatic preparation</a><span>/</span>
+            <span>Run monitor</span>
+        </nav>
+
+        <section class="wizard-run-state wizard-run-state--waiting">
+            <div>
+                <p class="wizard-eyebrow">PRODUCTION WORKFLOW</p>
+                <h2>Waiting for production orchestrator</h2>
+                <p>The screen shows real snapshots. No automatic device commands are being sent.</p>
+            </div>
+            <strong th:text="|0 / ${#lists.size(automaticView.camera.bottles)}|">0 / 0</strong>
+        </section>
+        <div class="wizard-progress-track" role="progressbar" aria-valuemin="0"
+             th:attr="aria-valuemax=${#lists.size(automaticView.camera.bottles)}"
+             aria-valuenow="0"><span style="width:0"></span></div>
+
+        <div class="wizard-progress-grid">
+            <article class="wizard-camera-card">
+                <header><div><p class="wizard-eyebrow">LAST WORKFIELD FRAME</p><h2>Objects</h2></div></header>
+                <div class="wizard-camera-frame" th:if="${automaticView.camera.imageAvailable}">
+                    <img th:src="|/wizard/automatic/camera/image?version=${automaticView.camera.imageVersion}|"
+                         alt="Latest workfield frame">
+                </div>
+                <div class="wizard-camera-frame wizard-camera-frame--empty"
+                     th:unless="${automaticView.camera.imageAvailable}">No camera frame yet</div>
+            </article>
+
+            <article class="wizard-object-card">
+                <header><p class="wizard-eyebrow">OBJECT QUEUE</p><h2>Measurement progress</h2></header>
+                <div class="wizard-object-table-wrap">
+                    <table class="wizard-object-table"
+                           th:if="${!#lists.isEmpty(automaticView.camera.bottles)}">
+                        <thead><tr><th>No.</th><th>X</th><th>Y</th><th>Code</th><th>Weight</th><th>Spectrum</th></tr></thead>
+                        <tbody><tr th:each="bottle : ${automaticView.camera.bottles}">
+                            <td th:text="${bottle.number}">1</td>
+                            <td th:text="${#numbers.formatDecimal(bottle.centerX, 1, 1)}">0</td>
+                            <td th:text="${#numbers.formatDecimal(bottle.centerY, 1, 1)}">0</td>
+                            <td>Waiting</td><td>Waiting</td><td>Waiting</td>
+                        </tr></tbody>
+                    </table>
+                    <p class="wizard-empty-state" th:if="${#lists.isEmpty(automaticView.camera.bottles)}">
+                        The object queue has not been prepared.
+                    </p>
+                </div>
+            </article>
+        </div>
+
+        <div class="wizard-run-actions">
+            <button class="wizard-button" type="button" disabled>Pause</button>
+            <button class="wizard-button wizard-button--danger" type="button" disabled>Stop</button>
+        </div>
+    </main>
+</div>
+</body>
+</html>

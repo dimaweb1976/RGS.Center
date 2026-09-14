@@ -41,6 +41,8 @@ class OnlyOneWebConfiguration implements WebMvcConfigurer {
                         "/gammapro-boson/**",
                         "/barcode-scanner/**",
                         "/manipulator/**",
+                        "/wizard/automatic/**",
+                        "/wizard/measurement-parameters/**",
                         "/api/**"
                 )
                 .excludePathPatterns("/api/onlyOne/**");

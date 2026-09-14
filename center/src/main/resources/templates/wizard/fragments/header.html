@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<header class="wizard-header" th:fragment="header">
+    <div class="wizard-header-main">
+        <a class="wizard-brand" th:href="@{/wizard}" aria-label="Main menu">
+            <img th:src="@{/common/images/logo.svg}"
+                 alt="Baltic Scientific Instruments">
+        </a>
+
+        <div class="wizard-heading">
+            <p>GAMMA ROBOTIC SPECTROMETER</p>
+            <h1 th:text="${wizardTitle}">MAIN MENU</h1>
+        </div>
+
+        <div class="wizard-account">
+            <div th:if="${authUsername != null}"
+                 class="wizard-auth-status auth-status">
+                <span class="auth-csrf" hidden
+                      th:attr="data-token=${_csrf.token},data-header=${_csrf.headerName}"></span>
+                <div class="wizard-user">
+                    <span th:text="${authUsername}">operator</span>
+                    <small th:text="${authRole}">operator</small>
+                    <form method="post" th:action="@{/auth/logout}">
+                        <input type="hidden" th:name="${_csrf.parameterName}"
+                               th:value="${_csrf.token}">
+                        <button type="submit">Log out</button>
+                    </form>
+                </div>
+                <div class="wizard-lock-access onlyone-access">
+                    <span class="onlyone-state" role="status">Exclusive access: checking…</span>
+                    <input class="onlyone-password" type="password"
+                           placeholder="Master password"
+                           autocomplete="current-password"
+                           aria-label="Exclusive-access master password">
+                    <button class="onlyone-enter" type="button">Acquire</button>
+                    <button class="onlyone-exit" type="button" hidden>Release</button>
+                </div>
+                <script th:src="@{/js/auth-status.js}" defer></script>
+            </div>
+            <a th:unless="${authUsername != null}"
+               class="wizard-login-link"
+               th:href="@{/login}">Log in</a>
+        </div>
+    </div>
+
+    <div th:replace="~{wizard/fragments/live-status :: liveStatus}"></div>
+    <p id="wizard-refresh-error" class="wizard-refresh-error" hidden>
+        Connection with RGSCenter has been lost. Last received values are shown.
+    </p>
+</header>
+</body>
+</html>

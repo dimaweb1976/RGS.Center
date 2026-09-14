@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"></head>
+<body>
+<section id="wizard-measurement-form-panel"
+         th:fragment="formPanel"
+         class="wizard-parameters-panel"
+         aria-live="polite">
+    <header>
+        <p class="wizard-eyebrow">CURRENT MEASUREMENT PROFILE</p>
+        <h2>Parameters applied to the next measurement</h2>
+        <p>Values are stored in the RGSCenter database and shared by automatic and manual modes.</p>
+    </header>
+
+    <p class="wizard-form-message wizard-form-message--success"
+       th:if="${parametersMessage != null}" th:text="${parametersMessage}">Saved</p>
+    <p class="wizard-form-message wizard-form-message--error"
+       th:if="${parametersError != null}" th:text="${parametersError}">Invalid value</p>
+
+    <form id="wizard-measurement-parameters-form" method="post"
+          th:action="@{/wizard/measurement-parameters}">
+        <input type="hidden" name="version" th:value="${parametersForm.version}">
+        <label>
+            <span>Measuring time, min</span>
+            <input name="measuringTimeMinutes" type="number" min="1" max="1440" step="1"
+                   required th:value="${parametersForm.measuringTimeMinutes}">
+            <small>Allowed range: 1–1440 minutes.</small>
+        </label>
+        <label>
+            <span>Volume, ml</span>
+            <input name="volumeMl" type="number" min="0.001" max="10000" step="0.001"
+                   required th:value="${parametersForm.volumeMl}">
+            <small>Positive value, not greater than 10000 ml.</small>
+        </label>
+        <label>
+            <span>Geometry</span>
+            <select name="geometry" required>
+                <option th:each="geometry : ${sampleGeometries}"
+                        th:value="${geometry.name()}"
+                        th:selected="${geometry.name() == parametersForm.geometry}"
+                        th:text="${geometry.label}">Bottle</option>
+            </select>
+            <small>The geometry identifier will be passed to the measurement orchestrator.</small>
+        </label>
+        <label>
+            <span>Tare mass, g</span>
+            <input name="tareMassGrams" type="number" min="0" max="100000" step="0.001"
+                   required th:value="${parametersForm.tareMassGrams}">
+            <small>Container mass before adding the sample.</small>
+        </label>
+        <button class="wizard-button wizard-button--primary" type="submit">Save parameters</button>
+    </form>
+</section>
+</body>
+</html>
