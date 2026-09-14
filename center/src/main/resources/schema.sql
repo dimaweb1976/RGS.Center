@@ -165,6 +165,34 @@ CREATE INDEX IF NOT EXISTS idx_manual_measurements_sample
 CREATE INDEX IF NOT EXISTS idx_manual_measurements_started
     ON manual_measurements (started_at);
 
+-- One immutable row per object processed by an automatic production run.
+CREATE TABLE IF NOT EXISTS automatic_measurements
+(
+    run_id UUID NOT NULL,
+    object_number INTEGER NOT NULL CHECK (object_number > 0),
+    sample_code VARCHAR(256) NOT NULL,
+    coordinate_x DOUBLE PRECISION NOT NULL,
+    coordinate_y DOUBLE PRECISION NOT NULL,
+    gross_mass_grams NUMERIC(18, 6),
+    net_mass_grams NUMERIC(18, 6),
+    measuring_time_minutes BIGINT NOT NULL,
+    volume_ml DOUBLE PRECISION NOT NULL,
+    geometry VARCHAR(32) NOT NULL,
+    tare_mass_grams DOUBLE PRECISION NOT NULL,
+    started_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    finished_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    status VARCHAR(32) NOT NULL,
+    spectrum_reference TEXT NOT NULL,
+    error_message TEXT NOT NULL,
+    PRIMARY KEY (run_id, object_number)
+);
+
+CREATE INDEX IF NOT EXISTS idx_automatic_measurements_sample
+    ON automatic_measurements (sample_code, started_at);
+
+CREATE INDEX IF NOT EXISTS idx_automatic_measurements_started
+    ON automatic_measurements (started_at);
+
 COMMENT ON TABLE roles IS 'Справочник ролей пользователей RGSCenter';
 COMMENT ON TABLE users IS 'Пользователи RGSCenter';
 COMMENT ON COLUMN users.hash IS 'BCrypt-хэш пароля; пароль в открытом виде не хранится';
@@ -173,3 +201,4 @@ COMMENT ON TABLE device_settings IS 'Настройки подключения �
 COMMENT ON TABLE device_settings_audit IS 'Неизменяемая история настроек подключения';
 COMMENT ON TABLE measurement_parameters IS 'Текущие параметры автоматического и ручного измерения';
 COMMENT ON TABLE manual_measurements IS 'Результаты измерений, запущенных оператором в ручном режиме';
+COMMENT ON TABLE automatic_measurements IS 'Результаты объектов автоматического производственного цикла';

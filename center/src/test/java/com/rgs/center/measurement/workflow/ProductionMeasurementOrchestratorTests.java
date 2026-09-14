@@ -3,6 +3,7 @@ package com.rgs.center.measurement.workflow;
 import com.rgs.center.measurement.ScenarioStatus;
 import com.rgs.center.measurement.ScenarioStatusService;
 import com.rgs.center.measurement.MeasurementExecutionCoordinator;
+import com.rgs.center.measurement.history.MeasurementHistoryRepository;
 import com.rgs.center.measurement.parameters.MeasurementParameters;
 import com.rgs.center.measurement.parameters.MeasurementParametersService;
 import com.rgs.center.measurement.parameters.SampleGeometry;
@@ -21,6 +22,8 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class ProductionMeasurementOrchestratorTests {
@@ -64,6 +67,38 @@ class ProductionMeasurementOrchestratorTests {
                 "spectrum-2", "spectrometer-remove-2", "return-2"
         );
         assertThat(scenario.currentStatus()).isEqualTo(ScenarioStatus.NORMAL);
+    }
+
+    @Test
+    void persistsTerminalAutomaticRunForMeasurementHistory() throws Exception {
+        FakeGateway gateway = new FakeGateway();
+        MeasurementParametersService parametersService = mock(
+                MeasurementParametersService.class
+        );
+        when(parametersService.current()).thenReturn(new MeasurementParameters(
+                1, 300, SampleGeometry.BOTTLE, 25, 0, Instant.EPOCH
+        ));
+        MeasurementWorkflowConfiguration configuration =
+                new MeasurementWorkflowConfiguration();
+        configuration.setOperationTimeout(Duration.ofSeconds(2));
+        configuration.setSpectrumOverrun(Duration.ofSeconds(1));
+        MeasurementHistoryRepository history = mock(MeasurementHistoryRepository.class);
+        executionCoordinator = new MeasurementExecutionCoordinator();
+        orchestrator = new ProductionMeasurementOrchestrator(
+                gateway, parametersService, new ScenarioStatusService(),
+                executionCoordinator, configuration, history
+        );
+
+        orchestrator.start(List.of(new MeasurementObjectRequest(1, 10, 20)));
+        assertThat(awaitTerminal().state()).isEqualTo(MeasurementWorkflowState.COMPLETED);
+
+        verify(history, timeout(1000)).insertAutomaticRun(
+                org.mockito.ArgumentMatchers.argThat(snapshot ->
+                        snapshot.state() == MeasurementWorkflowState.COMPLETED
+                                && snapshot.objects().size() == 1
+                                && "CODE-1".equals(snapshot.objects().getFirst().barcode())
+                )
+        );
     }
 
     @Test

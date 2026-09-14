@@ -3,6 +3,7 @@ package com.rgs.center.measurement.workflow;
 import com.rgs.center.measurement.ScenarioStatus;
 import com.rgs.center.measurement.ScenarioStatusService;
 import com.rgs.center.measurement.MeasurementExecutionCoordinator;
+import com.rgs.center.measurement.history.MeasurementHistoryRepository;
 import com.rgs.center.measurement.parameters.MeasurementParameters;
 import com.rgs.center.measurement.parameters.MeasurementParametersService;
 import jakarta.annotation.PreDestroy;
@@ -47,6 +48,7 @@ public class ProductionMeasurementOrchestrator {
     private final ScenarioStatusService scenarioStatusService;
     private final MeasurementExecutionCoordinator executionCoordinator;
     private final MeasurementWorkflowConfiguration configuration;
+    private final MeasurementHistoryRepository historyRepository;
     private final Clock clock;
     private final ExecutorService runExecutor;
     private final ExecutorService operationExecutor;
@@ -72,7 +74,8 @@ public class ProductionMeasurementOrchestrator {
             MeasurementParametersService parametersService,
             ScenarioStatusService scenarioStatusService,
             MeasurementExecutionCoordinator executionCoordinator,
-            MeasurementWorkflowConfiguration configuration
+            MeasurementWorkflowConfiguration configuration,
+            MeasurementHistoryRepository historyRepository
     ) {
         this(
                 gateway,
@@ -80,6 +83,7 @@ public class ProductionMeasurementOrchestrator {
                 scenarioStatusService,
                 executionCoordinator,
                 configuration,
+                historyRepository,
                 Clock.systemUTC(),
                 Executors.newSingleThreadExecutor(runnable -> daemon(
                         runnable,
@@ -92,12 +96,34 @@ public class ProductionMeasurementOrchestrator {
         );
     }
 
+    /** Package-level constructor keeps isolated state-machine tests database-free. */
+    ProductionMeasurementOrchestrator(
+            MeasurementWorkflowDeviceGateway gateway,
+            MeasurementParametersService parametersService,
+            ScenarioStatusService scenarioStatusService,
+            MeasurementExecutionCoordinator executionCoordinator,
+            MeasurementWorkflowConfiguration configuration
+    ) {
+        this(
+                gateway, parametersService, scenarioStatusService,
+                executionCoordinator, configuration, null,
+                Clock.systemUTC(),
+                Executors.newSingleThreadExecutor(runnable -> daemon(
+                        runnable, "measurement-workflow"
+                )),
+                Executors.newCachedThreadPool(runnable -> daemon(
+                        runnable, "measurement-device-operation"
+                ))
+        );
+    }
+
     ProductionMeasurementOrchestrator(
             MeasurementWorkflowDeviceGateway gateway,
             MeasurementParametersService parametersService,
             ScenarioStatusService scenarioStatusService,
             MeasurementExecutionCoordinator executionCoordinator,
             MeasurementWorkflowConfiguration configuration,
+            MeasurementHistoryRepository historyRepository,
             Clock clock,
             ExecutorService runExecutor,
             ExecutorService operationExecutor
@@ -109,6 +135,7 @@ public class ProductionMeasurementOrchestrator {
                 executionCoordinator, "executionCoordinator"
         );
         this.configuration = Objects.requireNonNull(configuration, "configuration");
+        this.historyRepository = historyRepository;
         this.clock = Objects.requireNonNull(clock, "clock");
         this.runExecutor = Objects.requireNonNull(runExecutor, "runExecutor");
         this.operationExecutor = Objects.requireNonNull(operationExecutor, "operationExecutor");
@@ -281,6 +308,7 @@ public class ProductionMeasurementOrchestrator {
                     ScenarioStatus.NORMAL,
                     "production measurement workflow completed"
             );
+            persistTerminalRun();
             log.info("Production measurement workflow completed: runId={}", runId);
         } catch (WorkflowCancelledException | CancellationException exception) {
             finishCancelled();
@@ -491,6 +519,7 @@ public class ProductionMeasurementOrchestrator {
                 ScenarioStatus.NORMAL,
                 "production workflow cancelled"
         );
+        persistTerminalRun();
         log.info("Production measurement workflow cancelled: runId={}", runId);
     }
 
@@ -510,7 +539,24 @@ public class ProductionMeasurementOrchestrator {
             activeObjectNumber = null;
         }
         scenarioStatusService.updateStatus(ScenarioStatus.EMERGENCY, message);
+        persistTerminalRun();
         log.error("Production measurement workflow failed: runId={}, error={}", runId, message, exception);
+    }
+
+    /** History failures are reported but never rewrite the physical run outcome. */
+    private void persistTerminalRun() {
+        if (historyRepository == null) {
+            return;
+        }
+        try {
+            historyRepository.insertAutomaticRun(snapshot());
+        } catch (RuntimeException exception) {
+            log.error(
+                    "Automatic measurement history was not saved: runId={}",
+                    runId,
+                    exception
+            );
+        }
     }
 
     private synchronized void event(

@@ -38,7 +38,7 @@ class WizardSettingsControllerIntegrationTests {
                 .andExpect(content().string(containsString(
                         "href=\"/wizard/settings/RoboticManipulator\""
                 )))
-                .andExpect(content().string(containsString("stage 10")))
+                .andExpect(content().string(containsString("stage 11")))
                 .andExpect(content().string(containsString(
                         "/settings/device_settings/index.html"
                 )));

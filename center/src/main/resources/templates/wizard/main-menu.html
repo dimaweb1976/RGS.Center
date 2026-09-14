@@ -50,10 +50,10 @@
                 <span>Settings</span>
                 <small>Validated device parameters and change audit</small>
             </a>
-            <div class="wizard-menu-card is-disabled" aria-disabled="true">
+            <a class="wizard-menu-card" th:href="@{/wizard/database}">
                 <span>Database</span>
-                <small>Measurement history is not implemented yet</small>
-            </div>
+                <small>Search, reports and CSV export</small>
+            </a>
             <div class="wizard-menu-card is-disabled" aria-disabled="true">
                 <span>Help</span>
                 <small>Operator guide will be connected later</small>
@@ -62,7 +62,7 @@
     </main>
 
     <footer class="wizard-footer">
-        <span>RGSCenter Wizard - stage 10</span>
+        <span>RGSCenter Wizard - stage 11</span>
         <a th:href="@{/}">Open current interface</a>
     </footer>
 </div>
