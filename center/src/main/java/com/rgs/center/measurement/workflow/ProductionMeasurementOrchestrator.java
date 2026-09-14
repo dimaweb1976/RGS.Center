@@ -60,6 +60,7 @@ public class ProductionMeasurementOrchestrator {
     private MeasurementParameters parameters;
     private String lastError = "";
     private boolean cancellationRequested;
+    private boolean pauseRequested;
     private Future<?> runTask;
     private Future<?> activeOperation;
 
@@ -106,7 +107,7 @@ public class ProductionMeasurementOrchestrator {
     }
 
     /**
-     * Queues one production run. Stage 7 will expose this operation to the UI.
+     * Queues one production run for the automatic Thymeleaf workflow.
      *
      * @return unique identifier of the accepted run
      */
@@ -131,6 +132,7 @@ public class ProductionMeasurementOrchestrator {
         parameters = parametersService.current();
         lastError = "";
         cancellationRequested = false;
+        pauseRequested = false;
         objects.clear();
         queue.stream().map(MutableObject::new).forEach(objects::add);
         events.clear();
@@ -146,6 +148,46 @@ public class ProductionMeasurementOrchestrator {
         return runId;
     }
 
+    /** Requests a pause at the next confirmed boundary between operations. */
+    public boolean pause() {
+        synchronized (this) {
+            if (state != MeasurementWorkflowState.RUNNING || pauseRequested) {
+                return false;
+            }
+            pauseRequested = true;
+            state = activeOperation == null
+                    ? MeasurementWorkflowState.PAUSED
+                    : MeasurementWorkflowState.PAUSING;
+            event(activeObjectNumber, activeStep, 0,
+                    "Pause requested; waiting for a safe operation boundary");
+        }
+        scenarioStatusService.updateStatus(
+                ScenarioStatus.PAUSED,
+                "production workflow pause requested"
+        );
+        return true;
+    }
+
+    /** Continues a paused run without repeating the last confirmed operation. */
+    public boolean resume() {
+        synchronized (this) {
+            if ((state != MeasurementWorkflowState.PAUSED
+                    && state != MeasurementWorkflowState.PAUSING)
+                    || !pauseRequested) {
+                return false;
+            }
+            pauseRequested = false;
+            state = MeasurementWorkflowState.RUNNING;
+            event(activeObjectNumber, activeStep, 0, "Run resumed");
+            notifyAll();
+        }
+        scenarioStatusService.updateStatus(
+                ScenarioStatus.NORMAL,
+                "production workflow resumed"
+        );
+        return true;
+    }
+
     /** Requests cancellation and interrupts the currently waiting operation. */
     public boolean cancel() {
         Future<?> operation;
@@ -154,9 +196,11 @@ public class ProductionMeasurementOrchestrator {
                 return false;
             }
             cancellationRequested = true;
+            pauseRequested = false;
             state = MeasurementWorkflowState.CANCELLING;
             event(activeObjectNumber, activeStep, 0, "Cancellation requested");
             operation = activeOperation;
+            notifyAll();
         }
         scenarioStatusService.updateStatus(
                 ScenarioStatus.ABORTING,
@@ -312,6 +356,7 @@ public class ProductionMeasurementOrchestrator {
     ) {
         RuntimeException lastFailure = null;
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            awaitIfPaused();
             checkCancellation();
             synchronized (this) {
                 activeStep = step;
@@ -380,7 +425,30 @@ public class ProductionMeasurementOrchestrator {
     private synchronized boolean isActive() {
         return state == MeasurementWorkflowState.PRECHECK
                 || state == MeasurementWorkflowState.RUNNING
+                || state == MeasurementWorkflowState.PAUSING
+                || state == MeasurementWorkflowState.PAUSED
                 || state == MeasurementWorkflowState.CANCELLING;
+    }
+
+    /** Waits efficiently until Resume/Stop; no active polling is used. */
+    private void awaitIfPaused() {
+        synchronized (this) {
+            boolean announced = false;
+            while (pauseRequested && !cancellationRequested) {
+                if (!announced) {
+                    state = MeasurementWorkflowState.PAUSED;
+                    event(activeObjectNumber, activeStep, 0,
+                            "Run paused at a safe operation boundary");
+                    announced = true;
+                }
+                try {
+                    wait();
+                } catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                    throw new WorkflowCancelledException();
+                }
+            }
+        }
     }
 
     private synchronized boolean isCancellationRequested() {

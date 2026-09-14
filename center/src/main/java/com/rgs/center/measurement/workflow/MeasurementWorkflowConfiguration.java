@@ -14,6 +14,7 @@ public class MeasurementWorkflowConfiguration {
     private Duration operationTimeout = Duration.ofMinutes(2);
     private Duration spectrumOverrun = Duration.ofMinutes(2);
     private Duration gammaPollInterval = Duration.ofMillis(500);
+    private Duration estimatedDeviceOperationDuration = Duration.ofSeconds(30);
     private final Manipulator manipulator = new Manipulator();
 
     public int getMaxAttempts() {
@@ -48,6 +49,14 @@ public class MeasurementWorkflowConfiguration {
         this.gammaPollInterval = gammaPollInterval;
     }
 
+    public Duration getEstimatedDeviceOperationDuration() {
+        return estimatedDeviceOperationDuration;
+    }
+
+    public void setEstimatedDeviceOperationDuration(Duration value) {
+        estimatedDeviceOperationDuration = value;
+    }
+
     public Manipulator getManipulator() {
         return manipulator;
     }
@@ -59,6 +68,10 @@ public class MeasurementWorkflowConfiguration {
         requirePositive(operationTimeout, "operationTimeout");
         requirePositive(spectrumOverrun, "spectrumOverrun");
         requirePositive(gammaPollInterval, "gammaPollInterval");
+        requirePositive(
+                estimatedDeviceOperationDuration,
+                "estimatedDeviceOperationDuration"
+        );
         if (gammaPollInterval.toMillis() < 1L) {
             throw new IllegalStateException(
                     "Workflow gammaPollInterval must be at least 1 ms"

@@ -31,10 +31,15 @@
                 headers
             });
             if (!response.ok) {
+                const responseMessage = await response.text();
                 const message = response.status === 423
                     ? "Exclusive access lock is required for this action."
-                    : `Action failed: HTTP ${response.status}`;
+                    : responseMessage || `Action failed: HTTP ${response.status}`;
                 throw new Error(message);
+            }
+            if (path === "run/start") {
+                window.location.assign("/wizard/automatic/progress");
+                return;
             }
             workspace.outerHTML = await response.text();
         } catch (error) {

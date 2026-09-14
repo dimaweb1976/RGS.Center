@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"></head>
+<body>
+<section id="wizard-run-monitor"
+         th:fragment="monitor"
+         class="wizard-run-monitor"
+         th:attr="data-terminal=${workflowView.terminal}"
+         aria-live="polite">
+    <section class="wizard-run-state"
+             th:classappend="${workflowView.stateCssClass}">
+        <div>
+            <p class="wizard-eyebrow">PRODUCTION WORKFLOW</p>
+            <h2 th:text="${workflowView.headline}">Ready to start</h2>
+            <p th:text="${workflowView.details}">Recognize objects and start a production run.</p>
+        </div>
+        <strong th:text="|${workflowView.completedObjects} / ${workflowView.totalObjects}|">0 / 0</strong>
+    </section>
+
+    <div class="wizard-progress-track" role="progressbar"
+         aria-valuemin="0" aria-valuemax="100"
+         th:attr="aria-valuenow=${workflowView.progressPercent}">
+        <span th:style="|width:${workflowView.progressPercent}%|"></span>
+    </div>
+
+    <dl class="wizard-run-metrics">
+        <div><dt>State</dt><dd th:text="${workflowView.state}">IDLE</dd></div>
+        <div><dt>Active object</dt><dd th:text="${workflowView.activeObject}">—</dd></div>
+        <div><dt>Current step</dt><dd th:text="${workflowView.activeStep}">—</dd></div>
+        <div><dt>Estimated completion</dt><dd th:text="${workflowView.estimatedCompletion}">—</dd></div>
+    </dl>
+
+    <article class="wizard-object-card wizard-run-results">
+        <header>
+            <div><p class="wizard-eyebrow">LIVE RESULTS</p><h2>Object queue</h2></div>
+            <strong th:text="|${workflowView.progressPercent}%|">0%</strong>
+        </header>
+        <div class="wizard-object-table-wrap">
+            <table class="wizard-object-table" th:if="${!#lists.isEmpty(workflowView.objects)}">
+                <thead><tr>
+                    <th>No.</th><th>X</th><th>Y</th><th>Status</th><th>Barcode</th>
+                    <th>Gross</th><th>Net</th><th>Spectrum</th><th>Error</th>
+                </tr></thead>
+                <tbody>
+                <tr th:each="object : ${workflowView.objects}">
+                    <td th:text="${object.number}">1</td>
+                    <td th:text="${object.x}">0.0</td>
+                    <td th:text="${object.y}">0.0</td>
+                    <td><span class="wizard-object-status"
+                              th:classappend="${object.statusCssClass}"
+                              th:text="${object.status}">QUEUED</span></td>
+                    <td th:text="${object.barcode}">Waiting</td>
+                    <td th:text="${object.grossMass}">Waiting</td>
+                    <td th:text="${object.netMass}">Waiting</td>
+                    <td th:text="${object.spectrum}">Waiting</td>
+                    <td th:text="${object.error}">—</td>
+                </tr>
+                </tbody>
+            </table>
+            <p class="wizard-empty-state" th:if="${#lists.isEmpty(workflowView.objects)}">
+                No objects have been queued.
+            </p>
+        </div>
+    </article>
+
+    <section class="wizard-run-journal">
+        <header><p class="wizard-eyebrow">EVENT JOURNAL</p><h2>Latest workflow events</h2></header>
+        <ol th:if="${!#lists.isEmpty(workflowView.events)}">
+            <li th:each="event : ${workflowView.events}">
+                <time th:text="${event.time}">00:00:00</time>
+                <strong th:text="${event.context}">Run</strong>
+                <span th:text="${event.message}">Event</span>
+            </li>
+        </ol>
+        <p class="wizard-empty-state" th:if="${#lists.isEmpty(workflowView.events)}">
+            The run journal is empty.
+        </p>
+    </section>
+
+    <div class="wizard-run-actions">
+        <button class="wizard-button" type="button" data-workflow-action="pause"
+                th:if="${workflowView.canPause}">Pause</button>
+        <button class="wizard-button wizard-button--primary" type="button"
+                data-workflow-action="resume" th:if="${workflowView.canResume}">Resume</button>
+        <button class="wizard-button wizard-button--danger" type="button"
+                data-workflow-action="stop" th:if="${workflowView.canStop}">Stop safely</button>
+        <a class="wizard-button wizard-button--link" th:if="${workflowView.terminal}"
+           th:href="@{/wizard/automatic}">Prepare another run</a>
+    </div>
+</section>
+</body>
+</html>

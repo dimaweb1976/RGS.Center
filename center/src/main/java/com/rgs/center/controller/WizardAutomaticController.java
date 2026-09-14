@@ -2,10 +2,14 @@ package com.rgs.center.controller;
 
 import com.rgs.center.camera.CameraImagePayload;
 import com.rgs.center.camera.CameraImagingOperations;
+import com.rgs.center.camera.CameraImagingSnapshot;
 import com.rgs.center.dashboard.DashboardSnapshotService;
 import com.rgs.center.dashboard.model.DashboardSnapshot;
+import com.rgs.center.measurement.workflow.MeasurementObjectRequest;
+import com.rgs.center.measurement.workflow.ProductionMeasurementOrchestrator;
 import com.rgs.center.web.wizard.WizardAutomaticViewFactory;
 import com.rgs.center.web.wizard.WizardHomeViewFactory;
+import com.rgs.center.web.wizard.WizardWorkflowViewFactory;
 import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -27,18 +31,24 @@ public class WizardAutomaticController {
     private final DashboardSnapshotService dashboardService;
     private final WizardHomeViewFactory homeViewFactory;
     private final WizardAutomaticViewFactory automaticViewFactory;
+    private final WizardWorkflowViewFactory workflowViewFactory;
     private final CameraImagingOperations cameraImaging;
+    private final ProductionMeasurementOrchestrator orchestrator;
 
     public WizardAutomaticController(
             DashboardSnapshotService dashboardService,
             WizardHomeViewFactory homeViewFactory,
             WizardAutomaticViewFactory automaticViewFactory,
-            CameraImagingOperations cameraImaging
+            WizardWorkflowViewFactory workflowViewFactory,
+            CameraImagingOperations cameraImaging,
+            ProductionMeasurementOrchestrator orchestrator
     ) {
         this.dashboardService = dashboardService;
         this.homeViewFactory = homeViewFactory;
         this.automaticViewFactory = automaticViewFactory;
+        this.workflowViewFactory = workflowViewFactory;
         this.cameraImaging = cameraImaging;
+        this.orchestrator = orchestrator;
     }
 
     /** @return полная страница подготовки автоматического режима */
@@ -48,15 +58,64 @@ public class WizardAutomaticController {
         return "wizard/automatic-preparation";
     }
 
-    /**
-     * Показывает production-монитор цикла без имитации отсутствующего
-     * оркестратора и без отправки команд устройствам.
-     */
+    /** Показывает живой монитор production-оркестратора. */
     @GetMapping("/progress")
     public String progress(Model model) {
         addView(model);
         model.addAttribute("wizardTitle", "AUTO MEASUREMENTS — MONITOR");
         return "wizard/automatic-progress";
+    }
+
+    /** Запускает реальный цикл по последнему подтверждённому распознаванию. */
+    @PostMapping("/run/start")
+    @ResponseBody
+    public ResponseEntity<String> startRun() {
+        CameraImagingSnapshot camera = cameraImaging.snapshot();
+        if (!camera.recognized() || camera.bottles().isEmpty()) {
+            return ResponseEntity.badRequest().body(
+                    "Recognize at least one bottle before starting the run."
+            );
+        }
+        try {
+            var requests = camera.bottles().stream()
+                    .map(value -> new MeasurementObjectRequest(
+                            value.number(), value.centerX(), value.centerY()
+                    ))
+                    .toList();
+            return ResponseEntity.accepted().body(orchestrator.start(requests).toString());
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.badRequest().body(errorMessage(exception));
+        } catch (IllegalStateException exception) {
+            return ResponseEntity.status(409).body(errorMessage(exception));
+        }
+    }
+
+    /** Запрашивает паузу на следующей безопасной границе операций. */
+    @PostMapping("/run/pause")
+    @ResponseBody
+    public ResponseEntity<String> pauseRun() {
+        return controlResponse(orchestrator.pause(), "Run cannot be paused in its current state.");
+    }
+
+    /** Продолжает ранее приостановленный цикл. */
+    @PostMapping("/run/resume")
+    @ResponseBody
+    public ResponseEntity<String> resumeRun() {
+        return controlResponse(orchestrator.resume(), "Run cannot be resumed in its current state.");
+    }
+
+    /** Запрашивает безопасную остановку цикла и активного оборудования. */
+    @PostMapping("/run/stop")
+    @ResponseBody
+    public ResponseEntity<String> stopRun() {
+        return controlResponse(orchestrator.cancel(), "There is no active run to stop.");
+    }
+
+    /** Фрагмент для периодического обновления монитора без чтения приборов из HTTP-потока. */
+    @GetMapping("/run/status")
+    public String runStatus(Model model) {
+        addView(model);
+        return runMonitorFragment();
     }
 
     /** Получает тестовый или реальный кадр согласно конфигурации камеры. */
@@ -94,11 +153,16 @@ public class WizardAutomaticController {
 
     private void addView(Model model) {
         DashboardSnapshot snapshot = dashboardService.snapshot();
+        CameraImagingSnapshot camera = cameraImaging.snapshot();
         model.addAttribute("wizardTitle", "AUTO MEASUREMENTS — PREPARATION");
         model.addAttribute("wizardView", homeViewFactory.create(snapshot));
         model.addAttribute(
                 "automaticView",
-                automaticViewFactory.create(snapshot, cameraImaging.snapshot())
+                automaticViewFactory.create(snapshot, camera)
+        );
+        model.addAttribute(
+                "workflowView",
+                workflowViewFactory.create(orchestrator.snapshot(), camera.bottles())
         );
     }
 
@@ -111,6 +175,19 @@ public class WizardAutomaticController {
 
     private static String workspaceFragment() {
         return "wizard/fragments/automatic-workspace :: workspace";
+    }
+
+    private static String runMonitorFragment() {
+        return "wizard/fragments/run-monitor :: monitor";
+    }
+
+    private static ResponseEntity<String> controlResponse(
+            boolean accepted,
+            String rejectedMessage
+    ) {
+        return accepted
+                ? ResponseEntity.accepted().body("accepted")
+                : ResponseEntity.status(409).body(rejectedMessage);
     }
 
     private static String errorMessage(RuntimeException exception) {

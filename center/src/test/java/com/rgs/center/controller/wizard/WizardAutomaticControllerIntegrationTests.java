@@ -7,6 +7,12 @@ import com.rgs.center.camera.DetectedBottle;
 import com.rgs.center.measurement.parameters.MeasurementParameters;
 import com.rgs.center.measurement.parameters.MeasurementParametersService;
 import com.rgs.center.measurement.parameters.SampleGeometry;
+import com.rgs.center.measurement.workflow.MeasurementObjectRequest;
+import com.rgs.center.measurement.workflow.MeasurementObjectSnapshot;
+import com.rgs.center.measurement.workflow.MeasurementWorkflowSnapshot;
+import com.rgs.center.measurement.workflow.MeasurementWorkflowState;
+import com.rgs.center.measurement.workflow.MeasurementWorkflowStep;
+import com.rgs.center.measurement.workflow.ProductionMeasurementOrchestrator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,12 +24,14 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -55,14 +63,18 @@ class WizardAutomaticControllerIntegrationTests {
     @MockitoBean
     private CameraImagingService cameraImaging;
 
+    @MockitoBean
+    private ProductionMeasurementOrchestrator orchestrator;
+
     @BeforeEach
     void prepareCamera() {
-        reset(cameraImaging);
+        reset(cameraImaging, orchestrator);
         when(cameraImaging.snapshot()).thenReturn(emptyCamera());
+        when(orchestrator.snapshot()).thenReturn(idleWorkflow());
     }
 
     @Test
-    void rendersPreparationPageWithoutEnablingUnimplementedCommands()
+    void rendersPreparationPageWithStartDisabledUntilRecognition()
             throws Exception {
         mockMvc.perform(get("/wizard/automatic"))
                 .andExpect(status().isOk())
@@ -73,10 +85,7 @@ class WizardAutomaticControllerIntegrationTests {
                 .andExpect(content().string(containsString("Camera image")))
                 .andExpect(content().string(containsString("Capture image")))
                 .andExpect(content().string(containsString(
-                        "production measurement orchestrator is not implemented"
-                )))
-                .andExpect(content().string(containsString(
-                        "<button type=\"button\" class=\"wizard-button wizard-button--wide\" disabled"
+                        "data-wizard-action=\"run/start\" disabled"
                 )));
     }
 
@@ -149,21 +158,75 @@ class WizardAutomaticControllerIntegrationTests {
     }
 
     @Test
-    void rendersAutomaticProgressAsReadOnlyUntilOrchestratorExists()
+    void rendersLiveAutomaticProgressFromOrchestratorSnapshot()
             throws Exception {
+        when(orchestrator.snapshot()).thenReturn(runningWorkflow());
         mockMvc.perform(get("/wizard/automatic/progress"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString(
                         "AUTO MEASUREMENTS — MONITOR"
                 )))
                 .andExpect(content().string(containsString(
-                        "Waiting for production orchestrator"
+                        "Automatic measurement is running"
                 )))
                 .andExpect(content().string(containsString(
-                        "No automatic device commands are being sent"
+                        "Read and validate barcode"
                 )))
                 .andExpect(content().string(containsString(
-                        "<button class=\"wizard-button\" type=\"button\" disabled"
+                        "data-workflow-action=\"pause\""
+                )));
+    }
+
+    @Test
+    void startsProductionRunWithRecognizedBottleCoordinates() throws Exception {
+        CameraImagingSnapshot recognized = recognizedCamera();
+        when(cameraImaging.snapshot()).thenReturn(recognized);
+        when(orchestrator.start(anyList())).thenReturn(
+                UUID.fromString("8f6ddc93-8468-4297-b4c9-8a11ab990eba")
+        );
+
+        mockMvc.perform(post("/wizard/automatic/run/start").with(csrf()))
+                .andExpect(status().isAccepted())
+                .andExpect(content().string("8f6ddc93-8468-4297-b4c9-8a11ab990eba"));
+
+        verify(orchestrator).start(List.of(new MeasurementObjectRequest(1, 125.5, 64.0)));
+    }
+
+    @Test
+    void rejectsStartWithoutRecognizedObjects() throws Exception {
+        mockMvc.perform(post("/wizard/automatic/run/start").with(csrf()))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(containsString("Recognize at least one bottle")));
+    }
+
+    @Test
+    void exposesPauseResumeAndSafeStopControls() throws Exception {
+        when(orchestrator.pause()).thenReturn(true);
+        when(orchestrator.resume()).thenReturn(true);
+        when(orchestrator.cancel()).thenReturn(true);
+
+        mockMvc.perform(post("/wizard/automatic/run/pause").with(csrf()))
+                .andExpect(status().isAccepted());
+        mockMvc.perform(post("/wizard/automatic/run/resume").with(csrf()))
+                .andExpect(status().isAccepted());
+        mockMvc.perform(post("/wizard/automatic/run/stop").with(csrf()))
+                .andExpect(status().isAccepted());
+
+        verify(orchestrator).pause();
+        verify(orchestrator).resume();
+        verify(orchestrator).cancel();
+    }
+
+    @Test
+    void returnsOnlyLiveRunMonitorFragmentForPolling() throws Exception {
+        when(orchestrator.snapshot()).thenReturn(runningWorkflow());
+
+        mockMvc.perform(get("/wizard/automatic/run/status"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("id=\"wizard-run-monitor\"")))
+                .andExpect(content().string(containsString("Active object")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        containsString("<!DOCTYPE html>")
                 )));
     }
 
@@ -273,6 +336,43 @@ class WizardAutomaticControllerIntegrationTests {
                 "No camera frame yet.",
                 "",
                 "",
+                List.of()
+        );
+    }
+
+    private static CameraImagingSnapshot recognizedCamera() {
+        return new CameraImagingSnapshot(
+                true, 43L, true, "Recognition completed",
+                "C:\\camera\\bottles.jpeg",
+                "C:\\camera\\bottles_detected.jpeg",
+                List.of(new DetectedBottle(1, 125.5, 64.0, 40, 42, 41.0, 0.91))
+        );
+    }
+
+    private static MeasurementWorkflowSnapshot idleWorkflow() {
+        return new MeasurementWorkflowSnapshot(
+                null, MeasurementWorkflowState.IDLE, null, null,
+                null, null, null, "", List.of(), List.of()
+        );
+    }
+
+    private static MeasurementWorkflowSnapshot runningWorkflow() {
+        return new MeasurementWorkflowSnapshot(
+                UUID.fromString("8f6ddc93-8468-4297-b4c9-8a11ab990eba"),
+                MeasurementWorkflowState.RUNNING,
+                MeasurementWorkflowStep.READ_BARCODE,
+                1,
+                java.time.Instant.EPOCH,
+                null,
+                new MeasurementParameters(
+                        1, 300, SampleGeometry.BOTTLE, 25, 1, java.time.Instant.EPOCH
+                ),
+                "",
+                List.of(new MeasurementObjectSnapshot(
+                        1, 125.5, 64.0, "RUNNING",
+                        MeasurementWorkflowStep.MOVE_TO_BARCODE,
+                        "", null, null, "", ""
+                )),
                 List.of()
         );
     }

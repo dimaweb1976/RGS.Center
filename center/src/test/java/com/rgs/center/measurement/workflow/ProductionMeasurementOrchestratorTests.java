@@ -112,6 +112,32 @@ class ProductionMeasurementOrchestratorTests {
         assertThat(scenario.currentStatus()).isEqualTo(ScenarioStatus.NORMAL);
     }
 
+    @Test
+    void pausesOnlyAfterActiveOperationAndResumesWithNextStep() throws Exception {
+        FakeGateway gateway = new FakeGateway();
+        gateway.blockBarcode = true;
+        ScenarioStatusService scenario = new ScenarioStatusService();
+        orchestrator = orchestrator(gateway, scenario, 2);
+        orchestrator.start(List.of(new MeasurementObjectRequest(1, 1, 2)));
+        assertThat(gateway.barcodeEntered.await(2, TimeUnit.SECONDS)).isTrue();
+
+        assertThat(orchestrator.pause()).isTrue();
+        assertThat(orchestrator.snapshot().state())
+                .isEqualTo(MeasurementWorkflowState.PAUSING);
+        gateway.barcodeRelease.countDown();
+        awaitState(MeasurementWorkflowState.PAUSED);
+
+        assertThat(gateway.calls).doesNotContain("scales-position-1");
+        assertThat(scenario.currentStatus()).isEqualTo(ScenarioStatus.PAUSED);
+        assertThat(orchestrator.resume()).isTrue();
+
+        assertThat(awaitTerminal().state())
+                .isEqualTo(MeasurementWorkflowState.COMPLETED);
+        assertThat(Collections.frequency(gateway.calls, "barcode-1")).isOne();
+        assertThat(gateway.calls).contains("scales-position-1", "return-1");
+        assertThat(scenario.currentStatus()).isEqualTo(ScenarioStatus.NORMAL);
+    }
+
     private ProductionMeasurementOrchestrator orchestrator(
             FakeGateway gateway,
             ScenarioStatusService scenario,
@@ -144,6 +170,17 @@ class ProductionMeasurementOrchestratorTests {
             Thread.sleep(10);
         }
         throw new AssertionError("Workflow did not reach a terminal state");
+    }
+
+    private MeasurementWorkflowSnapshot awaitState(MeasurementWorkflowState expected)
+            throws Exception {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+        while (System.nanoTime() < deadline) {
+            MeasurementWorkflowSnapshot snapshot = orchestrator.snapshot();
+            if (snapshot.state() == expected) return snapshot;
+            Thread.sleep(10);
+        }
+        throw new AssertionError("Workflow did not reach state " + expected);
     }
 
     private static final class FakeGateway implements MeasurementWorkflowDeviceGateway {

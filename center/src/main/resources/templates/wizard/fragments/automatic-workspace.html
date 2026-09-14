@@ -59,12 +59,14 @@
 
             <div class="wizard-camera-actions">
                 <button type="button" class="wizard-button wizard-button--secondary"
-                        data-wizard-action="camera/capture">
+                        data-wizard-action="camera/capture"
+                        th:disabled="${workflowView.canStop}">
                     Capture image
                 </button>
                 <button type="button" class="wizard-button wizard-button--primary"
                         data-wizard-action="camera/recognize"
-                        th:disabled="${!automaticView.camera.imageAvailable}">
+                        th:disabled="${!automaticView.camera.imageAvailable
+                            || workflowView.canStop}">
                     Recognize bottles
                 </button>
             </div>
@@ -107,8 +109,11 @@
                 <div><dt>Original</dt><dd th:text="${automaticView.camera.originalFile}">—</dd></div>
                 <div><dt>Detected</dt><dd th:text="${automaticView.camera.detectedFile}">—</dd></div>
             </dl>
-            <button type="button" class="wizard-button wizard-button--wide" disabled
-                    title="The production measurement orchestrator is not implemented yet">
+            <button type="button" class="wizard-button wizard-button--wide wizard-button--primary"
+                    data-wizard-action="run/start"
+                    th:disabled="${!automaticView.camera.recognized
+                        || #lists.isEmpty(automaticView.camera.bottles)
+                        || workflowView.canStop}">
                 Start automatic run
             </button>
             <a class="wizard-button wizard-button--wide wizard-button--link"
@@ -116,8 +121,8 @@
                 Open run monitor
             </a>
             <p class="wizard-stage-note">
-                Stage 2 enables camera capture and recognition. HV commands and the automatic
-                measurement cycle remain locked until the production orchestrator is connected.
+                Start passes the recognized queue to the production orchestrator. If equipment
+                preflight fails, no object-handling command is sent and the monitor shows the reason.
             </p>
         </article>
     </div>

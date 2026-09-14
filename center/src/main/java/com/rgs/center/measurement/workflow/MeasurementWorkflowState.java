@@ -5,6 +5,8 @@ public enum MeasurementWorkflowState {
     IDLE,
     PRECHECK,
     RUNNING,
+    PAUSING,
+    PAUSED,
     COMPLETED,
     FAILED,
     CANCELLING,
