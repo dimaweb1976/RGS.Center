@@ -101,8 +101,30 @@ CREATE INDEX IF NOT EXISTS idx_device_settings_device
 CREATE INDEX IF NOT EXISTS idx_device_settings_updated_by
     ON device_settings (updated_by);
 
+-- Current operator defaults used by automatic and manual measurements.
+CREATE TABLE IF NOT EXISTS measurement_parameters
+(
+    id SMALLINT PRIMARY KEY CHECK (id = 1),
+    measuring_time_minutes BIGINT NOT NULL CHECK (measuring_time_minutes BETWEEN 1 AND 1440),
+    volume_ml DOUBLE PRECISION NOT NULL CHECK (volume_ml > 0 AND volume_ml <= 10000),
+    geometry VARCHAR(32) NOT NULL,
+    tare_mass_grams DOUBLE PRECISION NOT NULL CHECK (tare_mass_grams >= 0 AND tare_mass_grams <= 100000),
+    version BIGINT NOT NULL DEFAULT 0 CHECK (version >= 0),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+MERGE INTO measurement_parameters AS target
+USING (VALUES (1, 120, 300.0, 'BOTTLE', 0.0, 0))
+    AS source(id, measuring_time_minutes, volume_ml, geometry, tare_mass_grams, version)
+ON target.id = source.id
+WHEN NOT MATCHED THEN
+    INSERT (id, measuring_time_minutes, volume_ml, geometry, tare_mass_grams, version)
+    VALUES (source.id, source.measuring_time_minutes, source.volume_ml,
+            source.geometry, source.tare_mass_grams, source.version);
+
 COMMENT ON TABLE roles IS 'Справочник ролей пользователей RGSCenter';
 COMMENT ON TABLE users IS 'Пользователи RGSCenter';
 COMMENT ON COLUMN users.hash IS 'BCrypt-хэш пароля; пароль в открытом виде не хранится';
 COMMENT ON TABLE auth_sessions IS 'Серверные сессии токен-аутентификации RGSCenter';
 COMMENT ON TABLE device_settings IS 'Настройки подключения физических устройств';
+COMMENT ON TABLE measurement_parameters IS 'Текущие параметры автоматического и ручного измерения';
