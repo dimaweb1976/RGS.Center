@@ -2,11 +2,11 @@ package com.rgs.center.measurement;
 
 import org.springframework.stereotype.Service;
 
-/** Atomically prevents manual and automatic workflows from sharing devices. */
+/** Atomically prevents workflows and service commands from sharing devices. */
 @Service
 public class MeasurementExecutionCoordinator {
 
-    public enum Owner { NONE, AUTOMATIC, MANUAL }
+    public enum Owner { NONE, AUTOMATIC, MANUAL, SERVICE }
 
     private Owner owner = Owner.NONE;
 

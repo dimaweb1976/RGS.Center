@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<section id="wizard-service-content"
+         th:fragment="serviceContent"
+         class="wizard-service-content"
+         th:attr="data-service-refresh-url=@{/wizard/devices/{code}/status(code=${serviceDevice.device.code})}">
+    <div class="wizard-service-device-header"
+         th:classappend="${serviceDevice.device.stateCssClass}">
+        <span class="wizard-device-indicator" aria-hidden="true"></span>
+        <div>
+            <p class="wizard-eyebrow" th:text="${serviceDevice.device.protocol}">Protocol</p>
+            <h2 th:text="${serviceDevice.device.name}">Device</h2>
+            <p th:text="${serviceDevice.device.endpoint}">Endpoint</p>
+        </div>
+        <div class="wizard-service-device-state">
+            <strong th:text="${serviceDevice.device.connection}">OFFLINE</strong>
+            <span th:text="${serviceDevice.device.technical}">NO_DATA</span>
+        </div>
+    </div>
+
+    <div class="wizard-action-message" th:if="${serviceActionMessage != null}"
+         th:classappend="${serviceActionError} ? ' wizard-action-message--error'"
+         th:text="${serviceActionMessage}">Action result</div>
+
+    <section class="wizard-service-actions" th:if="${!serviceDevice.actions.empty}">
+        <div>
+            <p class="wizard-eyebrow">WHITELISTED COMMANDS</p>
+            <h3>Service operations</h3>
+            <p>Commands require exclusive access and are blocked while an automatic or manual measurement owns the equipment.</p>
+        </div>
+        <div class="wizard-service-action-list">
+            <div class="wizard-service-action" th:each="action : ${serviceDevice.actions}">
+                <button type="button"
+                        th:classappend="${action.dangerous} ? ' wizard-button--danger'"
+                        th:attr="data-service-action=@{/wizard/devices/{device}/actions/{action}(device=${serviceDevice.device.code},action=${action.code})}"
+                        th:disabled="${!action.enabled}"
+                        th:text="${action.label}">Command</button>
+                <small th:text="${action.description}">Description</small>
+            </div>
+        </div>
+    </section>
+
+    <div class="wizard-service-sections">
+        <section class="wizard-service-panel" th:each="section : ${serviceDevice.sections}">
+            <h3 th:text="${section.title}">State</h3>
+            <dl class="wizard-service-metrics">
+                <div th:each="metric : ${section.metrics}">
+                    <dt th:text="${metric.label}">Value</dt>
+                    <dd th:text="${metric.value}">No data</dd>
+                </div>
+            </dl>
+        </section>
+    </div>
+
+    <section class="wizard-service-panel wizard-service-communication"
+             th:if="${!serviceDevice.communications.empty}">
+        <h3>Connection, queues and protocol traffic</h3>
+        <div class="wizard-service-table-wrap">
+            <table>
+                <thead><tr>
+                    <th>Channel</th><th>Worker</th><th>TX queue</th><th>RX buffer</th>
+                    <th>Frame queue</th><th>RX bytes</th><th>TX bytes</th>
+                    <th>Frames</th><th>Dropped</th><th>Last RX</th><th>Last TX</th><th>Error</th>
+                </tr></thead>
+                <tbody><tr th:each="communication : ${serviceDevice.communications}">
+                    <td th:text="${communication.channel}">Channel</td>
+                    <td th:text="${communication.state}">STOPPED</td>
+                    <td th:text="${communication.commandQueueDepth}">0</td>
+                    <td th:text="${communication.receiveBufferBytes}">0</td>
+                    <td th:text="${communication.frameQueueDepth}">0</td>
+                    <td th:text="${communication.bytesReceived}">0</td>
+                    <td th:text="${communication.bytesSent}">0</td>
+                    <td th:text="${communication.framesReceived}">0</td>
+                    <td th:text="${communication.framesDropped}">0</td>
+                    <td th:text="${communication.lastReceive}">No data</td>
+                    <td th:text="${communication.lastTransmit}">No data</td>
+                    <td th:text="${communication.lastError}">No data</td>
+                </tr></tbody>
+            </table>
+        </div>
+    </section>
+</section>
+</body>
+</html>

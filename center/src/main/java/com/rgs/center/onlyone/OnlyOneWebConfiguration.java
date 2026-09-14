@@ -43,6 +43,7 @@ class OnlyOneWebConfiguration implements WebMvcConfigurer {
                         "/manipulator/**",
                         "/wizard/automatic/**",
                         "/wizard/manual/**",
+                        "/wizard/devices/**",
                         "/wizard/measurement-parameters/**",
                         "/api/**"
                 )

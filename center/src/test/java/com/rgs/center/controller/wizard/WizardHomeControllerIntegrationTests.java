@@ -51,6 +51,9 @@ class WizardHomeControllerIntegrationTests {
                 .andExpect(content().string(containsString(
                         "href=\"/wizard/manual\""
                 )))
+                .andExpect(content().string(containsString(
+                        "href=\"/wizard/devices\""
+                )))
                 .andExpect(content().string(containsString("HV request")))
                 .andExpect(content().string(containsString("Lead shield")))
                 .andExpect(content().string(containsString(

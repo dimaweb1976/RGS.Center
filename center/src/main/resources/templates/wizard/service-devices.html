@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>RGSCenter - Service devices</title>
+    <link rel="stylesheet" th:href="@{/wizard/css/tokens.css}">
+    <link rel="stylesheet" th:href="@{/wizard/css/layout.css}">
+    <link rel="stylesheet" th:href="@{/wizard/css/components.css}">
+    <link rel="stylesheet" th:href="@{/wizard/css/service-devices.css}">
+    <script defer th:src="@{/wizard/js/status-refresh.js}"></script>
+    <script defer th:src="@{/wizard/js/service-devices.js}"></script>
+</head>
+<body class="wizard-page">
+<div class="wizard-shell">
+    <div th:replace="~{wizard/fragments/header :: header}"></div>
+    <main class="wizard-main">
+        <nav class="wizard-breadcrumb" aria-label="Breadcrumb">
+            <a th:href="@{/wizard}">Main menu</a><span>/</span><span>Service devices</span>
+        </nav>
+        <section class="wizard-intro wizard-service-intro">
+            <p class="wizard-eyebrow">SERVICE WORKSPACE</p>
+            <h2>Equipment state and diagnostics</h2>
+            <p>Pages read prepared snapshots. A physical device is contacted only by an explicit service command.</p>
+        </section>
+        <div th:replace="~{wizard/fragments/service-device-list :: serviceContent}"></div>
+    </main>
+    <footer class="wizard-footer">
+        <span>RGSCenter Wizard - stage 9</span>
+        <a th:href="@{/devices}">Open legacy device table</a>
+    </footer>
+</div>
+</body>
+</html>
