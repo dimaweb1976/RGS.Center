@@ -194,6 +194,11 @@ public class DeviceSettingCatalog {
             if (id.endsWith(".charset") && !Charset.isSupported(text)) {
                 throw new IllegalArgumentException(id + " contains an unsupported charset");
             }
+            if (id.endsWith(".ip") && !isIpv4Address(text)) {
+                throw new IllegalArgumentException(
+                        id + " must be an IPv4 address such as 192.168.1.13"
+                );
+            }
             return;
         }
         if (value instanceof Long number) {
@@ -213,6 +218,24 @@ public class DeviceSettingCatalog {
                     id + " must be between " + minimum + " and " + maximum
             );
         }
+    }
+
+    private static boolean isIpv4Address(String value) {
+        String[] octets = value.split("\\.", -1);
+        if (octets.length != 4) {
+            return false;
+        }
+        for (String octet : octets) {
+            if (octet.isEmpty() || octet.length() > 3
+                    || !octet.chars().allMatch(Character::isDigit)) {
+                return false;
+            }
+            int number = Integer.parseInt(octet);
+            if (number > 255 || (octet.length() > 1 && octet.startsWith("0"))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static IllegalArgumentException wrongType(Definition definition) {

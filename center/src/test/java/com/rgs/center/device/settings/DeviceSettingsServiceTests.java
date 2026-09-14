@@ -4,6 +4,7 @@ import com.rgs.center.objects.SettingType;
 import com.rgs.center.service.SettingsService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
 import java.util.List;
@@ -24,6 +25,7 @@ class DeviceSettingsServiceTests {
     void setUp() {
         repository = mock(DeviceSettingsRepository.class);
         runtimeSettings = new SettingsService();
+        ReflectionTestUtils.invokeMethod(runtimeSettings, "initializeDefaults");
         service = new DeviceSettingsService(
                 repository,
                 new DeviceSettingCatalog(),
@@ -75,6 +77,14 @@ class DeviceSettingsServiceTests {
                 0,
                 7
         );
+        verify(repository).insertAudit(
+                "scales",
+                SettingsService.SCALES_PORT,
+                SettingType.STRING,
+                "COM12",
+                "COM12",
+                7
+        );
     }
 
     @Test
@@ -98,5 +108,61 @@ class DeviceSettingsServiceTests {
                         )),
                         7
                 ));
+    }
+
+    @Test
+    void exposesRuntimeDefaultWhenDatabaseRowDoesNotExist() {
+        assertEquals(4, service.findByDevice("scales").size());
+        assertEquals(
+                Instant.EPOCH,
+                service.findByDevice("scales").getFirst().updatedAt()
+        );
+    }
+
+    @Test
+    void firstSaveCreatesMissingDatabaseRow() {
+        DeviceSetting saved = new DeviceSetting(
+                SettingsService.SCALES_PORT,
+                "scales",
+                SettingType.STRING,
+                "COM12",
+                1,
+                Instant.now(),
+                7L,
+                "admin"
+        );
+        when(repository.findByDevice("scales"))
+                .thenReturn(List.of(), List.of(saved));
+        when(repository.update(
+                "scales",
+                SettingsService.SCALES_PORT,
+                SettingType.STRING,
+                "COM12",
+                0,
+                7
+        )).thenReturn(0, 1);
+        when(repository.insert(
+                "scales",
+                SettingsService.SCALES_PORT,
+                SettingType.STRING,
+                "COM12"
+        )).thenReturn(1);
+
+        service.updateDevice(
+                "scales",
+                List.of(new DeviceSettingsService.Update(
+                        SettingsService.SCALES_PORT,
+                        "COM12",
+                        0
+                )),
+                7
+        );
+
+        verify(repository).insert(
+                "scales",
+                SettingsService.SCALES_PORT,
+                SettingType.STRING,
+                "COM12"
+        );
     }
 }

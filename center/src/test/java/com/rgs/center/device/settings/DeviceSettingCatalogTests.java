@@ -42,4 +42,14 @@ class DeviceSettingCatalogTests {
                 () -> catalog.convertAndValidate(timeout, 0)
         );
     }
+
+    @Test
+    void rejectsInvalidIpv4Address() {
+        var definition = catalog.require(SettingsService.CAMERA_IP);
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> catalog.convertAndValidate(definition, "192.168.1.999")
+        );
+    }
 }

@@ -21,8 +21,10 @@ class DeviceSettingsControllerTests {
 
     private final DeviceSettingsService service = mock(DeviceSettingsService.class);
     private final DeviceConnectionManager manager = mock(DeviceConnectionManager.class);
+    private final DeviceSettingsApplyTracker tracker =
+            new DeviceSettingsApplyTracker();
     private final DeviceSettingsController controller =
-            new DeviceSettingsController(service, manager);
+            new DeviceSettingsController(service, manager, tracker);
 
     @Test
     void administratorIdIsRecordedOnUpdate() {
@@ -59,6 +61,7 @@ class DeviceSettingsControllerTests {
         );
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(true, tracker.isPending("scales"));
         verify(service).updateDevice("scales", expected, 42);
     }
 
@@ -87,6 +90,7 @@ class DeviceSettingsControllerTests {
 
     @Test
     void applyReturnsServiceUnavailableWhenReconnectFails() {
+        tracker.markPending("scales");
         when(manager.reconfigure("scales")).thenReturn(
                 new DeviceReconfigurationResult(
                         "scales",
@@ -102,6 +106,7 @@ class DeviceSettingsControllerTests {
         );
 
         assertEquals(HttpStatus.SERVICE_UNAVAILABLE, response.getStatusCode());
+        assertEquals(true, tracker.isPending("scales"));
     }
 
     private static UsernamePasswordAuthenticationToken authentication(

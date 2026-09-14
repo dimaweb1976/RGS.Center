@@ -5,8 +5,11 @@ import com.rgs.center.service.SettingsService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /** Transactional boundary for browser reads and optimistic-lock updates. */
@@ -29,13 +32,36 @@ public class DeviceSettingsService {
 
     @Transactional(readOnly = true)
     public List<DeviceSetting> findAll() {
-        return repository.findAll();
+        Map<String, DeviceSetting> stored = new LinkedHashMap<>();
+        repository.findAll().forEach(setting -> stored.put(setting.stringId(), setting));
+        return catalog.definitions().stream()
+                .map(definition -> materialize(
+                        definition,
+                        stored.get(definition.stringId())
+                ))
+                .toList();
     }
 
     @Transactional(readOnly = true)
     public List<DeviceSetting> findByDevice(String deviceCode) {
+        Map<String, DeviceSetting> stored = new LinkedHashMap<>();
+        repository.findByDevice(deviceCode).forEach(setting ->
+                stored.put(setting.stringId(), setting));
+        return catalog.requireDevice(deviceCode).stream()
+                .map(definition -> materialize(
+                        definition,
+                        stored.get(definition.stringId())
+                ))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<DeviceSettingAudit> findRecentAudit(String deviceCode, int limit) {
         catalog.requireDevice(deviceCode);
-        return repository.findByDevice(deviceCode);
+        if (limit < 1 || limit > 200) {
+            throw new IllegalArgumentException("Audit limit must be between 1 and 200");
+        }
+        return repository.findRecentAudit(deviceCode, limit);
     }
 
     /**
@@ -54,6 +80,9 @@ public class DeviceSettingsService {
         }
 
         Set<String> uniqueIds = new HashSet<>();
+        Map<String, DeviceSetting> previous = new LinkedHashMap<>();
+        repository.findByDevice(deviceCode).forEach(setting ->
+                previous.put(setting.stringId(), setting));
         for (Update update : updates) {
             if (update == null || update.stringId() == null) {
                 throw new IllegalArgumentException("Setting id is required");
@@ -71,6 +100,7 @@ public class DeviceSettingsService {
                 throw new IllegalArgumentException("Version must not be negative");
             }
             Object value = catalog.convertAndValidate(definition, update.value());
+            DeviceSetting old = previous.get(update.stringId());
             int changed = repository.update(
                     deviceCode,
                     definition.stringId(),
@@ -79,9 +109,37 @@ public class DeviceSettingsService {
                     update.version(),
                     administratorId
             );
+            if (changed == 0
+                    && old == null
+                    && update.version() == 0) {
+                changed = repository.insert(
+                        deviceCode,
+                        definition.stringId(),
+                        definition.type(),
+                        value
+                );
+                if (changed == 1) {
+                    changed = repository.update(
+                            deviceCode,
+                            definition.stringId(),
+                            definition.type(),
+                            value,
+                            0,
+                            administratorId
+                    );
+                }
+            }
             if (changed != 1) {
                 throw new DeviceSettingsConflictException(update.stringId());
             }
+            repository.insertAudit(
+                    deviceCode,
+                    definition.stringId(),
+                    definition.type(),
+                    old == null ? null : old.value(),
+                    value,
+                    administratorId
+            );
         }
 
         List<DeviceSetting> saved = repository.findByDevice(deviceCode);
@@ -101,6 +159,25 @@ public class DeviceSettingsService {
                 .toList();
         settingsService.load(records);
         return records.size();
+    }
+
+    private DeviceSetting materialize(
+            DeviceSettingCatalog.Definition definition,
+            DeviceSetting stored
+    ) {
+        if (stored != null) {
+            return stored;
+        }
+        return new DeviceSetting(
+                definition.stringId(),
+                definition.deviceCode(),
+                definition.type(),
+                settingsService.getValue(definition.stringId()),
+                0,
+                Instant.EPOCH,
+                null,
+                null
+        );
     }
 
     public record Update(String stringId, Object value, long version) {

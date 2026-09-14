@@ -26,13 +26,16 @@ public class DeviceSettingsController {
 
     private final DeviceSettingsService settingsService;
     private final DeviceConnectionManager connectionManager;
+    private final DeviceSettingsApplyTracker applyTracker;
 
     public DeviceSettingsController(
             DeviceSettingsService settingsService,
-            DeviceConnectionManager connectionManager
+            DeviceConnectionManager connectionManager,
+            DeviceSettingsApplyTracker applyTracker
     ) {
         this.settingsService = settingsService;
         this.connectionManager = connectionManager;
+        this.applyTracker = applyTracker;
     }
 
     @GetMapping
@@ -46,7 +49,7 @@ public class DeviceSettingsController {
                 .computeIfAbsent(setting.deviceCode(), ignored -> new java.util.ArrayList<>())
                 .add(toResponse(setting)));
         return ResponseEntity.ok(grouped.entrySet().stream()
-                .map(entry -> new DeviceResponse(entry.getKey(), List.copyOf(entry.getValue())))
+                .map(entry -> response(entry.getKey(), entry.getValue()))
                 .toList());
     }
 
@@ -59,7 +62,7 @@ public class DeviceSettingsController {
         if (denied != null) {
             return denied;
         }
-        return ResponseEntity.ok(new DeviceResponse(
+        return ResponseEntity.ok(response(
                 deviceCode,
                 settingsService.findByDevice(deviceCode).stream()
                         .map(DeviceSettingsController::toResponse)
@@ -92,7 +95,8 @@ public class DeviceSettingsController {
                 ).stream()
                 .map(DeviceSettingsController::toResponse)
                 .toList();
-        return ResponseEntity.ok(new DeviceResponse(deviceCode, saved));
+        applyTracker.markPending(deviceCode);
+        return ResponseEntity.ok(response(deviceCode, saved));
     }
 
     @PostMapping("/{deviceCode}/apply")
@@ -104,9 +108,35 @@ public class DeviceSettingsController {
             return writeDenied(authentication);
         }
         DeviceReconfigurationResult result = connectionManager.reconfigure(deviceCode);
+        if (result.applied()) {
+            applyTracker.markApplied(deviceCode);
+        }
         return result.applied()
                 ? ResponseEntity.ok(result)
                 : ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(result);
+    }
+
+    @GetMapping("/{deviceCode}/audit")
+    public ResponseEntity<?> audit(
+            @PathVariable String deviceCode,
+            Authentication authentication
+    ) {
+        ResponseEntity<?> denied = requireReader(authentication);
+        if (denied != null) {
+            return denied;
+        }
+        return ResponseEntity.ok(settingsService.findRecentAudit(deviceCode, 50));
+    }
+
+    private DeviceResponse response(
+            String deviceCode,
+            List<SettingResponse> settings
+    ) {
+        return new DeviceResponse(
+                deviceCode,
+                applyTracker.isPending(deviceCode),
+                settings
+        );
     }
 
     private static SettingResponse toResponse(DeviceSetting setting) {
@@ -169,7 +199,11 @@ public class DeviceSettingsController {
     public record UpdateValue(String stringId, Object value, long version) {
     }
 
-    public record DeviceResponse(String deviceCode, List<SettingResponse> settings) {
+    public record DeviceResponse(
+            String deviceCode,
+            boolean restartRequired,
+            List<SettingResponse> settings
+    ) {
     }
 
     public record SettingResponse(

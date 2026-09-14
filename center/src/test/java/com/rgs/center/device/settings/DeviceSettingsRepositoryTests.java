@@ -53,6 +53,18 @@ class DeviceSettingsRepositoryTests {
         assertEquals(1, saved.version());
         assertEquals(administratorId, saved.updatedBy());
         assertEquals("admin", saved.updatedByLogin());
+        repository.insertAudit(
+                "scales",
+                "device.scales.port",
+                SettingType.STRING,
+                "COM5",
+                "COM12",
+                administratorId
+        );
+        DeviceSettingAudit audit = repository.findRecentAudit("scales", 10).getFirst();
+        assertEquals("COM5", audit.oldValue());
+        assertEquals("COM12", audit.newValue());
+        assertEquals("admin", audit.changedByLogin());
         assertEquals(0, repository.update(
                 "scales",
                 "device.scales.port",
@@ -60,6 +72,22 @@ class DeviceSettingsRepositoryTests {
                 "COM13",
                 0,
                 administratorId
+        ));
+    }
+
+    @Test
+    void insertsMissingSettingOnlyOnce() {
+        assertEquals(1, repository.insert(
+                "camera",
+                "device.camera.ip",
+                SettingType.STRING,
+                "192.168.1.13"
+        ));
+        assertEquals(0, repository.insert(
+                "camera",
+                "device.camera.ip",
+                SettingType.STRING,
+                "192.168.1.14"
         ));
     }
 }
