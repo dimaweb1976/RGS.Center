@@ -42,6 +42,7 @@ class OnlyOneWebConfiguration implements WebMvcConfigurer {
                         "/barcode-scanner/**",
                         "/manipulator/**",
                         "/wizard/automatic/**",
+                        "/wizard/manual/**",
                         "/wizard/measurement-parameters/**",
                         "/api/**"
                 )

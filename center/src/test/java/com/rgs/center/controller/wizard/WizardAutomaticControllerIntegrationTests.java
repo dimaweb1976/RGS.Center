@@ -5,6 +5,9 @@ import com.rgs.center.camera.CameraImagingService;
 import com.rgs.center.camera.CameraImagingSnapshot;
 import com.rgs.center.camera.DetectedBottle;
 import com.rgs.center.measurement.parameters.MeasurementParameters;
+import com.rgs.center.measurement.manual.ManualMeasurementService;
+import com.rgs.center.measurement.manual.ManualMeasurementSnapshot;
+import com.rgs.center.measurement.manual.ManualMeasurementState;
 import com.rgs.center.measurement.parameters.MeasurementParametersService;
 import com.rgs.center.measurement.parameters.SampleGeometry;
 import com.rgs.center.measurement.workflow.MeasurementObjectRequest;
@@ -29,6 +32,7 @@ import java.util.UUID;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -66,11 +70,15 @@ class WizardAutomaticControllerIntegrationTests {
     @MockitoBean
     private ProductionMeasurementOrchestrator orchestrator;
 
+    @MockitoBean
+    private ManualMeasurementService manualMeasurementService;
+
     @BeforeEach
     void prepareCamera() {
-        reset(cameraImaging, orchestrator);
+        reset(cameraImaging, orchestrator, manualMeasurementService);
         when(cameraImaging.snapshot()).thenReturn(emptyCamera());
         when(orchestrator.snapshot()).thenReturn(idleWorkflow());
+        when(manualMeasurementService.snapshot()).thenReturn(idleManualMeasurement());
     }
 
     @Test
@@ -231,28 +239,79 @@ class WizardAutomaticControllerIntegrationTests {
     }
 
     @Test
-    void rendersManualModeUsingExistingDeviceServiceEndpoints()
+    void rendersFullManualMeasurementWorkspace()
             throws Exception {
         mockMvc.perform(get("/wizard/manual"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("MANUAL MEASUREMENTS")))
                 .andExpect(content().string(containsString(
-                        "Manual device control"
+                        "Identification and mass"
                 )))
                 .andExpect(content().string(containsString(
-                        "href=\"/gammapro-boson\""
+                        "data-manual-action=\"scan\""
                 )))
                 .andExpect(content().string(containsString(
-                        "href=\"/barcode-scanner\""
+                        "data-manual-action=\"weigh\""
                 )))
                 .andExpect(content().string(containsString(
-                        "href=\"/scales\""
+                        "data-manual-action=\"hatch/open\""
                 )))
                 .andExpect(content().string(containsString(
-                        "href=\"/manipulator\""
+                        "data-manual-action=\"hv/enable\""
                 )))
                 .andExpect(content().string(containsString(
-                        "Production manual measurement is not enabled yet"
+                        "data-manual-action=\"spectrum/start\""
+                )));
+    }
+
+    @Test
+    void delegatesManualMeasurementCommandsAndReturnsWorkspaceFragment()
+            throws Exception {
+        when(manualMeasurementService.stopSpectrumAcquisition()).thenReturn(true);
+
+        mockMvc.perform(post("/wizard/manual/sample-code").with(csrf())
+                        .param("sampleCode", "SAMPLE-17"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString(
+                        "id=\"wizard-manual-workspace\""
+                )));
+        mockMvc.perform(post("/wizard/manual/scan").with(csrf()))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/wizard/manual/weigh").with(csrf()))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/wizard/manual/hatch/open").with(csrf()))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/wizard/manual/hatch/close").with(csrf()))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/wizard/manual/hv/enable").with(csrf()))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/wizard/manual/hv/disable").with(csrf()))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/wizard/manual/spectrum/start").with(csrf()))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/wizard/manual/spectrum/stop").with(csrf()))
+                .andExpect(status().isOk());
+
+        verify(manualMeasurementService).setSampleCode("SAMPLE-17");
+        verify(manualMeasurementService).scanBarcode();
+        verify(manualMeasurementService).readWeight();
+        verify(manualMeasurementService).openHatch();
+        verify(manualMeasurementService).closeHatch();
+        verify(manualMeasurementService).enableHighVoltage();
+        verify(manualMeasurementService).disableHighVoltage();
+        verify(manualMeasurementService).startSpectrumAcquisition();
+        verify(manualMeasurementService).stopSpectrumAcquisition();
+    }
+
+    @Test
+    void rendersManualProtocolFailureInsideWorkspace() throws Exception {
+        doThrow(new IllegalStateException("Spectrometer hatch is not confirmed closed"))
+                .when(manualMeasurementService).closeHatch();
+
+        mockMvc.perform(post("/wizard/manual/hatch/close").with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString(
+                        "Spectrometer hatch is not confirmed closed"
                 )));
     }
 
@@ -374,6 +433,13 @@ class WizardAutomaticControllerIntegrationTests {
                         "", null, null, "", ""
                 )),
                 List.of()
+        );
+    }
+
+    private static ManualMeasurementSnapshot idleManualMeasurement() {
+        return new ManualMeasurementSnapshot(
+                null, ManualMeasurementState.IDLE, "", "",
+                null, null, null, null, null, null, "", ""
         );
     }
 }

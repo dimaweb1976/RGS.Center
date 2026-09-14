@@ -2,6 +2,7 @@ package com.rgs.center.measurement.workflow;
 
 import com.rgs.center.measurement.ScenarioStatus;
 import com.rgs.center.measurement.ScenarioStatusService;
+import com.rgs.center.measurement.MeasurementExecutionCoordinator;
 import com.rgs.center.measurement.parameters.MeasurementParameters;
 import com.rgs.center.measurement.parameters.MeasurementParametersService;
 import jakarta.annotation.PreDestroy;
@@ -44,6 +45,7 @@ public class ProductionMeasurementOrchestrator {
     private final MeasurementWorkflowDeviceGateway gateway;
     private final MeasurementParametersService parametersService;
     private final ScenarioStatusService scenarioStatusService;
+    private final MeasurementExecutionCoordinator executionCoordinator;
     private final MeasurementWorkflowConfiguration configuration;
     private final Clock clock;
     private final ExecutorService runExecutor;
@@ -69,12 +71,14 @@ public class ProductionMeasurementOrchestrator {
             MeasurementWorkflowDeviceGateway gateway,
             MeasurementParametersService parametersService,
             ScenarioStatusService scenarioStatusService,
+            MeasurementExecutionCoordinator executionCoordinator,
             MeasurementWorkflowConfiguration configuration
     ) {
         this(
                 gateway,
                 parametersService,
                 scenarioStatusService,
+                executionCoordinator,
                 configuration,
                 Clock.systemUTC(),
                 Executors.newSingleThreadExecutor(runnable -> daemon(
@@ -92,6 +96,7 @@ public class ProductionMeasurementOrchestrator {
             MeasurementWorkflowDeviceGateway gateway,
             MeasurementParametersService parametersService,
             ScenarioStatusService scenarioStatusService,
+            MeasurementExecutionCoordinator executionCoordinator,
             MeasurementWorkflowConfiguration configuration,
             Clock clock,
             ExecutorService runExecutor,
@@ -100,6 +105,9 @@ public class ProductionMeasurementOrchestrator {
         this.gateway = Objects.requireNonNull(gateway, "gateway");
         this.parametersService = Objects.requireNonNull(parametersService, "parametersService");
         this.scenarioStatusService = Objects.requireNonNull(scenarioStatusService, "scenarioStatusService");
+        this.executionCoordinator = Objects.requireNonNull(
+                executionCoordinator, "executionCoordinator"
+        );
         this.configuration = Objects.requireNonNull(configuration, "configuration");
         this.clock = Objects.requireNonNull(clock, "clock");
         this.runExecutor = Objects.requireNonNull(runExecutor, "runExecutor");
@@ -122,27 +130,33 @@ public class ProductionMeasurementOrchestrator {
         configuration.validate();
         List<MeasurementObjectRequest> queue = List.copyOf(requests);
         ensureUniqueNumbers(queue);
+        executionCoordinator.acquire(MeasurementExecutionCoordinator.Owner.AUTOMATIC);
 
-        runId = UUID.randomUUID();
-        state = MeasurementWorkflowState.PRECHECK;
-        activeStep = MeasurementWorkflowStep.PRECHECK;
-        activeObjectNumber = null;
-        startedAt = clock.instant();
-        finishedAt = null;
-        parameters = parametersService.current();
-        lastError = "";
-        cancellationRequested = false;
-        pauseRequested = false;
-        objects.clear();
-        queue.stream().map(MutableObject::new).forEach(objects::add);
-        events.clear();
-        event(null, MeasurementWorkflowStep.PRECHECK, 0,
-                "Run accepted; equipment preflight started");
-        scenarioStatusService.updateStatus(
-                ScenarioStatus.NORMAL,
-                "production measurement workflow started"
-        );
-        runTask = runExecutor.submit(() -> execute(queue, parameters));
+        try {
+            runId = UUID.randomUUID();
+            state = MeasurementWorkflowState.PRECHECK;
+            activeStep = MeasurementWorkflowStep.PRECHECK;
+            activeObjectNumber = null;
+            startedAt = clock.instant();
+            finishedAt = null;
+            parameters = parametersService.current();
+            lastError = "";
+            cancellationRequested = false;
+            pauseRequested = false;
+            objects.clear();
+            queue.stream().map(MutableObject::new).forEach(objects::add);
+            events.clear();
+            event(null, MeasurementWorkflowStep.PRECHECK, 0,
+                    "Run accepted; equipment preflight started");
+            scenarioStatusService.updateStatus(
+                    ScenarioStatus.NORMAL,
+                    "production measurement workflow started"
+            );
+            runTask = runExecutor.submit(() -> execute(queue, parameters));
+        } catch (RuntimeException exception) {
+            executionCoordinator.release(MeasurementExecutionCoordinator.Owner.AUTOMATIC);
+            throw exception;
+        }
         log.info("Production measurement workflow accepted: runId={}, objects={}",
                 runId, queue.size());
         return runId;
@@ -276,6 +290,8 @@ public class ProductionMeasurementOrchestrator {
             } else {
                 finishFailed(exception);
             }
+        } finally {
+            executionCoordinator.release(MeasurementExecutionCoordinator.Owner.AUTOMATIC);
         }
     }
 

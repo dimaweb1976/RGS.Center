@@ -2,6 +2,7 @@ package com.rgs.center.measurement.workflow;
 
 import com.rgs.center.measurement.ScenarioStatus;
 import com.rgs.center.measurement.ScenarioStatusService;
+import com.rgs.center.measurement.MeasurementExecutionCoordinator;
 import com.rgs.center.measurement.parameters.MeasurementParameters;
 import com.rgs.center.measurement.parameters.MeasurementParametersService;
 import com.rgs.center.measurement.parameters.SampleGeometry;
@@ -18,12 +19,14 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class ProductionMeasurementOrchestratorTests {
 
     private ProductionMeasurementOrchestrator orchestrator;
+    private MeasurementExecutionCoordinator executionCoordinator;
 
     @AfterEach
     void stopExecutors() {
@@ -138,6 +141,19 @@ class ProductionMeasurementOrchestratorTests {
         assertThat(scenario.currentStatus()).isEqualTo(ScenarioStatus.NORMAL);
     }
 
+    @Test
+    void refusesAutomaticStartWhileManualMeasurementOwnsEquipment() {
+        FakeGateway gateway = new FakeGateway();
+        orchestrator = orchestrator(gateway, new ScenarioStatusService(), 2);
+        executionCoordinator.acquire(MeasurementExecutionCoordinator.Owner.MANUAL);
+
+        assertThatThrownBy(() -> orchestrator.start(List.of(
+                new MeasurementObjectRequest(1, 1, 2)
+        ))).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("reserved by MANUAL");
+        assertThat(gateway.calls).isEmpty();
+    }
+
     private ProductionMeasurementOrchestrator orchestrator(
             FakeGateway gateway,
             ScenarioStatusService scenario,
@@ -153,8 +169,10 @@ class ProductionMeasurementOrchestratorTests {
         configuration.setMaxAttempts(maxAttempts);
         configuration.setOperationTimeout(Duration.ofSeconds(2));
         configuration.setSpectrumOverrun(Duration.ofSeconds(1));
+        executionCoordinator = new MeasurementExecutionCoordinator();
         return new ProductionMeasurementOrchestrator(
-                gateway, parametersService, scenario, configuration
+                gateway, parametersService, scenario,
+                executionCoordinator, configuration
         );
     }
 

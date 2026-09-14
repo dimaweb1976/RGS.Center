@@ -122,9 +122,34 @@ WHEN NOT MATCHED THEN
     VALUES (source.id, source.measuring_time_minutes, source.volume_ml,
             source.geometry, source.tare_mass_grams, source.version);
 
+-- Immutable terminal records produced by the operator-controlled workflow.
+CREATE TABLE IF NOT EXISTS manual_measurements
+(
+    id UUID PRIMARY KEY,
+    sample_code VARCHAR(256) NOT NULL,
+    gross_mass_grams NUMERIC(18, 6) NOT NULL,
+    net_mass_grams NUMERIC(18, 6) NOT NULL,
+    measuring_time_minutes BIGINT NOT NULL,
+    volume_ml DOUBLE PRECISION NOT NULL,
+    geometry VARCHAR(32) NOT NULL,
+    tare_mass_grams DOUBLE PRECISION NOT NULL,
+    started_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    finished_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    status VARCHAR(32) NOT NULL,
+    spectrum_reference TEXT NOT NULL,
+    error_message TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_manual_measurements_sample
+    ON manual_measurements (sample_code, started_at);
+
+CREATE INDEX IF NOT EXISTS idx_manual_measurements_started
+    ON manual_measurements (started_at);
+
 COMMENT ON TABLE roles IS 'Справочник ролей пользователей RGSCenter';
 COMMENT ON TABLE users IS 'Пользователи RGSCenter';
 COMMENT ON COLUMN users.hash IS 'BCrypt-хэш пароля; пароль в открытом виде не хранится';
 COMMENT ON TABLE auth_sessions IS 'Серверные сессии токен-аутентификации RGSCenter';
 COMMENT ON TABLE device_settings IS 'Настройки подключения физических устройств';
 COMMENT ON TABLE measurement_parameters IS 'Текущие параметры автоматического и ручного измерения';
+COMMENT ON TABLE manual_measurements IS 'Результаты измерений, запущенных оператором в ручном режиме';
