@@ -1,6 +1,5 @@
 package com.rgs.center.pages.manualmode;
 
-import com.rgs.center.pages.automode.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 
