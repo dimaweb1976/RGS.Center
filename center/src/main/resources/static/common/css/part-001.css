@@ -1,0 +1,18 @@
+/* common: original cascade segment 1. Loaded by Common/styles.css. */
+:root { --bg: #eef3f7; --surface: #fff; --ink: #17212b; --muted: #647383; --line: #d5dee6; --blue: #0b65a8; --blue2: #084d80; --cyan: #19a4b8; --green: #16815d; --amber: #c48716; --red: #b73c43; --shadow: 0 14px 40px rgba(26,50,71,.10); font-family: Inter, "Segoe UI", Arial, sans-serif; color: var(--ink); background: var(--bg); }
+* { box-sizing: border-box; }
+body { margin: 0px; min-width: 320px; }
+button,input,select,textarea { font: inherit; }
+button { cursor: pointer; }
+.gate-shell { min-height: 100vh; display: grid; place-items: center; background: radial-gradient(circle at 50% 15%, rgb(255, 255, 255) 0, rgb(233, 241, 247) 45%, rgb(220, 232, 240) 100%); padding: 24px; }
+.gate-card { width: min(520px, 100%); background: rgba(255, 255, 255, 0.94); border-top: 5px solid var(--blue); border-right: 1px solid rgb(201, 215, 225); border-bottom: 1px solid rgb(201, 215, 225); border-left: 1px solid rgb(201, 215, 225); border-image: none; border-radius: 16px; box-shadow: var(--shadow); padding: 42px; }
+.brand { display: flex; align-items: center; gap: 12px; font-weight: 700; }
+.brand--center { justify-content: center; color: rgb(49, 82, 104); text-transform: uppercase; font-size: 12px; letter-spacing: 0.06em; }
+.brand-mark { display: grid; place-items: center; width: 50px; height: 36px; background: var(--blue); color: white; border-radius: 4px; font-size: 18px; font-weight: 900; letter-spacing: -0.08em; }
+.gate-card h1 { text-align: center; text-transform: uppercase; font-size: 34px; line-height: 1.05; margin: 18px 0px 28px; letter-spacing: 0.02em; }
+.eyebrow { text-transform: uppercase; letter-spacing: 0.13em; color: var(--blue); font-size: 12px; font-weight: 800; margin: 0px 0px 7px; }
+.gate-card>.eyebrow { text-align: center; margin-top: 30px; }
+.availability { display: flex; align-items: center; justify-content: center; gap: 9px; background: rgb(240, 244, 247); border-radius: 8px; padding: 13px; color: var(--muted); margin-bottom: 20px; }
+.availability span,.pulse { width: 9px; height: 9px; border-radius: 50%; background: var(--amber); }
+.availability.free { color: var(--green); background: rgb(237, 248, 243); }
+.availability.free span,.pulse { background: var(--green); }

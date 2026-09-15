@@ -1,0 +1,8 @@
+/* auto: original cascade segment 5. Loaded by Common/styles.css. */
+.auto-command-bar { display: flex; align-items: center; justify-content: space-between; gap: 24px; background: rgb(9, 21, 33); border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; margin-bottom: 18px; }
+.auto-command-copy { display: grid; gap: 5px; }
+.auto-command-copy strong { font-size: 14px; }
+.auto-command-copy span { font-size: 11px; color: var(--muted); }
+.auto-controls { display: flex; gap: 9px; flex: 0 0 auto; }
+.auto-controls button { min-width: 104px; }
+.auto-controls button span { margin-right: 7px; }

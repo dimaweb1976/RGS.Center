@@ -1,0 +1,39 @@
+/* common: original cascade segment 18. Loaded by Common/styles.css. */
+.sample-stages { display: flex; gap: 24px; color: var(--muted); font-size: 14px; }
+.sample-stages span.active { color: var(--cyan); font-weight: 700; }
+.sample-stages span.complete { color: var(--green); }
+.queue-progress-section { border-top: 1px solid var(--line); background: rgb(9, 21, 33); }
+.queue-progress-section .progress-heading>strong { font-size: 20px; }
+.queue-summary { color: var(--muted); }
+.queue-summary b { font-weight: 600; color: var(--ink); margin-left: 8px; font-variant-numeric: tabular-nums; }
+.diagnostics-dialog { width: min(620px, 100% - 32px); max-height: 85vh; overflow: auto; background: rgb(13, 25, 40); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 24px; }
+.diagnostics-dialog::backdrop { background: rgba(2, 7, 13, 0.8); }
+.diagnostics-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.diagnostics-head h2 { font-size: 22px; margin: 0px; }
+.diagnostics-head button { background: transparent; border: 0px; font-size: 24px; padding: 4px 10px; }
+.diagnostics-caption { color: var(--muted); font-size: 14px; }
+.diagnostics-row { display: flex; justify-content: space-between; gap: 16px; border-top: 1px solid var(--line); padding: 14px 0px; font-size: 14px; }
+.diagnostics-row b { color: var(--green); }
+.diagnostics-row.warn b { color: var(--amber); }
+@media (max-width:1000px) {
+  .workspace { grid-template-columns: 170px minmax(0,1fr); }
+  .nav-item { font-size: 14px; justify-content: flex-start; }
+  .system-strip .module { flex: 1 0 110px; }
+  .diagnostics-link { flex: 1 1 0%; justify-content: flex-end; }
+}
+@media (max-width:680px) {
+  .workspace { display: flex; flex-direction: column; }
+  .content { flex: 1 1 0%; }
+  .system-strip { position: static; }
+  .system-strip .module:nth-child(n+5) { display: block; }
+  .sidenav { flex-shrink: 0; }
+  .nav-item { min-width: max-content; font-size: 14px; }
+  .sample-progress-section,.queue-progress-section { padding: 16px; }
+  .sample-stages { gap: 12px; flex-wrap: wrap; }
+  .sample-stage-line,.queue-summary { align-items: flex-start; flex-wrap: wrap; }
+  .progress-heading { gap: 12px; }
+  .sample-progress-section h2 span { display: block; margin: 6px 0px 0px; }
+}
+.workspace { grid-template-rows: 1fr; min-height: calc(100vh - 128px); }
+.sidenav { grid-row: 1; }
+.system-strip { position: static; border-top: 0px; border-bottom: 1px solid var(--line); }

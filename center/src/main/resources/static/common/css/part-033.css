@@ -1,0 +1,11 @@
+/* common: original cascade segment 33. Loaded by Common/styles.css. */
+.auto-state { background: rgb(247, 250, 252); }
+.auto-state.running { color: var(--green); border-color: rgb(159, 211, 189); background: rgb(229, 246, 238); }
+.auto-state.paused { color: var(--amber); border-color: rgb(228, 198, 142); background: rgb(255, 247, 232); }
+.header-auto-state b { color: var(--ink); }
+.header-auto-state .rgs-serial { color: rgb(112, 133, 151); }
+.state-banner { background: rgb(234, 247, 241); border-top-color: rgb(183, 222, 207); border-right-color: rgb(183, 222, 207); border-bottom-color: rgb(183, 222, 207); border-left-color: var(--green); }
+.notice { background: rgb(255, 247, 232); border-color: rgb(232, 207, 157); }
+.access-badge { background: rgb(255, 247, 232); color: rgb(133, 87, 6); border-color: rgb(232, 207, 157); }
+.form-grid label,.parameter-grid label,.device-fields label { color: rgb(41, 70, 93); }
+.parameter-summary,#deviceForm fieldset { background: rgb(247, 250, 252); border-color: var(--line); }

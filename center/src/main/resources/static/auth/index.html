@@ -1,53 +1,29 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Robotic Gamma Spectrometer</title>
-  <link rel="stylesheet" href="/common/css/styles.css" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Login · RGS CENTER</title>
+<link rel="stylesheet" href="styles.css">
 </head>
-<body>
-  <main class="authPage">
-    <section class="authShell">
-      <header class="brandHeader">
-        <div class="brandBadge">
-          <img src="/common/images/logo.svg" alt="Logo" />
-        </div>
-
-        <div class="brandTitle">
-          <h1>ROBOTIC GAMMA<br />SPECTROMETER</h1>
-          <div class="deviceId">
-            Spectrometer №3
-          </div>
-        </div>
-      </header>
-
-      <div class="authCard">
-        <div id="formView">
-          <form id="authForm" autocomplete="off">
-            <div class="inputGroup">
-              <label for="password">Password</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="Enter your password"
-                autocomplete="current-password"
-              />
-            </div>
-
-            <button class="primaryButton" type="submit">Sign in</button>
-            <p id="errorMessage" class="errorMessage" hidden></p>
-          </form>
-        </div>
-
-        <div id="busyView" class="busyView" hidden>
-          <p class="busyMessage">Web interface is already in use from the IP</p>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <script src="./js/script.js"></script>
+<body data-page="login">
+<main class="login-shell">
+<section class="login-card" aria-labelledby="loginTitle">
+<img class="login-logo" src="../Common/assets/logo.svg" alt="Baltic Scientific Instruments">
+<h1 id="loginTitle">RGS CENTER</h1>
+<p class="login-subtitle">Robotic Gamma-Ray Spectrometer<br>Control Web Interface v.12</p>
+<form id="loginForm">
+<h2>Sign in</h2>
+<label for="login">Login</label>
+<input id="login" name="login" type="text" autocomplete="username" required>
+<label for="password">Password</label>
+<input id="password" name="password" type="password" autocomplete="current-password" required>
+<p id="loginMessage" role="status" aria-live="polite" hidden></p>
+<button type="submit">Sign in</button>
+</form>
+</section>
+</main>
+<script src="page.js"></script>
+<script src="../Common/init.js"></script>
 </body>
 </html>

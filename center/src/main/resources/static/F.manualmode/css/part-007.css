@@ -1,0 +1,5 @@
+/* manual: original cascade segment 7. Loaded by Common/styles.css. */
+.header-process progress,.service-progress progress { appearance: none; display: block; width: 100%; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; background: rgb(9, 21, 33); }
+.header-process progress::-webkit-progress-bar,.service-progress progress::-webkit-progress-bar { background: rgb(9, 21, 33); }
+.header-process progress::-webkit-progress-value,.service-progress progress::-webkit-progress-value { background: var(--blue); }
+.header-process progress::-moz-progress-bar,.service-progress progress::-moz-progress-bar { background: var(--blue); }

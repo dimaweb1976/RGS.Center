@@ -1,0 +1,13 @@
+/* manual: original cascade segment 11. Loaded by Common/styles.css. */
+.service-parameter-actions { display: flex; align-items: center; justify-content: flex-end; gap: 16px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
+.service-parameter-actions span { color: var(--muted); font-size: 13px; }
+.service-parameter-actions button { min-width: 170px; }
+.measurement-type { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; padding: 12px 14px; background: rgb(243, 247, 250); border: 1px solid var(--line); border-radius: 6px; }
+.measurement-type>span { font-size: 13px; font-weight: 700; color: rgb(61, 76, 89); }
+.measurement-type>div { display: flex; }
+.measurement-type button { min-width: 120px; border-radius: 0px; background: rgb(255, 255, 255); }
+.measurement-type button:first-child { border-radius: 5px 0 0 5px; }
+.measurement-type button:last-child { border-radius: 0 5px 5px 0; border-left: 0px; }
+.measurement-type button.active { background: rgb(8, 123, 155); border-color: rgb(6, 105, 130); color: rgb(255, 255, 255); }
+.parameter-disabled { opacity: 0.48; }
+.parameter-disabled input,.parameter-disabled select,.parameter-disabled button { cursor: not-allowed; }

@@ -1,0 +1,11 @@
+/* common: original cascade segment 11. Loaded by Common/styles.css. */
+.dialog-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 22px; }
+@media (max-width:600px) {
+  .parameter-grid { grid-template-columns: 1fr; }
+}
+.auto-state { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 99px; padding: 7px 11px; color: var(--muted); font-size: 12px; font-weight: 800; }
+.auto-state i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.auto-state.running { color: var(--green); border-color: rgb(40, 92, 72); background: rgb(14, 44, 36); }
+.auto-state.running i { background: var(--green); box-shadow: 0 0 8px var(--green); }
+.auto-state.paused { color: var(--amber); border-color: rgb(115, 85, 38); background: rgb(51, 39, 21); }
+.auto-state.paused i { background: var(--amber); }

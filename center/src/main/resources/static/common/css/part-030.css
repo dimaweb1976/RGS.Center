@@ -1,0 +1,11 @@
+/* common: original cascade segment 30. Loaded by Common/styles.css. */
+.nav-item { font-size: 14px; }
+.system-strip .module span,.system-strip .module b { font-size: 13px; }
+.system-strip .module.hv-off b { color: var(--muted); }
+.system-strip .module.hv-off b:before { background: var(--muted); }
+.content>.system-strip { flex-wrap: nowrap; }
+.content>.system-strip .module { min-width: 78px; padding: 5px 8px 5px 20px; }
+.content>.system-strip .module span { font-size: 12px; white-space: nowrap; }
+.content>.system-strip .module b { font-size: 11px; white-space: nowrap; margin-top: 2px; }
+.content>.system-strip .module b:before { left: 6px; }
+.content>.system-strip .diagnostics-link { flex: 0 0 auto; padding: 8px 7px; font-size: 12px; gap: 6px; }

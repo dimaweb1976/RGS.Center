@@ -1,0 +1,3 @@
+/* manual: original cascade segment 2. Loaded by Common/styles.css. */
+.service-panel { display: none; }
+.service-panel.active { display: block; }

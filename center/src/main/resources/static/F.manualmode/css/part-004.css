@@ -1,0 +1,6 @@
+/* manual: original cascade segment 4. Loaded by Common/styles.css. */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-grid .wide { grid-column: 1/-1; }
+.input-action { display: flex; }
+.input-action input { border-radius: 5px 0 0 5px; }
+.input-action button { border-radius: 0 5px 5px 0; border-left: 0px; padding: 0px 13px; color: var(--blue); background: rgb(238, 246, 250); }

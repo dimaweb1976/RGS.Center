@@ -1,0 +1,6 @@
+/* common: original cascade segment 35. Loaded by Common/styles.css. */
+.header-auto-state { min-width: 138px; padding: 10px 14px; border-width: 1px; box-shadow: 0 2px 7px rgba(24,55,78,.08); }
+.header-auto-state>span { gap: 3px; }
+.header-auto-state small { font-size: 13px; font-weight: 650; letter-spacing: 0.015em; color: rgb(70, 96, 115); }
+.header-auto-state .rgs-serial { font-size: 11px; font-weight: 600; letter-spacing: 0.055em; color: rgb(96, 120, 139); }
+.header-auto-state b { font-size: 13px; font-weight: 800; letter-spacing: 0.01em; }

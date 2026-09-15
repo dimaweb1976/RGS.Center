@@ -1,0 +1,5 @@
+/* common: original cascade segment 48. Loaded by Common/styles.css. */
+@media (max-width:700px) {
+  .device-editor-head { flex-direction: column; }
+  .geometry-actions { justify-content: flex-start; }
+}

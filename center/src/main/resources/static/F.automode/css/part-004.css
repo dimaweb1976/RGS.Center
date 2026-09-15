@@ -1,0 +1,6 @@
+/* auto: original cascade segment 4. Loaded by Common/styles.css. */
+.parameter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 22px 0px; }
+.parameter-grid label { display: grid; gap: 7px; color: rgb(200, 213, 227); font-size: 12px; font-weight: 700; }
+.parameter-grid :disabled { cursor: not-allowed; opacity: 0.62; }
+.parameter-summary { border: 1px solid var(--line); background: rgb(9, 21, 33); border-radius: 6px; padding: 11px 13px; color: var(--muted); font-size: 11px; }
+.parameter-summary b { color: rgb(240, 182, 106); }

@@ -1,0 +1,25 @@
+/* common: original cascade segment 15. Loaded by Common/styles.css. */
+@media (max-width:900px) {
+  .device-settings { grid-template-columns: 1fr; }
+  .device-list { border-right: 0px; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: repeat(2,1fr); }
+  .device-list-head { grid-column: 1/-1; }
+  .device-item { border-right: 1px solid rgb(29, 44, 61); }
+  .device-fields { grid-template-columns: 1fr; }
+  .device-fields label { grid-template-columns: 1fr; gap: 7px; }
+  .device-fields input { text-align: left; }
+}
+@media (max-width:600px) {
+  .device-list { display: block; }
+  .device-editor { padding: 18px 14px; }
+  .device-editor-head { gap: 12px; }
+  .connection-badge { white-space: nowrap; }
+  .device-actions { display: grid; }
+  .device-actions button { width: 100%; }
+}
+.ownership .robot-status small { display: block; font-size: 14px; }
+.ownership .robot-state { display: flex; align-items: center; gap: 8px; font-size: 14px; margin-top: 4px; color: rgb(64, 202, 151); white-space: nowrap; }
+.robot-status-dot { width: 9px; height: 9px; border-radius: 50%; background: currentcolor; flex-shrink: 0; }
+.ownership .robot-state.in-process { color: rgb(242, 207, 75); }
+.ownership .robot-state.fault { color: rgb(255, 107, 117); }
+.interface-version { font: inherit; color: inherit; margin-left: 8px; }
+.instrument-serial { font-size: 14px; font-weight: 700; color: inherit; white-space: nowrap; }

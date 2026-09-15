@@ -1,0 +1,13 @@
+/* common: original cascade segment 5. Loaded by Common/styles.css. */
+.right-stack { display: grid; gap: 18px; align-content: start; }
+.shield-status { display: flex; align-items: center; gap: 16px; margin-bottom: 18px; }
+.shield-graphic { width: 70px; height: 58px; background: rgb(51, 70, 82); border: 5px solid rgb(112, 128, 138); border-radius: 6px; display: grid; place-items: center; }
+.shield-graphic span { width: 32px; height: 30px; border: 3px solid rgb(168, 180, 187); background: rgb(21, 36, 46); border-radius: 3px; }
+.button-row { display: flex; gap: 9px; }
+.button-row>* { flex: 1 1 0%; }
+.danger-outline { background: white; color: var(--red); border-color: rgb(216, 154, 158); }
+.start-panel p,.notice p { color: var(--muted); font-size: 13px; line-height: 1.5; }
+.process-actions { margin-top: 18px; }
+.background-grid .panel>label { max-width: 300px; }
+.notice { background: rgb(255, 247, 232); border: 1px solid rgb(241, 214, 159); border-radius: 6px; padding: 14px; margin-top: 22px; }
+.notice p { margin: 6px 0px 0px; }

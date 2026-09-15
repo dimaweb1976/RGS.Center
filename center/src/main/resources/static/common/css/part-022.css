@@ -1,0 +1,9 @@
+/* common: original cascade segment 22. Loaded by Common/styles.css. */
+@media (max-width:600px) {
+  .measurement-progress { padding: 16px; }
+  .measurement-metric { padding: 12px; }
+  .measurement-metric>b { font-size: 16px; }
+  .measurement-heading { gap: 6px 12px; }
+  .measurement-heading>.auto-state { min-width: 106px; padding: 9px; }
+  .system-strip .module { flex: 1 0 100px; }
+}

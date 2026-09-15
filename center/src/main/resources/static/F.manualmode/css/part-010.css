@@ -1,0 +1,3 @@
+/* manual: original cascade segment 10. Loaded by Common/styles.css. */
+.input-action button { background: rgb(217, 237, 245); color: rgb(7, 95, 122); border-color: rgb(159, 200, 215); box-shadow: none; }
+.input-action button:hover:not(:disabled) { background: rgb(201, 228, 238); filter: none; }

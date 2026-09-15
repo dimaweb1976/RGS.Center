@@ -1,0 +1,10 @@
+/* common: original cascade segment 27. Loaded by Common/styles.css. */
+@media (max-width:1250px) {
+  .topbar>.brand>span { position: static; transform: none; text-align: left; }
+  .system-strip .module { flex: 1 0 150px; }
+}
+@media (max-width:680px) {
+  .header-auto-state { min-width: 106px; padding: 9px; }
+  .header-auto-state small { font-size: 12px; }
+  .system-strip .module { flex: 1 0 150px; }
+}

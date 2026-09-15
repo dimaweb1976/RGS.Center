@@ -1,0 +1,7 @@
+/* auto: original cascade segment 23. Loaded by Common/styles.css. */
+body .measurement-metric.stage-metric,
+body .measurement-metric.stage-metric.active-stage,
+body .measurement-metric.stage-metric.stopped-stage { background: rgb(248, 251, 253); border-color: var(--line); box-shadow: none; }
+body .measurement-metric.stage-metric>b,
+body .measurement-metric.stage-metric.active-stage>b,
+body .measurement-metric.stage-metric.stopped-stage>b { background: rgb(248, 251, 253); border-color: rgb(159, 211, 189); color: rgb(19, 117, 79); box-shadow: none; }

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RGS center</title>
+<link rel="stylesheet" href="/F.automode/styles.css">
+<link rel="stylesheet" href="/common/header.css">
+</head>
+<body data-page="auto">
+<div id="pageContent">
+<div id="view-auto" class="view active">
+          <div class="page-head"><div><p class="eyebrow">Auto mode</p></div></div>
+          <div class="auto-dashboard-grid">
+            <section class="measurement-progress panel" aria-label="Current measurement">
+              <div class="auto-command-bar">
+                <div class="auto-controls">
+                  <button id="autoStart" class="primary" type="button"><span>▶</span> Start</button>
+                  <button id="autoPause" type="button" disabled=""><span>Ⅱ</span> Pause</button>
+                  <button id="autoStop" class="danger-outline" type="button" disabled=""><span>■</span> Stop</button>
+                </div>
+                <button id="autoParamsBtn" class="params-button" type="button">Measuring parameters ›</button>
+              </div>
+              <div class="measurement-heading"><p class="eyebrow">Current measurement</p><h2 id="currentSample">Sample 1 of 30 · S-001</h2></div>
+              <div class="measurement-metrics">
+                <div class="measurement-metric stage-metric stopped-stage"><span id="currentStep">Current step 1 of 9</span><b id="autoStep" role="status">Sample pickup</b></div>
+                <div class="measurement-metric"><span>Elapsed time</span><b id="sampleElapsed">00:00:00</b></div>
+                <div class="measurement-metric"><span>Sample time remaining</span><b id="sampleRemaining">00:30:25</b></div>
+                <div class="measurement-metric"><span>Batch time remaining</span><b id="autoRemaining">04:33:45</b></div>
+              </div>
+              <div id="stageTimeline" class="stage-timeline" aria-label="Measurement stages"><span class="active">Sample pickup</span><span>Scan</span><span>Weigh</span><span>Open Lead Shield</span><span>Place in Lead Shield</span><span>Close Lead Shield</span><span>Spectrum acquisition</span><span>Open shield</span><span>Return sample</span></div>
+              <div class="measurement-progress-label"><span>Current sample progress</span><strong id="samplePercent">0%</strong></div>
+              <div id="sampleProgress" class="auto-progress-track sample-progress-track" role="progressbar" aria-label="Current sample progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="sampleProgressBar"></i></div>
+              <div class="measurement-progress-label batch-label"><span>Batch progress · <b id="batchCount">0 of 30 completed</b></span><strong id="autoPercent">0%</strong></div>
+              <div id="queueProgress" class="auto-progress-track" role="progressbar" aria-label="Batch measurement progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="autoProgressBar"></i></div>
+            </section>
+          </div>
+          <div class="auto-grid"><article class="panel workfield"><div class="workfield-head"><div><p class="eyebrow">Machine vision</p><h2>Sample workfield</h2><small>Last scan: <span id="lastScanTime">not scanned</span></small></div><div class="camera-state"><span></span>Camera online</div><button id="scanWorkfield" class="secondary">Scan workfield</button></div><div class="field-map" aria-label="Workfield sample map"></div><div class="workfield-legend"><span><i class="ready"></i>Ready</span><span><i class="selected"></i>Selected</span><span><i class="processing"></i>Processing</span><span><i class="complete"></i>Completed</span><span><i class="error"></i>Error</span></div></article><article class="panel queue-panel"><div class="panel-title"><div><p class="eyebrow">Measurement plan</p><h2 id="selectedSamplesTitle">30 samples selected</h2><small id="queueSummary">Ready 30 · Completed 0 · Errors 0</small></div></div><div class="queue-table-scroll"><table><thead><tr><th>#</th><th class="select-column"><input id="selectAllSamples" type="checkbox" checked="" aria-label="Select all samples"></th><th>Sample ID</th><th>Mass</th><th>Status</th></tr></thead><tbody id="sampleRows"></tbody></table></div></article></div>
+        </div>
+<div id="autoParamsModal" class="modal" hidden="">
+    <form id="autoParamsForm" class="modal-card parameters-modal" aria-labelledby="autoParamsTitle">
+      <button id="closeAutoParams" class="modal-close" type="button" aria-label="Close">×</button>
+      <h2 id="autoParamsTitle">Measurement parameters</h2>
+      <div class="parameter-grid">
+        <label>Batch ID<input id="autoBatchId" type="text" value="BATCH-2026-0418"></label>
+        <label>Preset time<div class="value-unit"><input id="autoPresetTime" type="number" value="30" min="0.01" step="any"><select id="autoPresetUnit" aria-label="Preset time unit"><option value="seconds">seconds</option><option value="minutes" selected="">minutes</option><option value="hours">hours</option></select></div></label>
+        <label>Tare mass<div class="value-unit"><input id="autoTareMass" type="number" value="32.4" min="0" step="any"><select id="autoMassUnit" aria-label="Tare mass unit"><option value="mg">mg</option><option value="g" selected="">g</option><option value="kg">kg</option></select></div></label>
+        <label>Volume<div class="value-unit"><input id="autoVolume" type="number" value="100" min="0" step="any"><select id="autoVolumeUnit" aria-label="Volume unit"><option value="ml" selected="">ml</option><option value="l">l</option><option value="cm3">cm³</option></select></div></label>
+        <label>Activity<select id="autoActivityUnit" aria-label="Activity unit"><option value="Bq" selected="">Bq</option><option value="Ku">Ku</option></select></label>
+        <label>Sample geometry<select id="autoGeometry"><option>100 ml cylinder</option><option>Petri dish</option></select></label>
+        <label class="parameter-comments">Comments<textarea id="autoComments" rows="3" placeholder="Optional"></textarea></label>
+      </div>
+      <div id="autoParamsAccess" class="parameter-summary"><span>Parameters can be edited before starting or while the sequence is paused.</span></div>
+      <div class="dialog-actions"><button id="cancelAutoParams" type="button">Close</button><button id="saveAutoParams" class="primary" type="submit">Save</button></div>
+    </form>
+  </div>
+</div>
+<script src="common/components.js"></script>
+<script src="common/core.js"></script>
+<script src="/F.automode/page.js"></script>
+<script src="common/process.js"></script>
+<script src="common/page-init.js"></script>
+<script src="common/init.js"></script>
+</body>
+</html>

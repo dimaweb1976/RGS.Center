@@ -1,0 +1,5 @@
+/* auto: original cascade segment 8. Loaded by Common/styles.css. */
+.measurement-progress { padding: 0px; margin-bottom: 18px; overflow: hidden; }
+.sample-progress-section,.queue-progress-section { padding: 18px 22px; }
+.sample-progress-section h2,.queue-progress-section h2 { font-size: 16px; }
+.sample-progress-section h2 span { color: var(--cyan); margin-left: 12px; font-size: 14px; }

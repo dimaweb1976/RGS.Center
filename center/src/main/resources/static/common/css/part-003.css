@@ -1,0 +1,6 @@
+/* common: original cascade segment 3. Loaded by Common/styles.css. */
+.state-banner { background: rgb(237, 248, 243); border-top: 1px solid rgb(185, 224, 209); border-right: 1px solid rgb(185, 224, 209); border-bottom: 1px solid rgb(185, 224, 209); border-left: 4px solid var(--green); border-image: none; border-radius: 7px; padding: 12px 15px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; }
+.state-banner>div { display: flex; align-items: center; gap: 10px; }
+.state-banner small,.shield-status small { display: block; color: var(--muted); margin-top: 3px; }
+.state-banner>span { color: var(--green); font-weight: 800; }
+.state-icon { display: grid; place-items: center; background: var(--green); color: rgb(255, 255, 255); width: 24px; height: 24px; border-radius: 50%; }

@@ -1,0 +1,8 @@
+/* common: original cascade segment 8. Loaded by Common/styles.css. */
+.shield-graphic { background: rgb(28, 43, 61); border-color: rgb(81, 104, 127); }
+.danger-outline { background: rgb(41, 26, 34); color: var(--red); border-color: rgb(101, 49, 60); }
+.notice { background: rgb(51, 39, 21); border-color: rgb(115, 85, 38); }
+th,td { border-color: var(--line); }
+.empty-view>p:last-child,.start-panel p,.notice p { color: var(--muted); }
+.modal { background: rgba(2, 7, 13, 0.8); }
+.toast { background: rgb(25, 51, 74); border: 1px solid rgb(47, 102, 129); }

@@ -1,0 +1,8 @@
+/* common: original cascade segment 28. Loaded by Common/styles.css. */
+.readiness-banner { display: flex; align-items: center; gap: 10px; border: 1px solid rgb(115, 85, 38); background: rgb(51, 39, 21); border-radius: 6px; padding: 10px 13px; margin-bottom: 12px; color: var(--amber); }
+.readiness-banner.ready { border-color: rgb(40, 92, 72); background: rgb(14, 44, 36); color: var(--green); }
+.readiness-banner.fault { border-color: rgb(101, 49, 60); background: rgb(41, 26, 34); color: var(--red); }
+.readiness-dot { width: 9px; height: 9px; border-radius: 50%; background: currentcolor; box-shadow: 0 0 8px currentColor; flex: 0 0 auto; }
+.readiness-banner div { display: grid; gap: 2px; }
+.readiness-banner strong { font-size: 14px; color: var(--ink); }
+.readiness-banner small { font-size: 12px; color: var(--muted); }

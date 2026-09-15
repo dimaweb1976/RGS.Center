@@ -1,0 +1,12 @@
+/* common: original cascade segment 54. Loaded by Common/styles.css. */
+body.theme-dark .auto-state { background: rgb(13, 25, 40); }
+body.theme-dark .auto-state.running,body.theme-dark .auto-state.idle { background: rgb(14, 44, 36); border-color: rgb(40, 92, 72); }
+body.theme-dark .auto-state.paused { background: rgb(16, 31, 52); border-color: rgb(49, 89, 133); }
+body.theme-dark .state-banner { background: rgb(14, 44, 36); border-top-color: rgb(32, 89, 65); border-right-color: rgb(32, 89, 65); border-bottom-color: rgb(32, 89, 65); border-left-color: var(--green); }
+body.theme-dark .notice,body.theme-dark .access-badge { background: rgb(51, 39, 21); border-color: rgb(115, 85, 38); color: var(--amber); }
+body.theme-dark .diagnostics-dialog { background: rgb(13, 25, 40); color: var(--ink); border-color: var(--line); }
+body.theme-dark .diagnostics-hv-controls { background: rgb(16, 34, 53); border-color: rgb(49, 89, 133); }
+body.theme-dark .condition-notice { background: rgb(25, 28, 37); }
+body.theme-dark .condition-notice.critical { background: rgb(41, 22, 32); }
+body.theme-dark .condition-notice.paused { background: rgb(16, 31, 52); }
+body.theme-dark .toast { background: rgb(25, 51, 74); color: rgb(255, 255, 255); border-color: rgb(47, 102, 129); }

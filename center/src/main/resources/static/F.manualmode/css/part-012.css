@@ -1,0 +1,13 @@
+/* manual: original cascade segment 12. Loaded by Common/styles.css. */
+.manual-spectrum-progress { margin: 14px 0px 18px; padding: 16px 20px; }
+.manual-spectrum-progress>div { margin-bottom: 8px; }
+.manual-spectrum-progress .service-progress-head span { display: grid; gap: 3px; }
+.manual-spectrum-progress .service-progress-head b { color: var(--ink); font-size: 15px; }
+.manual-spectrum-progress .service-progress-head small { color: var(--muted); font-size: 12px; }
+.manual-spectrum-progress .service-progress-head>strong { color: var(--blue); font-size: 18px; }
+.manual-spectrum-progress .service-progress-time { margin: 9px 0px 0px; }
+.manual-spectrum-progress .service-progress-time strong { color: var(--ink); font-variant-numeric: tabular-nums; }
+.manual-spectrum-progress.paused progress::-webkit-progress-value { background: var(--amber); }
+.manual-spectrum-progress.paused progress::-moz-progress-bar { background: var(--amber); }
+.manual-spectrum-progress.complete progress::-webkit-progress-value { background: var(--green); }
+.manual-spectrum-progress.complete progress::-moz-progress-bar { background: var(--green); }

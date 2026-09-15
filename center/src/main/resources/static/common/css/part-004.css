@@ -1,0 +1,5 @@
+/* common: original cascade segment 4. Loaded by Common/styles.css. */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 20px; box-shadow: 0 4px 13px rgba(27,52,73,.04); }
+.panel-title { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid rgb(231, 237, 242); padding-bottom: 14px; margin-bottom: 18px; }
+.panel h2 { font-size: 20px; margin: 0px; }
+.step { display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid rgb(154, 179, 196); border-radius: 50%; color: var(--blue); font-weight: 800; }

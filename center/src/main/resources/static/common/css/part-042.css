@@ -1,0 +1,6 @@
+/* common: original cascade segment 42. Loaded by Common/styles.css. */
+@media (max-width:600px) {
+  .measurement-type { align-items: stretch; flex-direction: column; }
+  .measurement-type>div { display: grid; grid-template-columns: 1fr 1fr; }
+  .measurement-type button { min-width: 0px; }
+}
