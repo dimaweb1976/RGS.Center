@@ -1,0 +1,9 @@
+/* settings: original cascade segment 2. Loaded by Common/styles.css. */
+#deviceForm { display: grid; gap: 22px; }
+#deviceForm fieldset { border: 1px solid var(--line); border-radius: 8px; padding: 20px; margin: 0px; background: rgb(9, 21, 33); }
+#deviceForm legend { padding: 0px 8px; color: rgb(173, 193, 212); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; }
+.device-fields { display: grid; grid-template-columns: minmax(190px,1fr) minmax(180px,240px); gap: 12px 24px; align-items: center; }
+.device-fields label { display: grid; grid-template-columns: subgrid; grid-column: 1/-1; align-items: center; color: rgb(200, 213, 227); font-size: 13px; font-weight: 650; }
+.device-fields input { height: 42px; font-size: 16px; font-variant-numeric: tabular-nums; text-align: center; }
+.device-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.device-actions button { min-width: 150px; }

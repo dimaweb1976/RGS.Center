@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Settings · TRY2_light</title>
+<link rel="stylesheet" href="F.settings/styles.css">
+<link rel="stylesheet" href="common/header.css">
+</head>
+<body data-page="settings">
+<div id="pageContent">
+<div id="view-settings" class="view active settings-view">
+          <div class="page-head">
+            <div><p class="eyebrow">Settings</p></div>
+          </div>
+          <div class="settings-tabs" role="tablist" aria-label="Settings sections">
+            <button id="settings-hardware-tab" class="settings-tab active" type="button" role="tab" aria-selected="true" aria-controls="settingsPanel" data-settings="hardware">System modules</button>
+            <button id="settings-geometries-tab" class="settings-tab" type="button" role="tab" aria-selected="false" aria-controls="settingsPanel" data-settings="geometries" tabindex="-1">Sample geometries</button>
+            <button id="settings-documents-tab" class="settings-tab" type="button" role="tab" aria-selected="false" aria-controls="settingsPanel" data-settings="documents" tabindex="-1">Documents</button>
+            <button id="settings-interface-tab" class="settings-tab" type="button" role="tab" aria-selected="false" aria-controls="settingsPanel" data-settings="interface" tabindex="-1">Interface</button>
+            <button id="settings-account-tab" class="settings-tab" type="button" role="tab" aria-selected="false" aria-controls="settingsPanel" data-settings="account" tabindex="-1">User account</button>
+          </div>
+          <div id="settingsPanel" class="device-settings" role="tabpanel" aria-labelledby="settings-hardware-tab">
+            <aside id="settingsList" class="device-list" aria-label="Settings categories"></aside>
+            <section class="device-editor" aria-labelledby="deviceEditorTitle">
+              <div class="device-editor-head"><div><p id="settingsEditorLabel" class="eyebrow">Module configuration</p><h2 id="deviceEditorTitle">PLC</h2></div><div id="geometryActions" class="geometry-actions" hidden=""><button id="addGeometry" type="button">Add geometry</button><button id="duplicateGeometry" type="button">Duplicate</button><button id="archiveGeometry" type="button">Archive</button></div></div>
+              <form id="deviceForm"><div id="settingsFields"></div><div class="device-actions"><span id="settingsSaveStatus" role="status" aria-live="polite"></span><button class="primary" type="submit">Save</button></div></form>
+            </section>
+          </div>
+        </div>
+</div>
+<script src="common/components.js"></script>
+<script src="common/core.js"></script>
+<script src="F.settings/page.js"></script>
+<script src="common/process.js"></script>
+<script src="common/page-init.js"></script>
+<script src="common/init.js"></script>
+</body>
+</html>

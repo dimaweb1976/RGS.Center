@@ -1,0 +1,29 @@
+/* help: original cascade segment 1. Loaded by Common/styles.css. */
+.help-view { max-width: 1380px; }
+.help-head { margin-bottom: 16px; }
+.help-layout { display: grid; grid-template-columns: minmax(600px,1.35fr) minmax(330px,.65fr); gap: 16px; align-items: start; }
+.documentation-panel,.about-panel { padding: 22px; }
+.help-section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+.help-section-head h2,.about-panel h2 { margin: 0px; font-size: 20px; }
+.help-section-head>p { max-width: 310px; margin: 0px; color: var(--muted); font-size: 13px; line-height: 1.45; text-align: right; }
+.document-list { display: grid; }
+.document-row { display: grid; grid-template-columns: 46px minmax(0,1fr) auto; align-items: center; gap: 15px; padding: 18px 0px; border-bottom: 1px solid var(--line); }
+.document-row:last-child { border-bottom: 0px; padding-bottom: 2px; }
+.document-icon { display: grid; place-items: center; width: 42px; height: 48px; border: 1px solid rgb(184, 204, 215); border-radius: 5px; background: rgb(237, 246, 250); color: rgb(11, 110, 141); font-size: 11px; font-weight: 900; letter-spacing: 0.04em; }
+.document-row h3 { margin: 0px 0px 5px; font-size: 15px; }
+.document-row p { margin: 0px; color: var(--muted); font-size: 13px; line-height: 1.45; }
+.document-row small { display: block; margin-top: 6px; color: rgb(117, 136, 151); font-size: 11px; font-weight: 700; }
+.document-download { display: inline-flex; align-items: center; gap: 9px; min-width: 116px; justify-content: center; padding: 9px 12px; border: 1px solid rgb(158, 198, 212); border-radius: 5px; background: rgb(230, 243, 247); color: rgb(8, 102, 129); font-size: 13px; font-weight: 800; text-decoration: none; }
+.document-download:hover { background: rgb(215, 235, 242); }
+.document-download span { font-size: 16px; }
+.about-panel { border-top: 4px solid var(--blue); }
+.about-panel>h2 { margin-bottom: 15px; }
+.about-panel>p { color: var(--muted); font-size: 14px; line-height: 1.6; }
+.about-panel .about-lead { color: var(--ink); font-size: 16px; font-weight: 650; line-height: 1.5; }
+.about-facts { margin: 21px 0px 0px; border-top: 1px solid var(--line); }
+.about-facts div { display: grid; grid-template-columns: 120px minmax(0,1fr); gap: 12px; padding: 11px 0px; border-bottom: 1px solid var(--line); }
+.about-facts dt { color: var(--muted); font-size: 12px; }
+.about-facts dd { margin: 0px; font-size: 13px; font-weight: 750; }
+.about-purpose { margin-top: 18px; padding: 14px; border-left: 3px solid var(--cyan); background: rgb(242, 248, 250); }
+.about-purpose strong { font-size: 13px; }
+.about-purpose p { margin: 5px 0px 0px; color: rgb(82, 104, 119); font-size: 13px; line-height: 1.5; }

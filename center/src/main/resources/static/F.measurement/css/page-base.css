@@ -1,0 +1,13 @@
+/* database: original cascade segment 1. Loaded by Common/styles.css. */
+.database-view { max-width: 1500px; }
+.database-head { margin-bottom: 16px; }
+.database-head h1 { font-size: 26px; margin: 0px 0px 6px; }
+.database-toolbar { display: grid; grid-template-columns: minmax(280px,1fr) 210px auto; align-items: end; gap: 14px; margin-bottom: 16px; padding: 14px 16px; }
+.database-toolbar label { display: grid; gap: 6px; color: var(--muted); font-size: 12px; font-weight: 700; }
+.database-toolbar input,.database-toolbar select { min-height: 42px; }
+.database-toolbar>span { align-self: center; color: var(--muted); font-size: 13px; white-space: nowrap; }
+.database-layout { display: grid; grid-template-columns: minmax(390px,.78fr) minmax(620px,1.22fr); gap: 16px; align-items: start; }
+.database-section-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 14px; }
+.database-section-head h2,.batch-files h3,.pdf-preview h3 { margin: 0px; }
+.database-section-head>div>p:last-child { margin: 6px 0px 0px; color: var(--muted); font-size: 13px; }
+.database-table-scroll { overflow: auto; }

@@ -1,0 +1,31 @@
+/* database: original cascade segment 4. Loaded by Common/styles.css. */
+.file-type.pdf { background: rgb(251, 234, 236); color: rgb(155, 54, 64); }
+.pdf-preview { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 18px; }
+.pdf-preview-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 12px; }
+.pdf-preview-head>div:last-child { display: flex; gap: 8px; }
+.pdf-preview-head button { padding: 8px 11px; font-size: 12px; }
+.pdf-canvas { height: 420px; overflow: auto; background: rgb(220, 229, 235); border: 1px solid rgb(190, 203, 213); border-radius: 6px; padding: 24px; }
+.pdf-canvas article { width: min(520px, 100%); min-height: 680px; margin: auto; background: rgb(255, 255, 255); color: rgb(36, 49, 59); box-shadow: 0 8px 26px #3b526833; padding: 42px; }
+.pdf-canvas header { display: flex; justify-content: space-between; border-bottom: 2px solid rgb(11, 113, 147); padding-bottom: 14px; }
+.pdf-canvas h4 { font-size: 22px; margin: 28px 0px; }
+.pdf-canvas dl { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pdf-canvas dl div { border-bottom: 1px solid rgb(217, 225, 231); padding-bottom: 8px; }
+.pdf-canvas dt { color: rgb(108, 125, 137); font-size: 11px; }
+.pdf-canvas dd { margin: 4px 0px 0px; font-weight: 700; font-size: 13px; }
+.pdf-spectrum { height: 170px; margin: 32px 0px; display: flex; align-items: flex-end; gap: 5px; border-left: 1px solid rgb(130, 149, 162); border-bottom: 1px solid rgb(130, 149, 162); padding: 0px 8px; }
+.pdf-spectrum i { flex: 1 1 0%; background: rgb(22, 137, 170); height: 18%; }
+.pdf-spectrum i:nth-child(2) { height: 28%; }
+.pdf-spectrum i:nth-child(3) { height: 52%; }
+.pdf-spectrum i:nth-child(4) { height: 31%; }
+.pdf-spectrum i:nth-child(5) { height: 82%; }
+.pdf-spectrum i:nth-child(6) { height: 38%; }
+.pdf-spectrum i:nth-child(7) { height: 24%; }
+.pdf-spectrum i:nth-child(8) { height: 68%; }
+.pdf-spectrum i:nth-child(9) { height: 34%; }
+.pdf-spectrum i:nth-child(10) { height: 19%; }
+.pdf-spectrum i:nth-child(11) { height: 43%; }
+.pdf-spectrum i:nth-child(12) { height: 26%; }
+.pdf-canvas footer { color: rgb(123, 139, 150); font-size: 11px; text-align: center; }
+.pdf-preview.expanded { position: fixed; inset: 20px; z-index: 30; background: rgb(255, 255, 255); border: 1px solid var(--line); border-radius: 8px; padding: 20px; box-shadow: 0 20px 70px #102b3f55; }
+.pdf-preview.expanded .pdf-canvas { height: calc(100vh - 110px); }
+.database-empty { text-align: center; color: var(--muted); padding: 28px; }

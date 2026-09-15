@@ -1,0 +1,5 @@
+/* database: original cascade segment 3. Loaded by Common/styles.css. */
+.batch-summary { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 20px; }
+.batch-summary span { display: grid; gap: 4px; padding: 12px; background: rgb(243, 247, 250); border: 1px solid var(--line); border-radius: 6px; }
+.batch-summary small { color: var(--muted); }
+.batch-summary b { font-size: 18px; }

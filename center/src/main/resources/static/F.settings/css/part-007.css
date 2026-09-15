@@ -1,0 +1,3 @@
+/* settings: original cascade segment 7. Loaded by Common/styles.css. */
+.account-security-note { margin: 0px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.settings-view[data-section="account"] .device-fields input { text-align: left; }

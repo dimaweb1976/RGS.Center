@@ -1,0 +1,5 @@
+/* settings: original cascade segment 6. Loaded by Common/styles.css. */
+.settings-view .device-list { max-height: 650px; overflow-y: auto; }
+.document-file-control { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; }
+.document-file-control button { white-space: nowrap; padding-inline: 16px; }
+.document-path { text-align: left !important; font-family: ui-monospace, SFMono-Regular, Consolas, monospace !important; font-size: 13px !important; }

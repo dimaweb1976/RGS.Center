@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Measurement database · TRY2_light</title>
+<link rel="stylesheet" href="F.measurement/styles.css">
+<link rel="stylesheet" href="common/header.css">
+</head>
+<body data-page="database">
+<div id="pageContent">
+<div id="view-database" class="view active database-view">
+          <div class="page-head database-head"><div><p class="eyebrow">Measurement database</p></div></div>
+          <div class="database-toolbar panel"><label class="database-search">Search<input id="databaseSearch" type="search" placeholder="Batch ID or sample ID"></label><label>Date<input id="databaseDateFilter" type="date" aria-label="Filter batches by date"></label><span id="databaseResultCount" aria-live="polite"></span></div>
+          <div class="database-layout">
+            <section class="panel batch-browser" aria-labelledby="batchListTitle"><div class="database-section-head"><div><p class="eyebrow">Stored batches</p><h2 id="batchListTitle">All batches</h2></div></div><div class="database-table-scroll"><table><thead><tr><th>Batch ID</th><th>Created</th><th>Files</th></tr></thead><tbody id="databaseBatchRows"></tbody></table></div></section>
+            <section class="panel batch-details" aria-labelledby="selectedBatchTitle">
+              <div class="database-section-head"><div><p class="eyebrow">Selected batch</p><h2 id="selectedBatchTitle">BATCH-2026-0418</h2><p id="selectedBatchMeta">Created automatically · 13 Sep 2026</p></div><button id="downloadBatch" type="button">Download all</button></div>
+              <div class="batch-summary"><span><small>Spectra</small><b id="batchSpectraCount">3</b></span><span><small>Reports</small><b id="batchReportsCount">2</b></span></div>
+              <section class="batch-parameters" aria-labelledby="batchParametersTitle"><div><p id="batchParametersTitle" class="eyebrow">Measurement parameters</p></div><dl><div><dt>Batch ID</dt><dd id="batchParameterId">BATCH-2026-0418</dd></div><div><dt>Preset time</dt><dd id="batchParameterTime">30 minutes</dd></div><div><dt>Tare mass</dt><dd id="batchParameterTare">32.4 g</dd></div><div><dt>Volume</dt><dd id="batchParameterVolume">100 ml</dd></div><div><dt>Activity</dt><dd id="batchParameterActivity">Bq</dd></div><div><dt>Sample geometry</dt><dd id="batchParameterGeometry">100 ml cylinder</dd></div><div class="batch-parameter-comment"><dt>Comments</dt><dd id="batchParameterComments">Routine laboratory batch.</dd></div></dl></section>
+              <div class="batch-files"><div><p class="eyebrow">Files</p><h3>Spectra and reports</h3></div><div class="database-table-scroll file-table-scroll"><table><thead><tr><th>File</th><th>Sample ID</th><th>Type</th><th>Created</th><th></th></tr></thead><tbody id="databaseFileRows"></tbody></table></div></div>
+              <section class="pdf-preview" aria-labelledby="pdfPreviewTitle"><div class="pdf-preview-head"><div><p class="eyebrow">PDF preview</p><h3 id="pdfPreviewTitle">Batch report.pdf</h3></div><div><button id="openPdfPreview" type="button">Full screen</button><button id="downloadSelectedFile" class="primary" type="button">Download PDF</button></div></div><div class="pdf-canvas"><article><header><strong>RGS CENTER</strong><span>Measurement report</span></header><h4 id="pdfBatchId">BATCH-2026-0418</h4><dl><div><dt>Sample ID</dt><dd id="pdfSampleId">LAB-418</dd></div><div><dt>Measurement date</dt><dd id="pdfMeasurementDate">13 Sep 2026 · 10:42</dd></div><div><dt>Geometry</dt><dd>Bottle 0.5 L</dd></div><div><dt>Preset time</dt><dd>30 min</dd></div></dl><div class="pdf-spectrum" aria-label="Spectrum chart preview"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><footer>Generated automatically by RGS CENTER</footer></article></div></section>
+            </section>
+          </div>
+        </div>
+</div>
+<script src="common/components.js"></script>
+<script src="common/core.js"></script>
+<script src="F.measurement/page.js"></script>
+<script src="common/process.js"></script>
+<script src="common/page-init.js"></script>
+<script src="common/init.js"></script>
+</body>
+</html>

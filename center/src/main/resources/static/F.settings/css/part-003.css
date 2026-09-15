@@ -1,0 +1,18 @@
+/* settings: original cascade segment 3. Loaded by Common/styles.css. */
+.settings-view { max-width: 1200px; }
+.settings-view .page-head p:not(.eyebrow) { font-size: 14px; }
+.settings-tab { font-size: 14px; }
+.settings-view .device-settings { grid-template-columns: 280px minmax(0,1fr); min-height: 550px; }
+.settings-view .device-list-head { color: var(--cyan); font-size: 14px; font-weight: 700; }
+.settings-view .device-item { display: block; font-size: 14px; line-height: 1.5; padding: 16px 20px; }
+.settings-view .device-editor { display: flex; flex-direction: column; }
+.settings-view .device-editor-head h2 { font-size: 20px; }
+.settings-view #deviceForm { flex: 1 1 0%; grid-template-rows: 1fr auto; }
+.settings-view #settingsFields { display: grid; align-content: start; gap: 22px; }
+.settings-view .device-fields label { font-size: 14px; line-height: 1.5; }
+.settings-view .device-fields select { height: 42px; font-size: 16px; }
+.settings-view .device-fields input { width: 100%; min-width: 0px; }
+.settings-view .device-actions { align-items: center; flex-wrap: wrap; padding-top: 10px; }
+.settings-view #settingsSaveStatus { font-size: 14px; color: var(--muted); margin-right: auto; }
+.settings-empty { color: var(--muted); font-size: 14px; }
+.settings-view button:focus-visible,.settings-view input:focus-visible,.settings-view select:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
