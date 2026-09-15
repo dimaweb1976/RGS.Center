@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class MeasurementExecutionCoordinator {
 
-    public enum Owner { NONE, AUTOMATIC, MANUAL, SERVICE }
+    public enum Owner { NONE, AUTOMATIC, MANUAL, SERVICE, STEP_TEST }
 
     private Owner owner = Owner.NONE;
 

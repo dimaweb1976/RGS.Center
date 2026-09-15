@@ -1,0 +1,91 @@
+#wizard-step-diagnostic {
+    display: grid;
+    gap: 16px;
+}
+
+.wizard-step-test-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 18px;
+    border: 1px solid var(--wizard-border-soft);
+    border-radius: 11px;
+    background: var(--wizard-surface);
+}
+
+.wizard-step-test-header h2,
+.wizard-step-test-header p {
+    margin: 0 0 7px;
+}
+
+.wizard-step-test-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    overflow-wrap: anywhere;
+}
+
+.wizard-step-test-cycle .wizard-cycle-steps li {
+    grid-template-columns: 32px minmax(0, 1fr) 90px minmax(80px, auto);
+}
+
+.wizard-step-test-confirm {
+    grid-column: 2 / 4;
+    grid-row: 2;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wizard-step-test-cycle .wizard-cycle-step-label small {
+    display: block;
+    margin-top: 3px;
+    color: var(--wizard-text-muted);
+    overflow-wrap: anywhere;
+}
+
+.wizard-step-test-cycle .wizard-cycle-steps button {
+    padding: 5px;
+    min-width: 80px;
+    width: max-content;
+    justify-self: end;
+    grid-column: 4;
+    grid-row: 1;
+}
+
+.wizard-step-test-cycle .wizard-cycle-steps button[data-step-test-action="skip-error"] {
+    grid-row: 2;
+}
+
+.wizard-cycle-step--skipped {
+    border-left-color: var(--wizard-warning) !important;
+}
+
+.wizard-cycle-step--skipped strong {
+    color: var(--wizard-text);
+}
+
+.wizard-step-test-finish {
+    margin: 0;
+    font-weight: 700;
+}
+
+.wizard-step-test-journal li {
+    grid-template-columns: minmax(135px, .5fr) minmax(125px, .4fr) minmax(0, 1fr);
+}
+
+@media (max-width: 640px) {
+    .wizard-step-test-cycle .wizard-cycle-steps li {
+        grid-template-columns: 32px minmax(0, 1fr) 80px;
+    }
+
+    .wizard-step-test-cycle .wizard-cycle-steps button {
+        grid-column: 3;
+    }
+
+    .wizard-step-test-confirm {
+        grid-column: 2 / 4;
+    }
+}

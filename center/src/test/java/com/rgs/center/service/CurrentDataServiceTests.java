@@ -68,4 +68,18 @@ class CurrentDataServiceTests {
                 () -> service.snapshot().put("other", null)
         );
     }
+
+    @Test
+    void eachSuccessfulPublicationGetsANewRevision() {
+        assertEquals(0L, service.getValue(DeviceCode.BARCODE_SCANNER,
+                CurrentDataService.DATA_REVISION, Long.class));
+        service.recordDataSuccess(DeviceCode.BARCODE_SCANNER, "FIRST");
+        Map<String, Object> first = service.getDeviceData(DeviceCode.BARCODE_SCANNER);
+        assertEquals(1L, first.get(CurrentDataService.DATA_REVISION));
+        assertEquals("FIRST", first.get(CurrentDataService.LAST_DATA));
+        service.recordDataSuccess(DeviceCode.BARCODE_SCANNER, "SECOND");
+        Map<String, Object> second = service.getDeviceData(DeviceCode.BARCODE_SCANNER);
+        assertEquals(2L, second.get(CurrentDataService.DATA_REVISION));
+        assertEquals("SECOND", second.get(CurrentDataService.LAST_DATA));
+    }
 }

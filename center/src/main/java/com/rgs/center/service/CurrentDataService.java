@@ -13,6 +13,7 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.time.Instant;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Потокобезопасная витрина последних известных состояний устройств.
@@ -32,9 +33,11 @@ public class CurrentDataService {
     public static final String DATA_AVAILABLE = "data_available";
     public static final String LAST_DATA = "last_data";
     public static final String LAST_ERROR = "last_error";
+    public static final String DATA_REVISION = "data_revision";
 
     private final Map<String, Map<String, Object>> currentData =
             new ConcurrentHashMap<>();
+    private final Map<String, AtomicLong> dataRevisions = new ConcurrentHashMap<>();
 
     /** Создаёт начальный набор параметров для каждого зарегистрированного устройства. */
     @PostConstruct
@@ -47,7 +50,9 @@ public class CurrentDataService {
             parameters.put(DATA_AVAILABLE, false);
             parameters.put(LAST_DATA, "");
             parameters.put(LAST_ERROR, "");
+            parameters.put(DATA_REVISION, 0L);
             currentData.put(device.getCode(), parameters);
+            dataRevisions.put(device.getCode(), new AtomicLong());
         }
         log.info(
                 "Current data view initialized for {} devices",
@@ -146,14 +151,17 @@ public class CurrentDataService {
      * @param value полученное значение
      */
     public void recordDataSuccess(DeviceCode device, Object value) {
-        Map<String, Object> parameters = deviceData(device);
-        parameters.put(LAST_DATA, value);
-        parameters.put(DATA_AVAILABLE, true);
-        parameters.put(LAST_ERROR, "");
-        parameters.put(
-                INTERACTION_LASTDATE_OUT,
-                Instant.now().getEpochSecond()
-        );
+        AtomicLong counter = dataRevisions.get(device.getCode());
+        synchronized (counter) {
+            long revision = counter.incrementAndGet();
+            setValues(device, Map.of(
+                    LAST_DATA, value,
+                    DATA_AVAILABLE, true,
+                    LAST_ERROR, "",
+                    INTERACTION_LASTDATE_OUT, Instant.now().getEpochSecond(),
+                    DATA_REVISION, revision
+            ));
+        }
         log.debug("Current data updated successfully for device {}", device);
     }
 
