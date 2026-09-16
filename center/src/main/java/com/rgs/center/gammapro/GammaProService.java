@@ -48,6 +48,12 @@ public class GammaProService extends AbstractQueuedDeviceService
     private volatile String lastCommand = "";
     private volatile String lastResponse = "";
     private volatile String lastError = "";
+    /** Наблюдения текущего TCP-сеанса; это не физическое состояние BOSON. */
+    private volatile boolean connectionAttempted;
+    private volatile Instant lastSuccessfulHeartbeatAt;
+    private volatile boolean businessCommandActive;
+    private volatile boolean responseUncertain = true;
+    private volatile Instant measurementDeadlineAt;
     private volatile BosonHighVoltageSnapshot bosonHighVoltage =
             BosonHighVoltageSnapshot.initial();
 
@@ -77,6 +83,13 @@ public class GammaProService extends AbstractQueuedDeviceService
                 SettingsService.GAMMA_PRO_CHARSET,
                 String.class
         ));
+    }
+
+    @Override
+    protected void onCommunicationStarting() {
+        connectionAttempted = true;
+        lastSuccessfulHeartbeatAt = null;
+        responseUncertain = true;
     }
 
     /**
@@ -109,6 +122,7 @@ public class GammaProService extends AbstractQueuedDeviceService
             }
             recordFailure(exception);
         } finally {
+            businessCommandActive = false;
             protocolLock.unlock();
         }
     }
@@ -130,6 +144,7 @@ public class GammaProService extends AbstractQueuedDeviceService
                 );
             }
 
+            businessCommandActive = true;
             executeCommandLocked(GammaProProtocol.setTract(
                     request.mcaName(),
                     request.channelName()
@@ -143,6 +158,11 @@ public class GammaProService extends AbstractQueuedDeviceService
             channelName = request.channelName();
             presetSeconds = request.presetSeconds();
             measurementState = GammaProMeasurementState.RUNNING;
+
+            // Во время WAIT_MEAS_END heartbeat не отправляется. Срок операции
+            // ограничен экспозицией и запасом на передачу результата.
+            measurementDeadlineAt = Instant.now().plusSeconds(presetSeconds)
+                    .plus(responseTimeout()).plusSeconds(30);
 
             submitCommandLocked(GammaProProtocol.WAIT_MEAS_END);
             GammaProProtocol.ResponseLine waitResponse =
@@ -164,6 +184,7 @@ public class GammaProService extends AbstractQueuedDeviceService
             recordFailure(exception);
             throw exception;
         } finally {
+            businessCommandActive = false;
             protocolLock.unlock();
         }
     }
@@ -182,6 +203,7 @@ public class GammaProService extends AbstractQueuedDeviceService
             recordFailure(exception);
             throw exception;
         } finally {
+            businessCommandActive = false;
             protocolLock.unlock();
         }
     }
@@ -190,6 +212,7 @@ public class GammaProService extends AbstractQueuedDeviceService
     public GammaProSnapshot stopSpectrumAcquisition() {
         protocolLock.lock();
         try {
+            businessCommandActive = true;
             executeCommandLocked(GammaProProtocol.STOP);
             measurementState = GammaProMeasurementState.COMPLETED;
             publishSuccess();
@@ -199,6 +222,7 @@ public class GammaProService extends AbstractQueuedDeviceService
             recordFailure(exception);
             throw exception;
         } finally {
+            businessCommandActive = false;
             protocolLock.unlock();
         }
     }
@@ -223,6 +247,7 @@ public class GammaProService extends AbstractQueuedDeviceService
                         "Cannot change BOSON HV while acquisition is running"
                 );
             }
+            businessCommandActive = true;
             log.info(
                     "Sending Gamma-PRO BOSON HV request: enabled={}, value={}, type={}, tract={}/{}",
                     enabled,
@@ -298,6 +323,7 @@ public class GammaProService extends AbstractQueuedDeviceService
             );
             throw exception;
         } finally {
+            businessCommandActive = false;
             protocolLock.unlock();
         }
     }
@@ -322,6 +348,7 @@ public class GammaProService extends AbstractQueuedDeviceService
                         "Cannot select BOSON tract while acquisition is running"
                 );
             }
+            businessCommandActive = true;
             log.info(
                     "Sending Gamma-PRO SET_TRACT request: tract={}/{}",
                     requestedMcaName,
@@ -359,6 +386,7 @@ public class GammaProService extends AbstractQueuedDeviceService
             );
             throw exception;
         } finally {
+            businessCommandActive = false;
             protocolLock.unlock();
         }
     }
@@ -375,6 +403,12 @@ public class GammaProService extends AbstractQueuedDeviceService
         return GammaProConnectionStatus.from(
                 communicationSnapshot().state()
         );
+    }
+
+    /** Незавершённая попытка TCP-подключения — ещё не установленный OFFLINE. */
+    public boolean connectionStarting() {
+        return communicationSnapshot().state()
+                == com.rgs.center.peripheral.PeripheralWorkerState.STARTING;
     }
 
     /** @return данные отдельной таблицы состояния Gamma-PRO */
@@ -437,7 +471,12 @@ public class GammaProService extends AbstractQueuedDeviceService
                 tracts,
                 lastCommand,
                 lastResponse,
-                lastError
+                lastError,
+                connectionAttempted,
+                lastSuccessfulHeartbeatAt,
+                businessCommandActive,
+                responseUncertain,
+                measurementDeadlineAt
         );
     }
 
@@ -448,6 +487,9 @@ public class GammaProService extends AbstractQueuedDeviceService
         );
         tracts = result.dataLines();
         tractsUpdatedAt = Instant.now();
+        // Только полный ответ ожидаемой GET_TRACTS_NAME с терминальным OK
+        // подтверждает idle-heartbeat. Чужие строки и ER не обновляют время.
+        lastSuccessfulHeartbeatAt = tractsUpdatedAt;
         publishSuccess();
         log.debug(
                 "Gamma-PRO GET_TRACTS_NAME completed: dataLines={}, bosonTractCandidate={}",
@@ -547,25 +589,36 @@ public class GammaProService extends AbstractQueuedDeviceService
             Duration timeout
     ) {
         long deadline = System.nanoTime() + timeout.toNanos();
-        while (true) {
-            byte[] frame = awaitQueuedFrame(
-                    remaining(deadline, expectedCommand)
-            ).orElseThrow(() -> new GammaProProtocolException(
-                    "Gamma-PRO response timed out for " + expectedCommand
-            ));
-            GammaProProtocol.ResponseLine response = decode(frame);
-            if (expectedCommand.equals(response.commandName())) {
-                return response;
+        try {
+            while (true) {
+                byte[] frame = awaitQueuedFrame(
+                        remaining(deadline, expectedCommand)
+                ).orElseThrow(() -> new GammaProProtocolException(
+                        "Gamma-PRO response timed out for " + expectedCommand
+                ));
+                GammaProProtocol.ResponseLine response = decode(frame);
+                if (expectedCommand.equals(response.commandName())) {
+                    if (response.type() != GammaProProtocol.ResponseType.UNKNOWN) {
+                        responseUncertain = false;
+                    }
+                    return response;
+                }
+                log.debug(
+                        "Ignoring Gamma-PRO response for another command: {}",
+                        response.raw()
+                );
             }
-            log.debug(
-                    "Ignoring Gamma-PRO response for another command: {}",
-                    response.raw()
-            );
+        } catch (RuntimeException exception) {
+            // ER доказывает наличие ответа; тайм-аут или ошибка чтения — нет.
+            responseUncertain = true;
+            throw exception;
         }
     }
 
     /** Применяет состояние длительной команды ожидания измерения. */
     private void applyWaitResponse(GammaProProtocol.ResponseLine response) {
+        responseUncertain = response.type()
+                == GammaProProtocol.ResponseType.UNKNOWN;
         switch (response.type()) {
             case DO -> measurementState = GammaProMeasurementState.RUNNING;
             case OK -> {
@@ -654,9 +707,11 @@ public class GammaProService extends AbstractQueuedDeviceService
         return Math.toIntExact(settingsService.getValue(code, Long.class));
     }
 
-    private static Duration remaining(long deadline, String command) {
+    private Duration remaining(long deadline, String command) {
         long remaining = deadline - System.nanoTime();
         if (remaining <= 0) {
+            // DATA/DO без завершающего OK также не подтверждают полный ответ.
+            responseUncertain = true;
             throw new GammaProProtocolException(
                     "Gamma-PRO response timed out for " + command
             );

@@ -75,6 +75,10 @@ class GammaProServiceTests {
                         service.connectionStatus()
                 );
                 service.pollGammaPro();
+                assertTrue(service.snapshot().connectionAttempted());
+                assertNotNull(service.snapshot().lastSuccessfulHeartbeatAt());
+                assertEquals(false, service.snapshot().businessCommandActive());
+                assertEquals(false, service.snapshot().responseUncertain());
                 GammaProStatusView statusView = service.statusView();
                 service.selectTract("BOSON1", "GCD-4020");
                 BosonHighVoltageSnapshot highVoltage =
@@ -196,6 +200,8 @@ class GammaProServiceTests {
                 assertTrue(service.snapshot().lastError().contains(
                         "rejected command"
                 ));
+                assertEquals(false, service.snapshot().responseUncertain());
+                assertEquals(false, service.snapshot().businessCommandActive());
             } finally {
                 service.stopCommunication();
             }
@@ -234,6 +240,8 @@ class GammaProServiceTests {
                 assertTrue(service.snapshot().lastError().contains(
                         "timed out"
                 ));
+                assertTrue(service.snapshot().responseUncertain());
+                assertEquals(false, service.snapshot().businessCommandActive());
             } finally {
                 service.stopCommunication();
             }

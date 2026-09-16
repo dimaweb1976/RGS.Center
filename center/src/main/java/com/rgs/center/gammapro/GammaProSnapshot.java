@@ -1,6 +1,7 @@
 package com.rgs.center.gammapro;
 
 import java.util.List;
+import java.time.Instant;
 
 /**
  * Неизменяемый снимок соединения и текущего измерения Gamma-PRO.
@@ -17,6 +18,13 @@ import java.util.List;
  *                    как ручная команда, так и периодический heartbeat
  * @param lastResponse последняя принятая строка протокола
  * @param lastError последняя ошибка
+ * @param connectionAttempted была ли реальная попытка открыть TCP-соединение
+ * @param lastSuccessfulHeartbeatAt время полного GET_TRACTS_NAME=OK текущего сеанса
+ * @param businessCommandActive выполняется ли ручная команда или запуск/останов измерения;
+ *                              периодический heartbeat не является бизнес-операцией
+ * @param responseUncertain тайм-аут/ошибка чтения без подтверждённого ответа;
+ *                          ER является ответом программы, а не потерей связи
+ * @param measurementDeadlineAt предельное время ожидания измерения без idle-heartbeat
  */
 public record GammaProSnapshot(
         boolean connected,
@@ -29,9 +37,24 @@ public record GammaProSnapshot(
         List<String> tracts,
         String lastCommand,
         String lastResponse,
-        String lastError
+        String lastError,
+        boolean connectionAttempted,
+        Instant lastSuccessfulHeartbeatAt,
+        boolean businessCommandActive,
+        boolean responseUncertain,
+        Instant measurementDeadlineAt
 ) {
     public GammaProSnapshot {
         tracts = List.copyOf(tracts);
+    }
+
+    /** Старые потребители не предоставляют доказательства доступности. */
+    public GammaProSnapshot(boolean connected, String host, int port,
+            GammaProMeasurementState measurementState, String mcaName,
+            String channelName, int presetSeconds, List<String> tracts,
+            String lastCommand, String lastResponse, String lastError) {
+        this(connected, host, port, measurementState, mcaName, channelName,
+                presetSeconds, tracts, lastCommand, lastResponse, lastError,
+                false, null, false, true, null);
     }
 }

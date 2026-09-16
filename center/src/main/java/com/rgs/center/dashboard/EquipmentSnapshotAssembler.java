@@ -350,7 +350,9 @@ public class EquipmentSnapshotAssembler {
         GammaProSnapshot source = status.snapshot();
         boolean enabled = gammaProService.isEnabled();
         ConnectionState connection = enabled
-                ? status.connectionStatus() == GammaProConnectionStatus.CONNECTED
+                ? gammaProService.connectionStarting()
+                        ? ConnectionState.CONNECTING
+                        : status.connectionStatus() == GammaProConnectionStatus.CONNECTED
                         ? ConnectionState.ONLINE : ConnectionState.OFFLINE
                 : ConnectionState.DISABLED;
         TechnicalState technical = source.measurementState()
@@ -397,7 +399,15 @@ public class EquipmentSnapshotAssembler {
                 source.presetSeconds(),
                 source.tracts(),
                 source.lastCommand(),
-                source.lastResponse()
+                source.lastResponse(),
+                source.connectionAttempted(),
+                source.lastSuccessfulHeartbeatAt(),
+                source.lastSuccessfulHeartbeatAt() != null
+                        && !source.lastSuccessfulHeartbeatAt()
+                                .plus(staleAfter).isBefore(now),
+                source.businessCommandActive(),
+                source.responseUncertain(),
+                source.measurementDeadlineAt()
         );
     }
 

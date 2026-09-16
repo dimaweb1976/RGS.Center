@@ -125,10 +125,16 @@ public abstract class AbstractQueuedDeviceService
             if (state != PeripheralWorkerState.STOPPED) {
                 worker.stop();
             }
+            onCommunicationStarting();
             worker.start();
         } finally {
             lifecycleLock.unlock();
         }
+    }
+
+    /** Вызывается перед реальной попыткой открытия, включая неудачные попытки. */
+    protected void onCommunicationStarting() {
+        // По умолчанию дополнительное наблюдение за сеансом не требуется.
     }
 
     /** Останавливает очереди, потоки и транспорт устройства. */
