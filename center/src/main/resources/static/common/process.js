@@ -56,21 +56,34 @@ function renderHvControls(){
   const value=$('#diagHvValue');if(value){const voltage=Number(storedSettings['parameters.hv']?.voltage??2600);value.textContent=['raise','ready','fall','leak'].includes(hvState)?labels[hvState]+' · '+voltage+' V':'HV OFF'}
   const leakage=$('#diagLeakage');if(leakage)leakage.textContent=['raise','ready','fall','leak'].includes(hvState)?hvLeakageCurrent.toFixed(1):'—';
 }
-function turnHvOn(){
-  if(!['off','fall'].includes(hvState)||processCondition==='critical')return;
-  clearTimeout(hvRampTimer);clearTimeout(hvLeakTimer);
-  hvState='raise';syncProcessControls();
-  hvRampTimer=setTimeout(()=>{hvState='ready';syncProcessControls()},10000);
-  hvLeakTimer=setTimeout(()=>{
-    const threshold=Number(storedSettings['parameters.hv']?.leakage??50);
-    if(hvState==='ready'&&hvLeakageCurrent>threshold){hvState='leak';pauseForHvChange();reportProcessCondition('fault','Detector leakage current exceeds the configured limit. Turn HV off and inspect the detector.');syncProcessControls()}
-  },60000);
+async function turnHvOn(){
+    try {
+        const res = await fetch('/gammapro-boson/hv/on', { method: 'POST' });
+        if (!res.ok) throw new Error('HV ON failed: ' + res.status);
+    } catch (err) {
+        console.error(err);
+    }
+
+  //if(!['off','fall'].includes(hvState)||processCondition==='critical')return;
+  //clearTimeout(hvRampTimer);clearTimeout(hvLeakTimer);
+  //hvState='raise';syncProcessControls();
+  //hvRampTimer=setTimeout(()=>{hvState='ready';syncProcessControls()},10000);
+  //hvLeakTimer=setTimeout(()=>{
+  //  const threshold=Number(storedSettings['parameters.hv']?.leakage??50);
+  //  if(hvState==='ready'&&hvLeakageCurrent>threshold){hvState='leak';pauseForHvChange();reportProcessCondition('fault','Detector leakage current exceeds the configured limit. Turn HV off and inspect the detector.');syncProcessControls()}
+  //},60000);
 }
-function turnHvOff(){
-  if(!['raise','ready','leak'].includes(hvState))return;
-  clearTimeout(hvRampTimer);clearTimeout(hvLeakTimer);
-  hvState='fall';pauseForHvChange();syncProcessControls();
-  hvRampTimer=setTimeout(()=>{hvState='off';syncProcessControls()},10000);
+async function turnHvOff(){
+    try {
+        const res = await fetch('/gammapro-boson/hv/off', { method: 'POST' });
+        if (!res.ok) throw new Error('HV OFF failed: ' + res.status);
+    } catch (err) {
+        console.error(err);
+    }
+  //if(!['raise','ready','leak'].includes(hvState))return;
+  //clearTimeout(hvRampTimer);clearTimeout(hvLeakTimer);
+  //hvState='fall';pauseForHvChange();syncProcessControls();
+  //hvRampTimer=setTimeout(()=>{hvState='off';syncProcessControls()},10000);
 }
 // Demo input for a future detector-current feed; normal demo current is zero.
 window.addEventListener('rgs:leakage-current',event=>{const current=Number(event.detail?.current);if(Number.isFinite(current)&&current>=0)hvLeakageCurrent=current});

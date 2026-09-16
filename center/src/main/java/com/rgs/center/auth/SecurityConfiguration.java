@@ -87,7 +87,8 @@ class SecurityConfiguration {
                         // Ignoring CSRF here also makes logout reliable from an older tab.
                         .ignoringRequestMatchers(
                                 "/auth/logout",
-                                "/api/onlyOne/**"
+                                "/api/onlyOne/**",
+                                "/gammapro-boson/**"
                         ))
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))

@@ -38,7 +38,7 @@ class OnlyOneWebConfiguration implements WebMvcConfigurer {
         registry.addInterceptor(lockInterceptor)
                 .addPathPatterns(
                         "/measurement-emulator/**",
-                        "/gammapro-boson/**",
+                        //"/gammapro-boson/**",
                         "/barcode-scanner/**",
                         "/manipulator/**",
                         "/wizard/automatic/**",
