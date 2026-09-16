@@ -3,6 +3,12 @@
 .system-strip .module span,.system-strip .module b { font-size: 13px; }
 .system-strip .module.hv-off b { color: var(--muted); }
 .system-strip .module.hv-off b:before { background: var(--muted); }
+/* GammaPRO uses four explicit states, independently of detector HV classes. */
+#indicator_gammapro[data-status="ONLINE"] b { color: rgb(64, 202, 151); }
+#indicator_gammapro[data-status="OFFLINE"] b { color: rgb(255, 83, 100); }
+#indicator_gammapro[data-status="IN_PROGRESS"] b { color: rgb(242, 185, 75); }
+#indicator_gammapro[data-status="UNKNOWN"] b { color: var(--muted); }
+#indicator_gammapro b:before { background: currentColor; }
 .content>.system-strip { flex-wrap: nowrap; }
 .content>.system-strip .module { min-width: 78px; padding: 5px 8px 5px 20px; }
 .content>.system-strip .module span { font-size: 12px; white-space: nowrap; }

@@ -9,9 +9,60 @@ if(currentView==='auto'&&complexState==='paused')autoPause.click();
 if(['fault','critical'].includes(complexState))reportProcessCondition(complexState);
 syncProcessControls();
 
+let coolerHasData = false;
+let indicatorRequestPending = false;
+function updateGammaProIndicator(status) {
+    const button = document.getElementById('indicator_gammapro');
+    if (!button) return;
+    const value = typeof status === 'string'
+        ? status.trim().toUpperCase() : 'UNKNOWN';
+    const states = {
+        ONLINE: ['module ok', 'Online'],
+        OFFLINE: ['module ok hv-leak', 'Offline'],
+        IN_PROGRESS: ['module warn', 'In progress'],
+        UNKNOWN: ['module ok hv-off', 'Unknown']
+    };
+    const [className, label] = states[value] || states.UNKNOWN;
+    button.className = className;
+    button.dataset.status = states[value] ? value : 'UNKNOWN';
+    button.setAttribute('aria-label', `GammaPRO: ${label}`);
+    const text = button.querySelector('b');
+    if (text) text.textContent = label;
+}
+function updateCoolingIndicator(status) {
+    const button = document.getElementById('indicator_cooler');
+    if (!button) return;
+    const value = typeof status === 'string' ? status.trim().toUpperCase() : 'NO_DATA';
+    const states = {
+        READY: ['module ok', 'Ready'],
+        ONLINE: ['module ok', 'Online'],
+        OFFLINE: ['module ok hv-leak', 'Offline'],
+        ALERT: ['module ok hv-leak', 'Alert'],
+        STALE: ['module ok hv-leak', 'Stale'],
+        BUSY: ['module warn', 'Busy'],
+        CONNECTING: ['module warn', 'Connecting'],
+        NO_DATA: ['module ok hv-off', 'No data'],
+        DISABLED: ['module ok hv-off', 'Disabled']
+    };
+    const [className, label] = states[value] || states.NO_DATA;
+    button.className = className;
+    const text = button.querySelector('b');
+    if (text) text.textContent = label;
+}
+updateGammaProIndicator('UNKNOWN');
 setInterval( fetchIndicators, 1000);
+fetchIndicators();
 function fetchIndicators() {
-    fetch('/api/v1/indicators')
+    // Не допускаем наложения запросов и запоздалого перезаписывания статуса.
+    if (indicatorRequestPending) return;
+    indicatorRequestPending = true;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    fetch('/api/v1/indicators', {
+        signal: controller.signal,
+        credentials: 'same-origin',
+        cache: 'no-store'
+    })
         .then(response => {
             if (!response.ok) {
               throw new Error('Indicators request failed');
@@ -21,6 +72,9 @@ function fetchIndicators() {
         .then(data => {
             // Process incoming JSON payload
             console.log('Indicators data:', data);
+            updateGammaProIndicator(data.gammapro);
+            updateCoolingIndicator(data.cooler);
+            coolerHasData = typeof data.cooler === 'string' && data.cooler.trim() !== '';
             
             const shieldBtn = document.getElementById('indicator_shield');
             if (shieldBtn && data.shield !== null) {
@@ -57,6 +111,12 @@ function fetchIndicators() {
     .catch(error => {
       // Handle network or parsing errors
       console.error('Failed to update indicators:', error);
+      updateGammaProIndicator('UNKNOWN');
+      updateCoolingIndicator(coolerHasData ? 'STALE' : 'NO_DATA');
+    })
+    .finally(() => {
+      clearTimeout(timeout);
+      indicatorRequestPending = false;
     });
 }
 }
