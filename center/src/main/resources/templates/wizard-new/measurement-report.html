@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>RGSCenter — Measurement report</title>
+    <link rel="stylesheet" th:href="@{/wizard-new/css/shell.css}">
+    <link rel="stylesheet" th:href="@{/wizard-new/css/database.css}">
+    <script defer th:src="@{/wizard-new/js/shell.js}"></script>
+</head>
+<body class="wn-page">
+<div class="wn-shell">
+    <div th:replace="~{wizard-new/fragments/shell :: header}"></div>
+    <button class="wn-nav-toggle" type="button" aria-controls="wn-workspace-nav"
+            aria-expanded="false">Sections</button>
+    <div class="wn-workspace">
+        <aside class="wn-sidebar" id="wn-workspace-nav">
+            <div th:replace="~{wizard-new/fragments/shell :: navigation}"></div>
+        </aside>
+        <main class="wn-content" id="main-content">
+            <div th:replace="~{wizard-new/fragments/shell :: liveStatus}"></div>
+            <nav class="wn-breadcrumb" aria-label="Breadcrumb">
+                <a th:href="@{/wizard-new}">Main menu</a><span>/</span>
+                <a th:href="@{/wizard-new/database}">Measurement database</a><span>/</span>
+                <span>Report</span>
+            </nav>
+            <article class="wn-database-panel wn-report">
+                <div class="wn-report-heading">
+                    <div>
+                        <p class="wn-eyebrow" th:text="|${measurement.mode} MEASUREMENT|">MANUAL MEASUREMENT</p>
+                        <h2 th:text="${measurement.sampleCode}">Sample code</h2>
+                        <p th:text="|Run ${measurement.runId} / object ${measurement.objectNumber}|">Run identifier</p>
+                    </div>
+                    <span class="wn-history-status" th:classappend="| wn-history-status--${measurement.statusClass}|"
+                          th:text="${measurement.status}">COMPLETED</span>
+                </div>
+                <section aria-labelledby="object-title">
+                    <h3 id="object-title">Object</h3>
+                    <dl class="wn-report-grid">
+                        <div><dt>Sample code</dt><dd th:text="${measurement.sampleCode}">Sample</dd></div>
+                        <div><dt>Coordinates</dt><dd th:text="${measurement.coordinates}">Not applicable</dd></div>
+                        <div><dt>Gross mass</dt><dd th:text="${measurement.grossMass}">Not recorded</dd></div>
+                        <div><dt>Net mass</dt><dd th:text="${measurement.netMass}">Not recorded</dd></div>
+                    </dl>
+                </section>
+                <section aria-labelledby="parameters-title">
+                    <h3 id="parameters-title">Measurement parameters snapshot</h3>
+                    <dl class="wn-report-grid">
+                        <div><dt>Acquisition time</dt><dd th:text="${measurement.measuringTime}">30 min</dd></div>
+                        <div><dt>Volume</dt><dd th:text="${measurement.volume}">250 ml</dd></div>
+                        <div><dt>Geometry</dt><dd th:text="${measurement.geometry}">Vial</dd></div>
+                        <div><dt>Tare mass</dt><dd th:text="${measurement.tareMass}">25 g</dd></div>
+                    </dl>
+                </section>
+                <section aria-labelledby="execution-title">
+                    <h3 id="execution-title">Execution</h3>
+                    <dl class="wn-report-grid">
+                        <div><dt>Started</dt><dd th:text="${measurement.startedAt}">Start</dd></div>
+                        <div><dt>Finished</dt><dd th:text="${measurement.finishedAt}">Finish</dd></div>
+                        <div><dt>Duration</dt><dd th:text="${measurement.duration}">Duration</dd></div>
+                        <div><dt>Spectrum reference</dt><dd th:text="${measurement.spectrumReference}">Not recorded</dd></div>
+                    </dl>
+                </section>
+                <section aria-labelledby="error-title">
+                    <h3 id="error-title">Error description</h3>
+                    <p th:text="${measurement.error}">Not recorded</p>
+                </section>
+            </article>
+        </main>
+    </div>
+</div>
+</body>
+</html>

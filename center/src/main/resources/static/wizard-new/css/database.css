@@ -1,0 +1,68 @@
+/* WizardNew history layout, adapted from the F.measurement panels and tables. */
+.wn-database-toolbar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: end; gap: 12px; margin: 15px 0 18px; padding: 15px; background: #fff; border: 1px solid #c8d9e8; border-radius: 8px; }
+.wn-database-toolbar .wn-search-field { grid-column: span 2; }
+.wn-database-toolbar label { display: grid; gap: 6px; color: #506b81; font-size: 12px; font-weight: 600; }
+.wn-database-toolbar input, .wn-database-toolbar select { width: 100%; min-height: 42px; padding: 8px 10px; background: #fff; border: 1px solid #bfd3e3; border-radius: 6px; font: inherit; font-size: 13px; color: var(--wn-ink); }
+.wn-database-toolbar .wn-primary-button { min-height: 42px; }
+.wn-result-count { align-self: center; color: var(--wn-muted); font-size: 12px; white-space: nowrap; }
+.wn-database-layout { display: grid; grid-template-columns: minmax(360px, .78fr) minmax(0, 1.22fr); gap: 16px; align-items: start; }
+.wn-database-layout .wn-database-panel { margin-top: 0; }
+.wn-run-browser h2, .wn-run-detail h2 { margin: 0 0 5px; font-size: 20px; overflow-wrap: anywhere; }
+.wn-panel-hint { color: var(--wn-muted); font-size: 12px; line-height: 1.5; }
+.wn-run-table, .wn-object-table { width: 100%; border-collapse: collapse; text-align: left; }
+.wn-run-table th, .wn-object-table th { padding: 11px 8px; border-bottom: 1px solid #bfd3e3; color: #506b81; font-size: 11px; text-transform: uppercase; }
+.wn-run-table td, .wn-object-table td { padding: 12px 8px; border-bottom: 1px solid #bfd3e3; font-size: 12px; }
+.wn-run-table td:first-child { max-width: 155px; overflow-wrap: anywhere; }
+.wn-run-table .is-selected td { background: #e8f5fd; }
+.wn-run-table a { font-weight: 700; text-decoration: none; }
+.wn-selected-heading { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
+.wn-selected-heading p:not(.wn-eyebrow) { margin: 5px 0 0; color: var(--wn-muted); font-size: 12px; }
+.wn-summary-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 18px 0; }
+.wn-summary-tiles div { display: grid; gap: 5px; padding: 11px; background: #f4f9fd; border: 1px solid #c8d9e8; border-radius: 7px; }
+.wn-summary-tiles small { color: var(--wn-muted); font-size: 11px; }
+.wn-summary-tiles strong { font-size: 15px; }
+.wn-detail-section { margin-top: 15px; padding-top: 15px; border-top: 1px solid #c8d9e8; }
+.wn-detail-section h3 { margin: 0 0 12px; font-size: 18px; }
+.wn-detail-section ul { margin: 10px 0; padding-left: 20px; overflow-wrap: anywhere; }
+.wn-object-table { min-width: 540px; }
+.wn-breadcrumb { display: flex; flex-wrap: wrap; gap: 9px; margin-bottom: 28px; color: var(--wn-muted); font-size: 13px; }
+.wn-database-panel { margin-top: 22px; padding: 24px; background: var(--wn-surface); border: 1px solid var(--wn-line); border-radius: 12px; box-shadow: var(--wn-shadow); }
+.wn-database-panel h3 { margin: 0 0 18px; font-size: 20px; }
+.wn-history-filters { display: grid; grid-template-columns: repeat(3, minmax(160px, 1fr)); align-items: end; gap: 14px; }
+.wn-history-filters label { display: grid; gap: 6px; color: var(--wn-muted); font-size: 12px; font-weight: 700; }
+.wn-history-filters input, .wn-history-filters select { width: 100%; min-height: 42px; padding: 8px 10px; border: 1px solid var(--wn-line); border-radius: 7px; background: #fff; color: var(--wn-ink); font: inherit; font-size: 14px; }
+.wn-history-filters :is(input, select):focus-visible, .wn-primary-button:focus-visible { outline: 3px solid #79b4df; outline-offset: 2px; }
+.wn-primary-button { min-height: 42px; padding: 8px 14px; border: 0; border-radius: 7px; background: var(--wn-blue); color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+.wn-primary-button:hover { background: var(--wn-blue-dark); }
+.wn-results-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.wn-results-heading h3 { margin: 0; }
+.wn-results-heading span, .wn-empty, .wn-history-note { color: var(--wn-muted); }
+.wn-empty { margin: 24px 0 0; padding: 22px; background: #f4f8fb; border-radius: 8px; }
+.wn-table-scroll { overflow-x: auto; margin-top: 22px; }
+.wn-history-table { width: 100%; min-width: 850px; border-collapse: collapse; text-align: left; }
+.wn-history-table th { padding: 12px 10px; color: var(--wn-muted); background: #f3f7fa; font-size: 12px; }
+.wn-history-table td { padding: 13px 10px; border-bottom: 1px solid var(--wn-line); font-size: 13px; }
+.wn-history-table tr:hover td { background: #f8fbfd; }
+.wn-history-status { display: inline-block; padding: 6px 9px; border-radius: 999px; font-size: 12px; font-weight: 800; }
+.wn-history-status--ready { background: #e6f5ec; color: #16815d; }
+.wn-history-status--warning { background: #fff2d9; color: #986613; }
+.wn-history-status--alert { background: #fce9eb; color: #aa313e; }
+.wn-history-note { margin: 18px 0; font-size: 13px; line-height: 1.5; }
+.wn-report-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.wn-report-heading h2 { margin: 0 0 8px; font-size: 27px; }
+.wn-report-heading p:not(.wn-eyebrow) { color: var(--wn-muted); overflow-wrap: anywhere; }
+.wn-report section { margin-top: 28px; border-top: 1px solid var(--wn-line); padding-top: 22px; }
+.wn-report-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 0; }
+.wn-report-grid div { padding: 12px; background: #f4f8fb; border-radius: 8px; }
+.wn-report-grid dt { color: var(--wn-muted); font-size: 12px; }
+.wn-report-grid dd { margin: 5px 0 0; font-weight: 700; overflow-wrap: anywhere; }
+@media (max-width: 1100px) { .wn-history-filters { grid-template-columns: repeat(2, minmax(160px, 1fr)); } }
+@media (max-width: 1250px) { .wn-database-layout { grid-template-columns: 1fr; } }
+@media (max-width: 680px) {
+    .wn-database-toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .wn-database-toolbar .wn-search-field { grid-column: span 2; }
+    .wn-summary-tiles { grid-template-columns: 1fr; }
+    .wn-database-panel { padding: 16px; }
+    .wn-history-filters, .wn-report-grid { grid-template-columns: 1fr; }
+    .wn-report-heading { display: block; }
+}

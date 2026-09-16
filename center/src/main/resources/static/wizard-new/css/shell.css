@@ -1,0 +1,100 @@
+/* WizardNew-specific adaptation of the visual language in F.*; no shared source is modified. */
+:root {
+    --wn-bg: #f3f9fd;
+    --wn-surface: #fff;
+    --wn-ink: #17212b;
+    --wn-muted: #647383;
+    --wn-line: #d5dee6;
+    --wn-blue: #0b65a8;
+    --wn-blue-dark: #084d80;
+    --wn-shadow: 0 10px 30px rgba(26, 50, 71, .07);
+    font-family: Inter, "Segoe UI", Arial, sans-serif;
+    color: var(--wn-ink);
+    background: var(--wn-bg);
+}
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; }
+button { font: inherit; cursor: pointer; }
+a { color: var(--wn-blue-dark); }
+.wn-shell { width: min(1600px, 100%); min-height: 100vh; margin: auto; background: #f5faff; box-shadow: 0 0 28px rgba(26, 50, 71, .08); }
+.wn-topbar {
+    display: grid;
+    grid-template-columns: 185px minmax(280px, 1fr) auto;
+    align-items: center;
+    gap: 20px;
+    min-height: 102px;
+    padding: 12px 34px;
+    background: var(--wn-surface);
+    border-bottom: 1px solid #c8d9e8;
+}
+.wn-brand { display: flex; align-items: center; text-decoration: none; }
+.wn-brand img { display: block; width: 130px; height: auto; }
+.wn-topbar-title { text-align: center; }
+.wn-topbar-title h1 { margin: 0 0 6px; font-size: 22px; font-weight: 500; letter-spacing: .04em; }
+.wn-topbar-title p { margin: 0; color: #48627a; font-size: 13px; letter-spacing: .03em; }
+.wn-eyebrow { margin: 0 0 8px; color: var(--wn-blue); font-size: 12px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+.wn-account { justify-self: end; display: flex; align-items: center; gap: 26px; }
+.wn-account form { margin: 0; }
+.wn-account form button { padding: 8px 4px; border: 0; background: transparent; color: var(--wn-blue-dark); text-decoration: underline; font-size: 13px; font-weight: 700; }
+.wn-workflow-badge { display: flex; align-items: center; gap: 8px; min-width: 134px; max-width: 240px; padding: 10px 12px; border: 1px solid #cbdbe9; border-radius: 6px; background: #f6fafe; font-size: 12px; }
+.wn-workflow-badge span:last-child { display: grid; gap: 3px; min-width: 0; }
+.wn-workflow-badge strong { color: #344b61; }
+.wn-workflow-badge small { color: #47617a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wn-workspace { display: grid; grid-template-columns: 225px minmax(0, 1fr); min-height: calc(100vh - 102px); }
+.wn-sidebar { padding: 20px 12px; background: #fff; border-right: 1px solid #c8d9e8; }
+.wn-nav { display: grid; gap: 6px; }
+.wn-nav-link { display: flex; align-items: center; min-height: 46px; padding: 12px 12px; text-decoration: none; color: #344b61; font-size: 13px; font-weight: 700; }
+.wn-nav-link:hover:not(.is-pending), .wn-nav-link.is-active { background: #e3f3fc; color: var(--wn-blue-dark); box-shadow: inset 3px 0 0 #1686b4; }
+.wn-nav-link.is-pending { color: #6a7f90; cursor: not-allowed; }
+.wn-nav-link--legacy { margin-top: 28px; border-top: 1px solid var(--wn-line); font-size: 12px; }
+.wn-content { min-width: 0; padding: 28px 28px 44px; }
+.wn-live-status { margin-bottom: 22px; }
+.wn-status-rail { display: grid; grid-template-columns: repeat(6, minmax(90px, 1fr)) minmax(130px, 1.4fr); align-items: center; min-height: 58px; padding: 8px 12px; background: #fff; border: 1px solid #c8d9e8; border-radius: 8px; }
+.wn-status-item { display: flex; align-items: center; gap: 7px; min-width: 0; min-height: 40px; padding: 2px 10px; border-right: 1px solid #d5e2ed; }
+.wn-status-item span:last-child { display: grid; gap: 2px; min-width: 0; }
+.wn-status-item strong { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wn-status-item small { color: var(--wn-muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wn-status-light { flex: 0 0 7px; width: 7px; height: 7px; background: #73879a; border-radius: 50%; }
+.wn-status-light.is-ready { background: #28b487; }
+.wn-status-light.is-warning { background: #dda73c; }
+.wn-status-light.is-alert { background: #c43d50; }
+.wn-diagnostics-link { justify-self: end; padding: 10px; font-size: 12px; text-decoration: none; white-space: nowrap; }
+.wn-status-refresh-error { margin: 8px 0 0; padding: 8px; background: #fff1e1; color: #85581a; font-size: 12px; }
+.wn-intro { max-width: 800px; }
+.wn-intro h2 { margin: 0 0 10px; font-size: clamp(28px, 3vw, 38px); }
+.wn-intro p:not(.wn-eyebrow) { color: var(--wn-muted); line-height: 1.55; }
+.wn-card-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 32px; }
+.wn-card { display: flex; flex-direction: column; min-height: 240px; padding: 24px; background: var(--wn-surface); border: 1px solid var(--wn-line); border-top: 4px solid var(--wn-blue); border-radius: 12px; box-shadow: var(--wn-shadow); }
+.wn-card--link { color: var(--wn-ink); text-decoration: none; }
+.wn-card--link:hover { border-color: var(--wn-blue); }
+.wn-card h3 { margin: 0 0 10px; font-size: 22px; }
+.wn-card p:not(.wn-eyebrow) { margin: 0; color: var(--wn-muted); line-height: 1.5; }
+.wn-pill { align-self: flex-start; margin-top: auto; padding: 7px 10px; background: #edf4fa; color: var(--wn-blue-dark); border-radius: 999px; font-size: 12px; font-weight: 700; }
+.wn-note { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 24px; padding: 18px 20px; background: #f4f9fc; border: 1px solid #b9d4e8; border-radius: 10px; }
+.wn-note span { color: var(--wn-muted); }
+.wn-nav-toggle { display: none; }
+@media (max-width: 980px) {
+    .wn-topbar { grid-template-columns: auto minmax(0, 1fr); }
+    .wn-account { grid-column: 1 / -1; justify-self: end; }
+    .wn-status-rail { grid-template-columns: repeat(3, minmax(120px, 1fr)); gap: 6px; }
+    .wn-status-item:nth-child(3n) { border-right: 0; }
+    .wn-diagnostics-link { grid-column: 1 / -1; }
+    .wn-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 680px) {
+    .wn-topbar { gap: 12px; padding: 16px; }
+    .wn-brand img { width: 90px; }
+    .wn-topbar-title { text-align: left; }
+    .wn-topbar-title h1 { font-size: 18px; }
+    .wn-topbar-title p { font-size: 10px; }
+    .wn-account { gap: 12px; font-size: 12px; }
+    .wn-nav-toggle { display: block; margin: 14px 16px 0; padding: 9px 14px; background: var(--wn-surface); border: 1px solid var(--wn-line); border-radius: 8px; }
+    .wn-workspace { display: block; }
+    .wn-sidebar { display: none; padding: 12px 16px; }
+    .wn-sidebar.is-open { display: block; }
+    .wn-content { padding: 20px 16px; }
+    .wn-status-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .wn-status-item:nth-child(3n) { border-right: 1px solid #d5e2ed; }
+    .wn-status-item:nth-child(2n) { border-right: 0; }
+    .wn-card-grid { grid-template-columns: 1fr; }
+}

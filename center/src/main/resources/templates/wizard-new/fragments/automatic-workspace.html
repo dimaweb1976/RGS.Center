@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"><body>
+<section id="wn-mode-workspace" class="wn-mode-workspace" th:fragment="workspace"
+         th:attr="data-polling=${workflowView.canStop || workflowView.state == 'PRECHECK' || workflowView.state == 'PAUSING' || workflowView.state == 'CANCELLING'}"
+         aria-live="polite">
+    <p id="wn-action-message" class="wn-action-message" role="alert" hidden></p>
+    <p class="wn-eyebrow">AUTO MODE</p>
+    <section class="wn-mode-panel wn-auto-overview" aria-labelledby="auto-state-title">
+        <div class="wn-mode-toolbar">
+            <button class="wn-mode-button wn-mode-button--start" type="button"
+                    data-wn-action="run/start"
+                    th:disabled="${!automaticView.camera.recognized || automaticView.camera.bottles.empty || workflowView.canStop}">▶ Start</button>
+            <button class="wn-mode-button" type="button" data-wn-action="run/pause"
+                    th:disabled="${!workflowView.canPause}">Ⅱ Pause</button>
+            <button class="wn-mode-button" type="button" data-wn-action="run/resume"
+                    th:disabled="${!workflowView.canResume}">▶ Resume</button>
+            <button class="wn-mode-button wn-mode-button--stop" type="button"
+                    data-wn-action="run/stop" th:disabled="${!workflowView.canStop}">■ Stop safely</button>
+            <a th:href="@{/wizard/measurement-parameters}">Measuring parameters →</a>
+        </div>
+        <div class="wn-overview-heading">
+            <div><p class="wn-eyebrow">CURRENT MEASUREMENT</p>
+                <h2 id="auto-state-title" th:text="${workflowView.headline}">Ready to start</h2>
+                <p th:text="${workflowView.details}">No run has started.</p></div>
+            <strong th:text="${workflowView.state}">IDLE</strong>
+        </div>
+        <div class="wn-auto-metrics">
+            <div><small>Active object</small><strong th:text="${workflowView.activeObject}">—</strong></div>
+            <div><small>Current step</small><strong th:text="${workflowView.activeStep}">—</strong></div>
+            <div><small>Completed</small><strong th:text="|${workflowView.completedObjects} / ${workflowView.totalObjects}|">0 / 0</strong></div>
+            <div><small>Estimated completion</small><strong th:text="${workflowView.estimatedCompletion}">—</strong></div>
+        </div>
+        <div class="wn-progress-caption"><span>Run progress</span><strong th:text="|${workflowView.progressPercent}%|">0%</strong></div>
+        <div class="wn-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100"
+             th:attr="aria-valuenow=${workflowView.progressPercent}">
+            <span th:style="|width:${workflowView.progressPercent}%|"></span>
+        </div>
+    </section>
+
+    <section class="wn-incident" th:if="${scenarioIncident.present()}" role="alert">
+        <p class="wn-eyebrow" th:text="|${scenarioIncident.severity} · ${scenarioIncident.status}|">Emergency</p>
+        <h2 th:text="${scenarioIncident.code}">Incident</h2>
+        <p th:text="${scenarioIncident.message}">The run was interrupted.</p>
+        <button type="button" data-wn-action="run/acknowledge"
+                th:if="${scenarioIncident.canAcknowledge()}">Acknowledge incident</button>
+        <button type="button" data-wn-action="run/reset"
+                th:if="${scenarioIncident.canReset()}">Validate and reset</button>
+    </section>
+
+    <div class="wn-mode-grid">
+        <article class="wn-mode-panel">
+            <p class="wn-eyebrow">MACHINE VISION</p>
+            <div class="wn-panel-heading"><h2>Camera workfield</h2>
+                <span th:text="|${automaticView.camera.bottles.size()} detected objects|">0 objects</span></div>
+            <p th:text="${automaticView.camera.message}">No frame yet.</p>
+            <div class="wn-camera-frame" th:if="${automaticView.camera.imageAvailable}">
+                <img th:src="|/wizard/automatic/camera/image?version=${automaticView.camera.imageVersion}|"
+                     alt="Latest real camera frame">
+            </div>
+            <div class="wn-camera-frame wn-camera-frame--empty"
+                 th:unless="${automaticView.camera.imageAvailable}">No camera frame yet</div>
+            <div class="wn-mode-toolbar">
+                <button type="button" data-wn-action="camera/capture"
+                        th:disabled="${workflowView.canStop}">Capture image</button>
+                <button type="button" data-wn-action="camera/recognize"
+                        th:disabled="${!automaticView.camera.imageAvailable || workflowView.canStop}">Recognize bottles</button>
+            </div>
+            <dl class="wn-file-paths" th:if="${automaticView.camera.recognized}">
+                <div><dt>Original image</dt><dd th:text="${automaticView.camera.originalFile}">—</dd></div>
+                <div><dt>Detected image</dt><dd th:text="${automaticView.camera.detectedFile}">—</dd></div>
+            </dl>
+        </article>
+        <article class="wn-mode-panel">
+            <p class="wn-eyebrow">MEASUREMENT PLAN</p>
+            <h2 th:text="|${workflowView.totalObjects} objects in queue|">0 objects</h2>
+            <p th:text="|Completed ${workflowView.completedObjects} / ${workflowView.totalObjects}|">No objects</p>
+            <div class="wn-table-scroll"><table class="wn-mode-table">
+                <thead><tr><th>No.</th><th>Sample</th><th>Status</th><th>Mass</th><th>Spectrum</th></tr></thead>
+                <tbody><tr th:each="object : ${workflowView.objects}">
+                    <td th:text="${object.number}">1</td>
+                    <td th:text="${object.barcode}">Waiting</td>
+                    <td th:text="${object.status}">QUEUED</td>
+                    <td th:text="${object.netMass}">Waiting</td>
+                    <td th:text="${object.spectrum}">Waiting</td>
+                </tr></tbody>
+            </table></div>
+            <p th:if="${workflowView.objects.empty}">Recognize bottles to create the object list.</p>
+            <p class="wn-mode-note">The backend preflight checks equipment before issuing any object-handling command.</p>
+        </article>
+    </div>
+    <section class="wn-mode-panel wn-journal">
+        <p class="wn-eyebrow">EVENT JOURNAL</p>
+        <h2>Latest workflow events</h2>
+        <ol><li th:each="event : ${workflowView.events}">
+            <time th:text="${event.time}">00:00:00</time>
+            <strong th:text="${event.context}">Run</strong>
+            <span th:text="${event.message}">Event</span>
+        </li></ol>
+        <p th:if="${workflowView.events.empty}">No workflow events yet.</p>
+    </section>
+</section>
+</body></html>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>RGSCenter — Automatic mode</title>
+    <link rel="stylesheet" th:href="@{/wizard-new/css/shell.css}">
+    <link rel="stylesheet" th:href="@{/wizard-new/css/modes.css}">
+    <script defer th:src="@{/wizard-new/js/shell.js}"></script>
+    <script defer th:src="@{/wizard-new/js/workflow-actions.js}"></script>
+</head>
+<body class="wn-page" data-workflow-mode="automatic">
+<div class="wn-shell">
+    <div th:replace="~{wizard-new/fragments/shell :: header}"></div>
+    <button class="wn-nav-toggle" type="button" aria-controls="wn-workspace-nav" aria-expanded="false">Sections</button>
+    <div class="wn-workspace">
+        <aside class="wn-sidebar" id="wn-workspace-nav">
+            <div th:replace="~{wizard-new/fragments/shell :: navigation}"></div>
+        </aside>
+        <main class="wn-content" id="main-content">
+            <div th:replace="~{wizard-new/fragments/shell :: liveStatus}"></div>
+            <div th:replace="~{wizard-new/fragments/automatic-workspace :: workspace}"></div>
+        </main>
+    </div>
+</div>
+</body>
+</html>

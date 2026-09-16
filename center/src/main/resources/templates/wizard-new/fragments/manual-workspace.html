@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"><body>
+<section id="wn-mode-workspace" class="wn-mode-workspace" th:fragment="workspace"
+         th:attr="data-polling=${manualMeasurement.canStop || manualMeasurement.state == 'PREPARING' || manualMeasurement.state == 'CANCELLING'}"
+         aria-live="polite">
+    <p id="wn-action-message" class="wn-action-message" role="alert" hidden></p>
+    <p class="wn-eyebrow">MANUAL MODE</p>
+    <div class="wn-mode-toolbar wn-manual-toolbar">
+        <button class="wn-mode-button" type="button" data-wn-action="hatch/open"
+                th:disabled="${!manualMeasurement.controlsEnabled}">Open shield</button>
+        <button class="wn-mode-button" type="button" data-wn-action="hatch/close"
+                th:disabled="${!manualMeasurement.controlsEnabled}">Close shield</button>
+        <button class="wn-mode-button wn-mode-button--start" type="button"
+                data-wn-action="spectrum/start" th:disabled="${!manualMeasurement.canStart}">▶ Start measurement</button>
+        <button class="wn-mode-button" type="button" disabled
+                title="ManualMeasurementService does not provide a pause operation">Ⅱ Pause unavailable</button>
+        <button class="wn-mode-button wn-mode-button--stop" type="button"
+                data-wn-action="spectrum/stop" th:disabled="${!manualMeasurement.canStop}">■ Stop safely</button>
+    </div>
+    <section class="wn-mode-panel wn-manual-overview">
+        <div class="wn-overview-heading">
+            <div><p class="wn-eyebrow">CURRENT MEASUREMENT</p>
+                <h2 th:text="${manualMeasurement.headline}">Prepare a manual measurement</h2>
+                <p th:text="${manualMeasurement.currentOperation}">—</p></div>
+            <strong th:text="${manualMeasurement.state}">IDLE</strong>
+        </div>
+        <div class="wn-progress-caption"><span>Spectrum acquisition progress</span>
+            <strong th:text="|${manualMeasurement.progressPercent}%|">0%</strong></div>
+        <div class="wn-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100"
+             th:attr="aria-valuenow=${manualMeasurement.progressPercent}">
+            <span th:style="|width:${manualMeasurement.progressPercent}%|"></span>
+        </div>
+        <div class="wn-auto-metrics">
+            <div><small>Started</small><strong th:text="${manualMeasurement.startedAt}">—</strong></div>
+            <div><small>Estimated finish</small><strong th:text="${manualMeasurement.estimatedFinishAt}">—</strong></div>
+            <div><small>HV request</small><strong th:text="${manualMeasurement.highVoltageState}">Not confirmed</strong></div>
+            <div><small>Shield</small><strong th:text="${manualMeasurement.hatchState}">UNKNOWN</strong></div>
+        </div>
+    </section>
+    <section class="wn-mode-panel wn-parameters">
+        <div class="wn-panel-heading"><h2>Measuring parameters</h2>
+            <a th:href="@{/wizard/measurement-parameters}">Edit parameters →</a></div>
+        <div class="wn-auto-metrics">
+            <div><small>Measuring time</small><strong th:text="|${manualView.parameters.measuringTimeMinutes} min|">30 min</strong></div>
+            <div><small>Volume</small><strong th:text="|${manualView.parameters.volumeMl} ml|">300 ml</strong></div>
+            <div><small>Geometry</small><strong th:text="${manualView.parameters.geometry.label}">Vial</strong></div>
+            <div><small>Tare mass</small><strong th:text="|${manualView.parameters.tareMassGrams} g|">0 g</strong></div>
+        </div>
+    </section>
+    <div class="wn-mode-grid">
+        <article class="wn-mode-panel">
+            <p class="wn-eyebrow">SAMPLE</p><h2>Identification and mass</h2>
+            <form data-wn-form="sample-code" method="post" th:action="@{/wizard/manual/sample-code}">
+                <label for="wn-sample-code">Sample code</label>
+                <div class="wn-field-actions">
+                    <input id="wn-sample-code" name="sampleCode" maxlength="256" required
+                           th:value="${manualMeasurement.sampleCode}"
+                           th:disabled="${!manualMeasurement.controlsEnabled}">
+                    <button type="submit" th:disabled="${!manualMeasurement.controlsEnabled}">Apply</button>
+                    <button type="button" data-wn-action="scan"
+                            th:disabled="${!manualMeasurement.controlsEnabled}">Scan</button>
+                </div>
+            </form>
+            <dl class="wn-measurement-values">
+                <div><dt>Gross mass</dt><dd th:text="${manualMeasurement.grossMass}">Not read</dd></div>
+                <div><dt>Net mass</dt><dd th:text="${manualMeasurement.netMass}">Not read</dd></div>
+            </dl>
+            <button type="button" data-wn-action="weigh"
+                    th:disabled="${!manualMeasurement.controlsEnabled}">Read stable weight</button>
+        </article>
+        <article class="wn-mode-panel">
+            <p class="wn-eyebrow">SPECTRUM</p><h2>Gamma-PRO acquisition</h2>
+            <dl class="wn-measurement-values">
+                <div><dt>Result</dt><dd th:text="${manualMeasurement.spectrumReference}">—</dd></div>
+                <div><dt>Last error</dt><dd th:text="${manualMeasurement.lastError}">—</dd></div>
+                <div><dt>Leakage current</dt><dd th:text="${manualView.leakageCurrent}">No data</dd></div>
+                <div><dt>Leakage limit</dt><dd th:text="${manualView.leakageLimit}">No data</dd></div>
+            </dl>
+            <div class="wn-mode-toolbar">
+                <button type="button" data-wn-action="hv/enable"
+                        th:disabled="${!manualMeasurement.controlsEnabled}">Turn on HV</button>
+                <button type="button" data-wn-action="hv/disable"
+                        th:disabled="${!manualMeasurement.controlsEnabled}">Turn off HV</button>
+                <button type="button" data-wn-action="reset"
+                        th:if="${manualMeasurement.canReset}">New measurement</button>
+            </div>
+            <p class="wn-mode-note">Before acquisition the backend rechecks Gamma-PRO, BOSON, SHP, Dobot, the closed hatch and the confirmed HV request.</p>
+        </article>
+    </div>
+</section>
+</body></html>
