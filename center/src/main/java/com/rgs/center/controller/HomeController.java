@@ -46,8 +46,9 @@ public class HomeController {
      */
     @GetMapping("/")
     public String index() {
-        log.debug("Rendering application index page");
-        return "index";
+        //log.debug("Rendering application index page");
+        //return "index";
+        return "forward:/F.automode/index.html";
     }
 
     /**
