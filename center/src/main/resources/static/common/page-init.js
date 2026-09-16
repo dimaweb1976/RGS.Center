@@ -9,6 +9,8 @@ if(currentView==='auto'&&complexState==='paused')autoPause.click();
 if(['fault','critical'].includes(complexState))reportProcessCondition(complexState);
 syncProcessControls();
 
+fetchIndicators();
+
 setInterval( fetchIndicators, 1000);
 function fetchIndicators() {
     fetch('/api/v1/indicators')
