@@ -1,5 +1,0 @@
-/* common: original cascade segment 34. Loaded by Common/styles.css. */
-.diagnostics-dialog { background: rgb(255, 255, 255); color: var(--ink); border-color: var(--line); }
-.toast { background: rgb(23, 61, 86); color: rgb(255, 255, 255); border-color: rgb(47, 102, 129); }
-body .header-auto-state.stopped { background: rgb(255, 241, 243); border-color: rgb(227, 174, 181); color: rgb(157, 51, 64); }
-body .header-auto-state.stopped b { color: rgb(143, 47, 58); }

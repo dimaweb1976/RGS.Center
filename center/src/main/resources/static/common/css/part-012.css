@@ -1,5 +1,0 @@
-/* common: original cascade segment 12. Loaded by Common/styles.css. */
-.overall-progress { margin-bottom: 18px; padding: 20px 22px; }
-.progress-heading { display: flex; align-items: flex-start; justify-content: space-between; }
-.progress-heading h2 { margin: 0px; }
-.progress-heading>strong { font-size: 24px; color: var(--cyan); font-variant-numeric: tabular-nums; }

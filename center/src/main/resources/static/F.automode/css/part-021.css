@@ -1,9 +1,0 @@
-/* auto: original cascade segment 21. Loaded by Common/styles.css. */
-.auto-command-bar,.measurement-progress .auto-command-bar { background: transparent; }
-.measurement-metric { background: rgb(248, 251, 253); border-color: var(--line); }
-.measurement-metric.stage-metric>b,.measurement-metric.stage-metric.active-stage>b,.measurement-metric.stage-metric.stopped-stage>b { background: rgb(229, 246, 238); border-color: rgb(159, 211, 189); color: rgb(19, 117, 79); }
-.auto-progress-track { background: rgb(219, 229, 236); }
-.auto-progress-track i { box-shadow: none; }
-.queue-panel tbody tr:hover,.queue-panel tbody tr.selected { background: rgb(231, 243, 249); }
-.queue-panel tbody tr.processing { background: rgb(255, 247, 232); }
-.stage-timeline span:not(:last-child):after { color: rgb(144, 162, 178); }

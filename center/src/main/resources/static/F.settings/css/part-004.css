@@ -1,6 +1,0 @@
-/* settings: original cascade segment 4. Loaded by Common/styles.css. */
-.device-settings { background: rgb(255, 255, 255); border-color: var(--line); }
-.device-list { background: rgb(247, 250, 252); border-color: var(--line); }
-.device-item { color: rgb(52, 75, 94); border-color: rgb(223, 231, 237); }
-.device-item:hover { background: rgb(234, 243, 248); }
-.device-item.active { background: rgb(220, 238, 247); color: rgb(7, 95, 148); box-shadow: inset 3px 0 var(--cyan); }

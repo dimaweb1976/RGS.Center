@@ -1,5 +1,0 @@
-/* common: original cascade segment 47. Loaded by Common/styles.css. */
-@media (max-width:700px) {
-  .batch-parameters dl { grid-template-columns: 1fr; }
-  .batch-parameters .batch-parameter-comment { grid-column: auto; }
-}

@@ -1,9 +1,0 @@
-/* common: original cascade segment 52. Loaded by Common/styles.css. */
-body.theme-dark .module span,body.theme-dark .system-strip .module span,body.theme-dark .device-fields label,body.theme-dark .parameter-grid label,body.theme-dark .gate-card label,body.theme-dark .form-grid label,body.theme-dark .panel>label { color: rgb(200, 213, 227); }
-body.theme-dark input,body.theme-dark select,body.theme-dark textarea { background: rgb(9, 21, 33); color: var(--ink); border-color: var(--line); }
-body.theme-dark button { background: rgb(23, 38, 56); color: var(--ink); border-color: rgb(59, 76, 96); }
-body.theme-dark .primary,body.theme-dark .password-row button { background: rgb(22, 137, 165); border-color: rgb(44, 203, 233); color: rgb(255, 255, 255); }
-body.theme-dark .secondary { background: rgb(23, 38, 56); color: var(--ink); }
-body.theme-dark .nav-item { color: rgb(157, 170, 189); }
-body.theme-dark .nav-item:hover { background: rgb(16, 34, 53); color: rgb(255, 255, 255); }
-body.theme-dark .nav-item.active { background: rgb(17, 48, 71); color: rgb(255, 255, 255); box-shadow: inset 3px 0 0 var(--cyan); }

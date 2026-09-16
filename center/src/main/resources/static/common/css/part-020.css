@@ -1,6 +1,0 @@
-/* common: original cascade segment 20. Loaded by Common/styles.css. */
-.content>.system-strip { margin-bottom: 22px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; }
-.system-strip .module { min-width: 0px; padding: 5px 12px 5px 25px; flex: 0 1 auto; }
-.system-strip .module span { font-size: 12px; }
-.system-strip .module b { font-size: 12px; }
-.system-strip .diagnostics-link { font-size: 12px; padding: 10px; }

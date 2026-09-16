@@ -1,6 +1,0 @@
-/* common: original cascade segment 32. Loaded by Common/styles.css. */
-button { background: rgb(237, 243, 247); color: rgb(37, 59, 77); border-color: rgb(185, 200, 212); }
-.secondary { background: rgb(255, 255, 255); color: rgb(37, 59, 77); }
-.primary,.password-row button { background: rgb(8, 123, 155); border-color: rgb(6, 105, 130); color: rgb(255, 255, 255); }
-.danger-outline { background: rgb(255, 245, 246); color: var(--red); border-color: rgb(222, 167, 173); }
-input,select,textarea { background: rgb(255, 255, 255); color: var(--ink); border-color: rgb(185, 200, 212); }

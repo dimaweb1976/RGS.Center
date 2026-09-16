@@ -1,5 +1,18 @@
 // A storage-denied file:// browser still renders the complete page.
-function browserStorage(name){const memory=new Map();return {getItem(key){try{return window[name].getItem(key)??memory.get(key)??null}catch{return memory.get(key)??null}},setItem(key,value){memory.set(key,String(value));try{window[name].setItem(key,String(value))}catch{}},removeItem(key){memory.delete(key);try{window[name].removeItem(key)}catch{}}}}
+function browserStorage(name){
+  const memory=new Map();
+  return {getItem(key){
+    try{
+      return window[name].getItem(key)??memory.get(key)??null
+    }catch{
+      return memory.get(key)??null}},setItem(key,value){memory.set(key,String(value));
+    try{window[name].setItem(key,String(value))}
+    catch{}
+},
+removeItem(key){memory.delete(key);
+try{window[name].removeItem(key)}
+catch{}
+}}}
 const safeSession=browserStorage('sessionStorage'),safeLocal=browserStorage('localStorage');
 // Shared state, session demonstration, navigation and notifications.
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];

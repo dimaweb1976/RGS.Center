@@ -1,0 +1,10 @@
+CSS refactor
+
+Working pages now use exactly two stylesheets:
+  /common/common.css
+  /<page>/<page-name>.css
+
+Common CSS contains only shared shell/components/rules used by multiple working pages.
+Selectors from the old common fragments that belong to only one page were moved into that page stylesheet.
+Old part-XXX.css folders and page styles.css import manifests were removed for these five pages.
+Auth/wizard/device_settings CSS was left untouched.

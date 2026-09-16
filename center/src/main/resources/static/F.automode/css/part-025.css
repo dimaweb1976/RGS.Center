@@ -1,5 +1,0 @@
-/* auto: original cascade segment 25. Loaded by Common/styles.css. */
-.queue-table-scroll { max-height: 430px; overflow: auto; border-bottom: 1px solid var(--line); }
-.queue-table-scroll table { margin-bottom: 0px; }
-.queue-table-scroll thead { position: sticky; top: 0px; z-index: 1; background: var(--surface); }
-.queue-table-scroll th { background: var(--surface); }

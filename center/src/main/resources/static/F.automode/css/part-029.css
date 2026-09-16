@@ -1,5 +1,0 @@
-/* auto: original cascade segment 29. Loaded by Common/styles.css. */
-body.theme-dark .queue-panel tbody tr:hover,body.theme-dark .queue-panel tbody tr.selected { background: rgb(17, 48, 71); }
-body.theme-dark .queue-panel tbody tr.processing { background: rgb(51, 39, 21); }
-body.theme-dark .auto-progress-track { background: rgb(28, 43, 61); }
-body.theme-dark .auto-progress-track i { box-shadow: 0 0 12px #27c5e855; }

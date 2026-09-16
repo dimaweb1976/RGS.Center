@@ -1,6 +1,0 @@
-/* common: original cascade segment 43. Loaded by Common/styles.css. */
-.batch-browser table { margin: 0px; }
-.batch-browser td:first-child b,.batch-browser td:first-child small { display: block; }
-.batch-browser td:first-child small { margin-top: 4px; color: var(--muted); }
-.batch-browser tbody tr { cursor: pointer; }
-.batch-browser tbody tr:hover,.batch-browser tbody tr.selected,.file-table-scroll tbody tr.selected { background: rgb(232, 243, 248); }

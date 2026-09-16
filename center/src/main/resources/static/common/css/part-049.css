@@ -1,7 +1,0 @@
-/* common: original cascade segment 49. Loaded by Common/styles.css. */
-@media (max-width:600px) {
-  .settings-tabs { overflow-x: auto; }
-  .settings-tab { white-space: nowrap; }
-  .document-file-control { grid-template-columns: 1fr; }
-  .document-file-control button { width: 100%; }
-}

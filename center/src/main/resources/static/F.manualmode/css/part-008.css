@@ -1,4 +1,0 @@
-/* manual: original cascade segment 8. Loaded by Common/styles.css. */
-.service-progress { margin: 18px 0px; }
-.service-progress>div { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; color: var(--muted); margin-bottom: 8px; }
-.service-progress progress { height: 9px; }

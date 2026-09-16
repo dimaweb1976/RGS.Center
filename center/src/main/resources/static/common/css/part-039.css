@@ -1,4 +1,0 @@
-/* common: original cascade segment 39. Loaded by Common/styles.css. */
-.value-unit { display: grid; grid-template-columns: minmax(0,1fr) 116px; }
-.value-unit input { border-radius: 5px 0 0 5px; }
-.value-unit select { border-left: 0px; border-radius: 0 5px 5px 0; background: rgb(243, 247, 250); }

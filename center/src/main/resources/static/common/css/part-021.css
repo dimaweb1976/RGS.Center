@@ -1,8 +1,0 @@
-/* common: original cascade segment 21. Loaded by Common/styles.css. */
-.auto-state>span { display: grid; gap: 4px; }
-.auto-state b { font-size: 12px; color: var(--ink); font-weight: 700; }
-.auto-state small { font-size: 12px; color: var(--muted); font-weight: 400; }
-.auto-state.stopped { color: var(--red); background: rgb(41, 26, 34); border-color: rgb(101, 49, 60); }
-.auto-state.stopped i { background: var(--red); box-shadow: 0 0 8px #ef6b7866; }
-.auto-state.idle { color: var(--green); background: rgb(14, 44, 36); border-color: rgb(40, 92, 72); }
-.auto-state.idle i { background: var(--green); }

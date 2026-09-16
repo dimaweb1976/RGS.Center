@@ -1,3 +1,0 @@
-/* common: original cascade segment 24. Loaded by Common/styles.css. */
-.header-process.paused progress::-webkit-progress-value { background: var(--amber); }
-.header-process.paused progress::-moz-progress-bar { background: var(--amber); }

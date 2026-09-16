@@ -1,7 +1,0 @@
-/* auto: original cascade segment 1. Loaded by Common/styles.css. */
-.auto-grid { display: grid; grid-template-columns: 1.4fr .6fr; gap: 18px; }
-.field-map { height: 430px; background: linear-gradient(135deg, rgb(35, 51, 61), rgb(19, 30, 37)); position: relative; overflow: hidden; border-radius: 6px; }
-.field-map:before { content: ""; position: absolute; inset: 24px; border: 2px dashed rgb(226, 189, 48); background: linear-gradient(90deg, transparent 49.7%, rgb(119, 136, 146) 50%, transparent 50.3%); }
-.sample-dot { position: absolute; width: 44px; height: 44px; border-radius: 50%; background: rgb(174, 185, 190); border: 3px solid rgb(232, 237, 239); display: grid; place-items: center; font-weight: 900; color: rgb(38, 53, 63); box-shadow: 0 4px 10px #0006; }
-.sample-dot:after { content: ""; width: 7px; height: 7px; background: rgb(233, 71, 79); border-radius: 50%; position: absolute; }
-.sample-dot b { transform: translateY(28px); color: rgb(255, 255, 255); font-size: 11px; }

@@ -1,3 +1,0 @@
-/* common: original cascade segment 17. Loaded by Common/styles.css. */
-.sample-stage-line,.queue-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 14px; }
-.sample-stage-line { margin-top: 12px; color: var(--cyan); }

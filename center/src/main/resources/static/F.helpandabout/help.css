@@ -1,4 +1,6 @@
-/* help: original cascade segment 1. Loaded by Common/styles.css. */
+/* Page-specific styles: F.helpandabout */
+
+/* page-base.css */
 .help-view { max-width: 1380px; }
 .help-head { margin-bottom: 16px; }
 .help-layout { display: grid; grid-template-columns: minmax(600px,1.35fr) minmax(330px,.65fr); gap: 16px; align-items: start; }
@@ -27,3 +29,21 @@
 .about-purpose { margin-top: 18px; padding: 14px; border-left: 3px solid var(--cyan); background: rgb(242, 248, 250); }
 .about-purpose strong { font-size: 13px; }
 .about-purpose p { margin: 5px 0px 0px; color: rgb(82, 104, 119); font-size: 13px; line-height: 1.5; }
+
+@media (max-width:1100px) {
+.help-layout {grid-template-columns: 1fr;}
+.about-panel {display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px;}
+.about-panel>.eyebrow, .about-panel>h2 {grid-column: 1/-1;}
+.about-facts {margin-top: 8px;}
+.about-purpose {align-self: start;}
+}
+@media (max-width:700px) {
+.help-layout {display: block;}
+.documentation-panel {margin-bottom: 16px;}
+.help-section-head {display: block;}
+.help-section-head>p {margin-top: 8px; text-align: left;}
+.document-row {grid-template-columns: 42px minmax(0,1fr);}
+.document-download {grid-column: 2; width: max-content;}
+.about-panel {display: block;}
+.about-facts div {grid-template-columns: 105px minmax(0,1fr);}
+}

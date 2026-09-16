@@ -1,5 +1,0 @@
-/* settings: original cascade segment 5. Loaded by Common/styles.css. */
-.geometry-actions { display: flex; gap: 7px; flex-wrap: wrap; justify-content: flex-end; }
-.geometry-actions button { padding: 7px 10px; font-size: 12px; }
-.device-item.archived { opacity: 0.55; }
-.settings-view[data-section="geometries"] .device-fields input { font-size: 14px; }

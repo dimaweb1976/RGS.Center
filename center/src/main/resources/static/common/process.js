@@ -48,7 +48,7 @@ function renderHvControls(){
   if(turnOff)turnOff.disabled=!['raise','ready','leak'].includes(hvState);
   hvRenderedState=hvState;
   const labels={off:'HV OFF',raise:'Raise',ready:'READY',fall:'Fall',leak:'LEAK'};
-  $('#detectorHvModule').className='module hv-'+hvState;
+  $('#indicator_detector').className='module hv-'+hvState;
   $('#detectorHvStatus').innerHTML=labels[hvState]+(['raise','fall'].includes(hvState)?'<span class="hv-dots" aria-hidden="true"><i>.</i><i>.</i><i>.</i></span>':'');
   $('#detectorHvStatus').setAttribute('aria-label',labels[hvState]);
   const messages={off:'Turn HV on and wait for READY before starting or resuming a measurement.',raise:'Detector voltage is rising. Wait for READY.',ready:'Detector HV is ready. Measurements can be started or resumed.',fall:'Detector voltage is falling. Start and resume are unavailable.',leak:'Leakage current exceeds the limit. Turn HV off and resolve the issue before continuing.'};
@@ -133,7 +133,7 @@ function openDiagnostics(event){
   });
   diagnosticsDialog.showModal();
   renderHvControls();
-  if(event?.currentTarget?.id==='detectorHvModule'){const row=$('#detectorHvDiagnostics');row.classList.add('focused');row.scrollIntoView({block:'center'})}
+  if(event?.currentTarget?.id==='indicator_detector'){const row=$('#detectorHvDiagnostics');row.classList.add('focused');row.scrollIntoView({block:'center'})}
 }
 $('#viewDiagnostics').addEventListener('click',openDiagnostics);
 $$('.system-strip .module').forEach(module=>module.addEventListener('click',openDiagnostics));
