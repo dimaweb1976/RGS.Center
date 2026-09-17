@@ -111,6 +111,16 @@ class DeviceSettingsServiceTests {
     }
 
     @Test
+    void persistedFeedbackOnlyOverridesPropertyDefault() {
+        assertEquals(false, runtimeSettings.getValue(SettingsService.MANIPULATOR_FEEDBACK_ONLY));
+        when(repository.findAll()).thenReturn(List.of(new DeviceSetting(
+                SettingsService.MANIPULATOR_FEEDBACK_ONLY, "RoboticManipulator",
+                SettingType.BOOLEAN, true, 1, Instant.now(), 7L, "admin")));
+        service.loadPersistedSettings();
+        assertEquals(true, runtimeSettings.getValue(SettingsService.MANIPULATOR_FEEDBACK_ONLY));
+    }
+
+    @Test
     void exposesRuntimeDefaultWhenDatabaseRowDoesNotExist() {
         assertEquals(4, service.findByDevice("scales").size());
         assertEquals(

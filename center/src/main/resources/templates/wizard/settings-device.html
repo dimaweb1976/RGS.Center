@@ -77,14 +77,15 @@
                                th:text="${field.label}">Setting</label>
                         <div class="wizard-setting-input">
                             <input th:id="|setting-${fieldStat.index}|"
-                                   th:type="${field.type == 'LONG' || field.type == 'DOUBLE'} ? 'number' : 'text'"
+                                   th:type="${field.type == 'BOOLEAN' ? 'checkbox' : (field.type == 'LONG' || field.type == 'DOUBLE' ? 'number' : 'text')}"
+                                   th:checked="${field.type == 'BOOLEAN' && field.value == 'true'}"
                                    th:value="${field.value}"
                                    th:attr="data-setting-id=${field.id},
                                             data-setting-type=${field.type},
                                             data-setting-version=${field.version},
                                             min=${field.minimum},max=${field.maximum}"
                                    th:disabled="${!settingsDevice.editable}"
-                                   required>
+                                   th:required="${field.type != 'BOOLEAN'}">
                             <span th:if="${!field.unit.isEmpty()}" th:text="${field.unit}">ms</span>
                         </div>
                         <small th:text="${field.hint}">Validation hint</small>

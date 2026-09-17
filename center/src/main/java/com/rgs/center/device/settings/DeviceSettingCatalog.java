@@ -44,6 +44,7 @@ public class DeviceSettingCatalog {
         add(definitions, DeviceCode.BOSON, SettingsService.BOSON_IP, SettingType.STRING);
 
         add(definitions, DeviceCode.ROBOTIC_MANIPULATOR, SettingsService.MANIPULATOR_HOST, SettingType.STRING);
+        add(definitions, DeviceCode.ROBOTIC_MANIPULATOR, SettingsService.MANIPULATOR_FEEDBACK_ONLY, SettingType.BOOLEAN);
         add(definitions, DeviceCode.ROBOTIC_MANIPULATOR, SettingsService.MANIPULATOR_COMMAND_PORT, SettingType.LONG);
         add(definitions, DeviceCode.ROBOTIC_MANIPULATOR, SettingsService.MANIPULATOR_FEEDBACK_PORT, SettingType.LONG);
         add(definitions, DeviceCode.ROBOTIC_MANIPULATOR, SettingsService.MANIPULATOR_CONNECT_TIMEOUT_MILLIS, SettingType.LONG);

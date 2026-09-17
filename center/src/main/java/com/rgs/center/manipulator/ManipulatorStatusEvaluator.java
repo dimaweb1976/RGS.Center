@@ -52,9 +52,9 @@ public class ManipulatorStatusEvaluator {
         DobotFeedbackFrame feedback = snapshot.latestFeedback();
         boolean hasFeedback = feedback != null
                 && snapshot.latestFeedbackReceivedAtEpochMillis() > 0L;
-        boolean channelsRunning = running(snapshot.commandChannel())
+        boolean channelsRunning = (snapshot.feedbackOnly() || running(snapshot.commandChannel()))
                 && running(snapshot.feedbackChannel());
-        boolean channelsTransitioning = transitioning(snapshot.commandChannel())
+        boolean channelsTransitioning = (!snapshot.feedbackOnly() && transitioning(snapshot.commandChannel()))
                 || transitioning(snapshot.feedbackChannel());
         boolean stale = hasFeedback && isStale(
                 snapshot.latestFeedbackReceivedAtEpochMillis()
@@ -77,7 +77,8 @@ public class ManipulatorStatusEvaluator {
         SpectrometerHatchStatus hatch = hatchStatus(feedback.digitalInputs());
         List<String> reasons = new ArrayList<>();
         if (stale) reasons.add("Telemetry is stale");
-        if (!channelsRunning) reasons.add("One or both TCP channels are not running");
+        if (!channelsRunning) reasons.add(snapshot.feedbackOnly()
+                ? "Feedback TCP channel is not running" : "One or both TCP channels are not running");
         if (feedback.error()) reasons.add("Robot feedback reports an error");
         reasons.addAll(
                 DobotSafetyState.decode(feedback.safetyState()).blockingFaults()

@@ -62,4 +62,18 @@ class WizardSettingsControllerIntegrationTests {
         mockMvc.perform(get("/wizard/settings/not-a-device"))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    void rendersFeedbackOnlyCheckboxAndApplyHint() throws Exception {
+        mockMvc.perform(get("/wizard/settings/RoboticManipulator"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString(
+                        "data-setting-id=\"device.manipulator.feedback-only\""
+                )))
+                .andExpect(content().string(containsString("type=\"checkbox\"")))
+                .andExpect(content().string(containsString("Feedback-only - telemetry only")))
+                .andExpect(content().string(containsString(
+                        "Commands and analogue polling disabled. Save, then Apply to device."
+                )));
+    }
 }
