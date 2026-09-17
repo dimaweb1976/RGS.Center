@@ -19,7 +19,7 @@ public class GetData4ViewDiagnostics {
     public GetData4ViewDiagnostics( DashboardSnapshotService dashboardSnapshotService) {
         this.dashboardSnapshotService = dashboardSnapshotService;
     }
-    @GetMapping("/v1/diganostics")
+    @GetMapping("/v1/diaпnostics")
     public ResponseEntity<?> aboutLines() {
         DashboardSnapshot spshot = dashboardSnapshotService.snapshot();
         
