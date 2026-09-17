@@ -23,7 +23,10 @@ public class HeaderStateIndicator {
     public ResponseEntity<?> aboutLines() {
         return ResponseEntity.ok( 
                 Map.of(
-                    "color", 1
+                    "color", 1,
+                    "status", "IDLE",
+                    "description", "-",
+                    "sernum", "RGS sn: 2534-26"
                 )
             );
     }
