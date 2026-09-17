@@ -23,16 +23,20 @@ public class ActionRunButtonsState {
     public ResponseEntity<?> aboutLines() {
         DashboardSnapshot spshot = dashboardSnapshotService.snapshot();
         
+        boolean b = Math.random() > 0.5;
+        
+        boolean b2 = Math.random() > 0.5;
+        
         return ResponseEntity.ok( 
                 Map.ofEntries(
-                    Map.entry( "AutoStart", "false"),
-                    Map.entry( "AutoPause", "false"),
-                    Map.entry( "AutoStop", "false"),                    
-                    Map.entry( "ManualStart", "false"),
-                    Map.entry( "ManualPause", "false"),
-                    Map.entry( "ManualStop", "false"),
-                    Map.entry( "ManualOpenShield", "false"),
-                    Map.entry( "ManualCloseShield", "false")
+                    Map.entry( "AutoStart", b),
+                    Map.entry( "AutoPause", !b),
+                    Map.entry( "AutoStop", !b),                    
+                    Map.entry( "ManualStart", b),
+                    Map.entry( "ManualPause", !b),
+                    Map.entry( "ManualStop", !b),
+                    Map.entry( "ManualOpenShield", b & b2),
+                    Map.entry( "ManualCloseShield", b & !b2)
                 )
             );
     }
