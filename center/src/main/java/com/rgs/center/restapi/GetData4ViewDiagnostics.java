@@ -78,11 +78,13 @@ public class GetData4ViewDiagnostics {
         
         String strDetectorTemperature = "-170";
         try {
-            strDetectorTemperature = String.format( "%.2f", spshot.equipment().shp().ambientTemperatureCelsius());
+            strDetectorTemperature = String.format( "%.2f", spshot.equipment().shp().detectorTemperatureCelsius());
         }
         catch( Exception ex) {
             
         }
+        
+        boolean b = Math.random() > 0.5 ? true : false;
         
         return ResponseEntity.ok( 
                 Map.ofEntries(
@@ -93,9 +95,9 @@ public class GetData4ViewDiagnostics {
                     Map.entry( "shield", "Unknown"),
                     Map.entry( "detector_hv", "HV OFF"),
                     Map.entry( "detector_leakage", "-"),
-                    Map.entry( "detector_temperature", strDetectorTemperature),
-                    Map.entry( "TurnHvOn", "true"),
-                    Map.entry( "TurnHvOff", "true"),
+                    Map.entry( "detector_temperature", strDetectorTemperature),                    
+                    Map.entry( "TurnHvOn", b),
+                    Map.entry( "TurnHvOff", !b),
                     Map.entry( "mca", "Unknown"),
                     Map.entry( "cooling_system", "Unknown"),
                     Map.entry( "ln2_lev", "" + ( 50 + ( int) (Math.random()*25.))),
