@@ -80,6 +80,7 @@ class EquipmentSnapshotTests {
                 null,
                 null,
                 null,
+                null,
                 null
         );
         ScalesEquipmentSnapshot scales = new ScalesEquipmentSnapshot(
