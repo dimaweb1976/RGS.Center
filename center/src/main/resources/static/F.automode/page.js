@@ -61,7 +61,7 @@ autoPercent=$('#autoPercent'),
 samplePercent=$('#samplePercent'),
 autoRemaining=$('#autoRemaining'),
 autoStep=$('#autoStep');
-let autoTimer=null,
+let automodeTimer=null,
 autoProgress=0,
 autoSeconds=0,
 acquisitionSeconds=1800;
@@ -108,24 +108,24 @@ function setAutoState(state,label){
 function runAutoSequence(){
   if(processCondition||!hvIsReady())
     return;
-  clearInterval(autoTimer);
+  clearInterval(automodeTimer);
   renderAutoProgress();
-  autoTimer=setInterval(()=>{if(
+  automodeTimer=setInterval(()=>{if(
   processCondition||!hvIsReady())
   return;
 
 autoSeconds++;
 renderAutoProgress();
 if(autoProgress>=100){
-  clearInterval(autoTimer);
-autoTimer=null;
+  clearInterval(automodeTimer);
+automodeTimer=null;
 setAutoState('idle','Complete');
 }},
 1000)}
 
 autoStart.addEventListener('click',()=>{if(!samples.some(sample=>sample.enabled)){showToast('Select at least one sample');return}if(!hvIsReady()||processCondition||recoveryHold||serviceMeasurement.active||autoIsActive())return;if(autoProgress>=100){autoProgress=0;autoSeconds=0}setAutoState('running','Measuring');runAutoSequence();showToast('Automated sequence started')});
-autoPause.addEventListener('click',()=>{if(processCondition||!autoIsActive())return;const paused=autoState.classList.contains('paused');if(paused){if(!hvIsReady())return;setAutoState('running','Measuring');autoPause.innerHTML='<span>Ⅱ</span> Pause';runAutoSequence();showToast('Automated sequence resumed')}else{clearInterval(autoTimer);setAutoState('paused','Paused');autoPause.innerHTML='<span>▶</span> Resume';renderAutoProgress();showToast('Automated sequence paused')}});
-autoStop.addEventListener('click',()=>{clearInterval(autoTimer);autoProgress=0;autoSeconds=0;setAutoState('stopped','Stopped');renderAutoProgress();autoPause.innerHTML='<span>Ⅱ</span> Pause';showToast('Automated sequence stopped')});
+autoPause.addEventListener('click',()=>{if(processCondition||!autoIsActive())return;const paused=autoState.classList.contains('paused');if(paused){if(!hvIsReady())return;setAutoState('running','Measuring');autoPause.innerHTML='<span>Ⅱ</span> Pause';runAutoSequence();showToast('Automated sequence resumed')}else{clearInterval(automodeTimer);setAutoState('paused','Paused');autoPause.innerHTML='<span>▶</span> Resume';renderAutoProgress();showToast('Automated sequence paused')}});
+autoStop.addEventListener('click',()=>{clearInterval(automodeTimer);autoProgress=0;autoSeconds=0;setAutoState('stopped','Stopped');renderAutoProgress();autoPause.innerHTML='<span>Ⅱ</span> Pause';showToast('Automated sequence stopped')});
 const autoParamsModal=$('#autoParamsModal');
 function closeAutoParams(){autoParamsModal.hidden=true}
 function openAutoParams(){const editable=!autoState.classList.contains('running');

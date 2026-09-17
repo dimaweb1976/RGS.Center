@@ -39,7 +39,7 @@ function syncProcessControls(){
 $('#headerPause').addEventListener('click',()=>{if(autoIsActive())autoPause.click();else pauseServiceMeasurement()});
 $('#headerStop').addEventListener('click',()=>{if(autoIsActive())autoStop.click();else if(serviceMeasurement.active)finishServiceMeasurement()});
 function pauseForHvChange(){
-  if(currentView==='auto'&&autoState.classList.contains('running')){clearInterval(autoTimer);autoTimer=null;setAutoState('paused','Paused');autoPause.innerHTML='<span>▶</span> Resume';}
+  if(currentView==='auto'&&autoState.classList.contains('running')){setAutoState('paused','Paused');autoPause.innerHTML='<span>▶</span> Resume';}
   if(serviceMeasurement.active)serviceMeasurement.paused=true;
 }
 function renderHvControls(data = null) {
@@ -161,7 +161,7 @@ window.addEventListener('rgs:leakage-current',event=>{const current=Number(event
 function reportProcessCondition(state,reason=''){
   if(!['fault','critical'].includes(state)||processCondition==='critical')return;
   processCondition=state;conditionReason=reason;recoveryHold=false;
-  if(autoIsActive()){clearInterval(autoTimer);autoTimer=null;setAutoState('paused','Paused');autoPause.innerHTML='<span>▶</span> Resume';}
+  if(autoIsActive()){setAutoState('paused','Paused');autoPause.innerHTML='<span>▶</span> Resume';}
   if(serviceMeasurement.active)serviceMeasurement.paused=true;
   syncProcessControls();
 }
