@@ -1,3 +1,59 @@
+let buttonsTimer = null;
+
+async function fetchButton() {
+  try {
+    const response = await fetch('/api/v1/buttonsState');
+
+    if (!response.ok) {
+      throw new Error('Automode button fetch request failed');
+    }
+
+    return await response.json();
+
+  } catch (error) {
+    console.error('Failed to update buttons:', error);
+    return null;
+  }
+}
+
+async function updateButtonsState() {
+  const data = await fetchButton();
+
+  if (!data) return;
+
+  const start = $('#startMeasure');
+  const pause = $('#manualPause');
+  const stop = $('#manualStop');
+  const openShield = $('#openShield');
+  const closeShield = $('#closeShield');
+
+  if (start) {
+    start.disabled = data.ManualStart !== true;
+  }
+
+  if (pause) {
+    pause.disabled = data.ManualPause !== true;
+  }
+
+  if (stop) {
+    stop.disabled = data.ManualStop !== true;
+  }
+
+  if (openShield) {
+    openShield.disabled = data.ManualOpenShield !== true;
+  }
+
+  if (closeShield) {
+    closeShield.disabled = data.ManualCloseShield !== true;
+  }
+}
+
+updateButtonsState();
+
+buttonsTimer = setInterval(() => {
+  updateButtonsState();
+}, 1000);
+
 // Manual acquisition, sample/background parameters and confirmation.
 function renderServiceSpectrumProgress(active,paused){
   const unit=$('#manualDurationUnit').value,multiplier=unit==='hours'?3600:unit==='minutes'?60:1;

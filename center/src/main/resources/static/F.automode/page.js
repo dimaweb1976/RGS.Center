@@ -1,3 +1,19 @@
+async function fetchButtons() {
+  try {
+    const response = await fetch('/api/v1/buttonsState');
+
+    if (!response.ok) {
+      throw new Error('Automode button fetch request failed');
+    }
+
+    return await response.json();
+
+  } catch (error) {
+    console.error('Failed to update buttons:', error);
+    return null;
+  }
+}
+
 // Sample workfield, queue, sequence and measurement parameters.
 const samples=Array.from({length:30},(_,i)=>({x:12+(i%6)*15.2,y:14+Math.floor(i/6)*18,id:`S-${String(i+1).padStart(3,'0')}`,mass:`${(512.4+i*7.3).toFixed(1)} g`,enabled:true}));
 const map=$('.field-map'), rows=$('#sampleRows');
@@ -15,8 +31,40 @@ $$('.sample-enabled').forEach((checkbox,i)=>{checkbox.addEventListener('click',e
 $$('.sample-enabled').forEach((checkbox,i)=>checkbox.addEventListener('change',()=>{if(autoIsActive())return;samples[i].enabled=checkbox.checked;updateSampleSelection()}));
 $('#selectAllSamples').addEventListener('change',event=>{if(autoIsActive())return;samples.forEach(sample=>sample.enabled=event.target.checked);$$('.sample-enabled').forEach(checkbox=>checkbox.checked=event.target.checked);updateSampleSelection()});
 $('#scanWorkfield').addEventListener('click',()=>{$('#lastScanTime').textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});$$('#sampleRows .barcode-id').forEach((cell,i)=>cell.innerHTML=`<b>${samples[i].id}</b>`);showToast('Workfield scanned · 9 barcodes recognized')});
-const autoStart=$('#autoStart'),autoPause=$('#autoPause'),autoStop=$('#autoStop'),autoParamsBtn=$('#autoParamsBtn'),autoState=$('#autoState'),autoProgressBar=$('#autoProgressBar'),sampleProgressBar=$('#sampleProgressBar'),autoPercent=$('#autoPercent'),samplePercent=$('#samplePercent'),autoRemaining=$('#autoRemaining'),autoStep=$('#autoStep');
-let autoTimer=null,autoProgress=0,autoSeconds=0,acquisitionSeconds=1800;
+const autoStart=$('#autoStart'),
+autoPause=$('#autoPause'),
+autoStop=$('#autoStop');
+
+let buttonsTimer = null;
+
+async function updateButtonsState() {
+  const data = await fetchButtons();
+
+  if (!data) return;
+
+  autoStart.disabled = data.AutoStart !== true;
+  autoPause.disabled = data.AutoPause !== true;
+  autoStop.disabled = data.AutoStop !== true;
+}
+
+updateButtonsState();
+
+buttonsTimer = setInterval(() => {
+  updateButtonsState();
+}, 1000);
+
+autoParamsBtn=$('#autoParamsBtn'),
+autoState=$('#autoState'),
+autoProgressBar=$('#autoProgressBar'),
+sampleProgressBar=$('#sampleProgressBar'),
+autoPercent=$('#autoPercent'),
+samplePercent=$('#samplePercent'),
+autoRemaining=$('#autoRemaining'),
+autoStep=$('#autoStep');
+let autoTimer=null,
+autoProgress=0,
+autoSeconds=0,
+acquisitionSeconds=1800;
 const scanningSeconds=10,weighingSeconds=15;
 function formatTime(seconds){seconds=Math.max(0,Math.ceil(seconds));const h=String(Math.floor(seconds/3600)).padStart(2,'0'),m=String(Math.floor(seconds%3600/60)).padStart(2,'0'),s=String(seconds%60).padStart(2,'0');return `${h}:${m}:${s}`}
 function renderAutoProgress(){
@@ -56,13 +104,32 @@ function setAutoState(state,label){
   autoState.innerHTML='<i aria-hidden="true"></i><span><b>'+label+'</b><small>Auto mode</small><small class="rgs-serial">RGS sn: 2534-26</small></span>';
   syncProcessControls();
 }
-function runAutoSequence(){if(processCondition||!hvIsReady())return;clearInterval(autoTimer);renderAutoProgress();autoTimer=setInterval(()=>{if(processCondition||!hvIsReady())return;autoSeconds++;renderAutoProgress();if(autoProgress>=100){clearInterval(autoTimer);autoTimer=null;setAutoState('idle','Complete');autoStart.disabled=false;autoPause.disabled=true;autoStop.disabled=true}},1000)}
-autoStart.addEventListener('click',()=>{if(!samples.some(sample=>sample.enabled)){showToast('Select at least one sample');return}if(!hvIsReady()||processCondition||recoveryHold||serviceMeasurement.active||autoIsActive())return;if(autoProgress>=100){autoProgress=0;autoSeconds=0}setAutoState('running','Measuring');autoStart.disabled=true;autoPause.disabled=false;autoStop.disabled=false;runAutoSequence();showToast('Automated sequence started')});
+
+function runAutoSequence(){
+  if(processCondition||!hvIsReady())
+    return;
+  clearInterval(autoTimer);
+  renderAutoProgress();
+  autoTimer=setInterval(()=>{if(
+  processCondition||!hvIsReady())
+  return;
+
+autoSeconds++;
+renderAutoProgress();
+if(autoProgress>=100){
+  clearInterval(autoTimer);
+autoTimer=null;
+setAutoState('idle','Complete');
+}},
+1000)}
+
+autoStart.addEventListener('click',()=>{if(!samples.some(sample=>sample.enabled)){showToast('Select at least one sample');return}if(!hvIsReady()||processCondition||recoveryHold||serviceMeasurement.active||autoIsActive())return;if(autoProgress>=100){autoProgress=0;autoSeconds=0}setAutoState('running','Measuring');runAutoSequence();showToast('Automated sequence started')});
 autoPause.addEventListener('click',()=>{if(processCondition||!autoIsActive())return;const paused=autoState.classList.contains('paused');if(paused){if(!hvIsReady())return;setAutoState('running','Measuring');autoPause.innerHTML='<span>Ⅱ</span> Pause';runAutoSequence();showToast('Automated sequence resumed')}else{clearInterval(autoTimer);setAutoState('paused','Paused');autoPause.innerHTML='<span>▶</span> Resume';renderAutoProgress();showToast('Automated sequence paused')}});
-autoStop.addEventListener('click',()=>{clearInterval(autoTimer);autoProgress=0;autoSeconds=0;setAutoState('stopped','Stopped');renderAutoProgress();autoStart.disabled=!!processCondition||recoveryHold||!hvIsReady();autoPause.disabled=true;autoPause.innerHTML='<span>Ⅱ</span> Pause';autoStop.disabled=true;showToast('Automated sequence stopped')});
+autoStop.addEventListener('click',()=>{clearInterval(autoTimer);autoProgress=0;autoSeconds=0;setAutoState('stopped','Stopped');renderAutoProgress();autoPause.innerHTML='<span>Ⅱ</span> Pause';showToast('Automated sequence stopped')});
 const autoParamsModal=$('#autoParamsModal');
 function closeAutoParams(){autoParamsModal.hidden=true}
-function openAutoParams(){const editable=!autoState.classList.contains('running');$$('#autoParamsForm select,#autoParamsForm input,#autoParamsForm textarea').forEach(control=>control.disabled=!editable);$('#saveAutoParams').hidden=!editable;$('#autoParamsAccess').innerHTML=editable?'<span>Parameters can be edited before starting or while the sequence is paused.</span>':'<span><b>View only:</b> pause or stop the sequence to edit these parameters.</span>';autoParamsModal.hidden=false;(editable?$('#autoBatchId'):$('#closeAutoParams')).focus()}
+function openAutoParams(){const editable=!autoState.classList.contains('running');
+  $$('#autoParamsForm select,#autoParamsForm input,#autoParamsForm textarea').forEach(control=>control.disabled=!editable);$('#saveAutoParams').hidden=!editable;$('#autoParamsAccess').innerHTML=editable?'<span>Parameters can be edited before starting or while the sequence is paused.</span>':'<span><b>View only:</b> pause or stop the sequence to edit these parameters.</span>';autoParamsModal.hidden=false;(editable?$('#autoBatchId'):$('#closeAutoParams')).focus()}
 autoParamsBtn.addEventListener('click',openAutoParams);
 $('#closeAutoParams').addEventListener('click',closeAutoParams);
 $('#cancelAutoParams').addEventListener('click',closeAutoParams);
