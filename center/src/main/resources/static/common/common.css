@@ -275,10 +275,6 @@ th, td {border-color: var(--line);}
 .auto-state>span {display: grid; gap: 4px;}
 .auto-state b {font-size: 12px; color: var(--ink); font-weight: 700;}
 .auto-state small {font-size: 12px; color: var(--muted); font-weight: 400;}
-.auto-state.stopped {color: var(--red); background: rgb(41, 26, 34); border-color: rgb(101, 49, 60);}
-.auto-state.stopped i {background: var(--red); box-shadow: 0 0 8px #ef6b7866;}
-.auto-state.idle {color: var(--green); background: rgb(14, 44, 36); border-color: rgb(40, 92, 72);}
-.auto-state.idle i {background: var(--green);}
 
 @media (max-width:600px) {
 .system-strip .module {flex: 1 0 100px;}
@@ -302,11 +298,47 @@ th, td {border-color: var(--line);}
 .header-process {order: 3; max-width: none; flex-basis: 100%; margin: 0px 0px 8px;}
 .topbar {gap: 12px 20px;}
 }
-.ownership .robot-state.idle {color: rgb(64, 202, 151);}
+/* .ownership .robot-state.idle {color: rgb(64, 202, 151);}
 .ownership .robot-state.auto, .ownership .robot-state.manual {color: rgb(242, 207, 75);}
 .ownership .robot-state.paused {color: rgb(83, 169, 255);}
 .ownership .robot-state.fault {color: rgb(255, 156, 58);}
-.ownership .robot-state.critical {color: rgb(255, 83, 100);}
+.ownership .robot-state.critical {color: rgb(255, 83, 100);} */
+
+.ownership .auto-state.gray {
+  color: rgb(140, 150, 160);
+}
+
+.ownership .auto-state.green {
+  color: rgb(64, 202, 151);
+}
+
+.ownership .auto-state.yellow {
+  color: rgb(242, 207, 75);
+}
+
+.ownership .auto-state.red {
+  color: rgb(255, 83, 100);
+}
+
+/* 0 или любое неизвестное значение */
+.ownership .robot-state.gray {
+  color: rgb(140, 150, 160);
+}
+
+/* 1 */
+.ownership .robot-state.green {
+  color: rgb(64, 202, 151);
+}
+
+/* 2 */
+.ownership .robot-state.yellow {
+  color: rgb(242, 207, 75);
+}
+
+/* 3 */
+.ownership .robot-state.red {
+  color: rgb(255, 83, 100);
+}
 .ownership .robot-state {display: flex !important;}
 .condition-notice {display: flex; align-items: center; justify-content: space-between; gap: 20px; max-width: 1200px; border: 1px solid; border-radius: 8px; padding: 16px 20px; margin-bottom: 18px; background: rgb(25, 28, 37); color: rgb(255, 156, 58);}
 .condition-notice.critical {color: rgb(255, 83, 100); background: rgb(41, 22, 32);}
@@ -352,19 +384,11 @@ th, td {border-color: var(--line);}
 .topbar {position: relative;}
 .system-strip .module {flex: 0 0 150px;}
 
-.header-auto-state {min-width: 118px; border-radius: 6px; padding: 10px 12px; font-size: 12px; font-weight: 400;}
-.header-auto-state>span {display: grid; gap: 4px;}
-.header-auto-state small {font-size: 12px; line-height: normal; color: var(--muted); font-weight: 400; order: initial;}
-.header-auto-state .rgs-serial {font-size: 10px; letter-spacing: 0.08em; color: rgb(129, 152, 170);}
-.header-auto-state b {font-size: 12px; color: var(--ink); font-weight: 700;}
-
 @media (max-width:1250px) {
 .topbar>.brand>span {position: static; transform: none; text-align: left;}
 .system-strip .module {flex: 1 0 150px;}
 }
 @media (max-width:680px) {
-.header-auto-state {min-width: 106px; padding: 9px;}
-.header-auto-state small {font-size: 12px;}
 .system-strip .module {flex: 1 0 150px;}
 }
 
@@ -425,8 +449,6 @@ input, select, textarea {background: rgb(255, 255, 255); color: var(--ink); bord
 .auto-state {background: rgb(247, 250, 252);}
 .auto-state.running {color: var(--green); border-color: rgb(159, 211, 189); background: rgb(229, 246, 238);}
 .auto-state.paused {color: var(--amber); border-color: rgb(228, 198, 142); background: rgb(255, 247, 232);}
-.header-auto-state b {color: var(--ink);}
-.header-auto-state .rgs-serial {color: rgb(112, 133, 151);}
 .state-banner {background: rgb(234, 247, 241); border-top-color: rgb(183, 222, 207); border-right-color: rgb(183, 222, 207); border-bottom-color: rgb(183, 222, 207); border-left-color: var(--green);}
 .notice {background: rgb(255, 247, 232); border-color: rgb(232, 207, 157);}
 .access-badge {background: rgb(255, 247, 232); color: rgb(133, 87, 6); border-color: rgb(232, 207, 157);}
@@ -434,14 +456,6 @@ input, select, textarea {background: rgb(255, 255, 255); color: var(--ink); bord
 
 .diagnostics-dialog {background: rgb(255, 255, 255); color: var(--ink); border-color: var(--line);}
 .toast {background: rgb(23, 61, 86); color: rgb(255, 255, 255); border-color: rgb(47, 102, 129);}
-body .header-auto-state.stopped {background: rgb(255, 241, 243); border-color: rgb(227, 174, 181); color: rgb(157, 51, 64);}
-body .header-auto-state.stopped b {color: rgb(143, 47, 58);}
-
-.header-auto-state {min-width: 138px; padding: 10px 14px; border-width: 1px; box-shadow: 0 2px 7px rgba(24,55,78,.08);}
-.header-auto-state>span {gap: 3px;}
-.header-auto-state small {font-size: 13px; font-weight: 650; letter-spacing: 0.015em; color: rgb(70, 96, 115);}
-.header-auto-state .rgs-serial {font-size: 11px; font-weight: 600; letter-spacing: 0.055em; color: rgb(96, 120, 139);}
-.header-auto-state b {font-size: 13px; font-weight: 800; letter-spacing: 0.01em;}
 
 .topbar .product-title {display: grid; gap: 3px; line-height: 1.15; letter-spacing: 0.035em;}
 .topbar .product-title strong {font-size: 21px; font-weight: 400; color: var(--ink);}
@@ -640,4 +654,143 @@ body.theme-dark .toast {background: rgb(25, 51, 74); color: rgb(255, 255, 255); 
 .app-shell .header-progress-wrap progress::-moz-progress-bar { background: var(--blue); border-radius: 6px; }
 @media (max-width: 760px) {
   .app-shell .topbar .ownership b, .app-shell .topbar .ownership small { display: block; }
+}
+
+.header-auto-state {
+  --state-color: var(--muted);
+
+  min-width: 150px;
+  padding: 10px 14px;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  border: 1px solid color-mix(
+    in srgb,
+    var(--state-color) 35%,
+    var(--line)
+  );
+
+  border-radius: 7px;
+
+  background: color-mix(
+    in srgb,
+    var(--state-color) 8%,
+    var(--surface)
+  );
+
+  box-shadow: 0 2px 7px rgba(24, 55, 78, 0.08);
+
+  color: var(--state-color);
+}
+
+
+.header-auto-state > i {
+  width: 9px;
+  height: 9px;
+  flex: 0 0 9px;
+
+  border-radius: 50%;
+
+  background: var(--state-color);
+
+  box-shadow: 0 0 0 3px
+    color-mix(
+      in srgb,
+      var(--state-color) 18%,
+      transparent
+    );
+}
+
+
+.header-auto-state > span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+
+.header-auto-state b {
+  font-size: 13px;
+  line-height: 1.2;
+  font-weight: 800;
+
+  color: var(--ink);
+}
+
+
+.header-auto-state small {
+  font-size: 12px;
+  line-height: 1.25;
+  font-weight: 500;
+
+  color: var(--muted);
+}
+
+
+.header-auto-state .rgs-serial {
+  font-size: 10px;
+  font-weight: 600;
+
+  letter-spacing: 0.06em;
+
+  color: var(--muted);
+}
+
+
+/* color = 0 / unknown */
+.header-auto-state.gray {
+  --state-color: var(--muted);
+}
+
+
+/* color = 1 */
+.header-auto-state.idle {
+  --state-color: var(--green);
+}
+
+
+/* color = 2 */
+.header-auto-state.yellow {
+  --state-color: var(--amber);
+}
+
+
+/* color = 3 */
+.header-auto-state.stopped {
+  --state-color: var(--red);
+}
+
+.header-auto-state {
+  --state-color: rgb(118, 130, 143);
+
+  color: var(--state-color);
+  border-color: color-mix(in srgb, var(--state-color) 45%, var(--line));
+  background: color-mix(in srgb, var(--state-color) 7%, var(--surface));
+}
+
+.header-auto-state > i {
+  background: var(--state-color);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--state-color) 15%, transparent);
+}
+
+.header-auto-state b {
+  color: var(--state-color);
+}
+
+.header-auto-state.gray {
+  --state-color: rgb(118, 130, 143);
+}
+
+.header-auto-state.idle {
+  --state-color: rgb(38, 173, 118);
+}
+
+.header-auto-state.yellow {
+  --state-color: rgb(205, 145, 25);
+}
+
+.header-auto-state.stopped {
+  --state-color: rgb(190, 62, 74);
 }

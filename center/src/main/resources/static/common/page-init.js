@@ -392,6 +392,10 @@ function destroyPageTimers() {
     clearTimeout(hvLeakTimer);
     hvLeakTimer = null;
   }
+  if (typeof mainIndicatorTimer !== 'undefined' && mainIndicatorTimer !== null) {
+    clearInterval(mainIndicatorTimer);
+    mainIndicatorTimer = null;
+  }
 }
 
 function showApiError() {

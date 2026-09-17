@@ -25,13 +25,79 @@ const complexState=['idle','auto','manual','background','paused','fault','critic
 let processCondition=null,conditionReason='',recoveryHold=false;
 let hvState='off',hvRenderedState=null,hvRampTimer=null,hvLeakTimer=null,hvLeakageCurrent=0;
 function hvIsReady(){return hvState==='ready'}
-function setRobotStatus(state){
-  const labels={idle:'IDLE',auto:'AUTO MEASUREMENT',manual:'MANUAL MEASUREMENT',paused:'PAUSED',fault:'FAULT',critical:'CRITICAL'};
-  if(!labels[state])return;
-  $('#robotStatus').className='robot-state '+state;
-  $('#robotStatusLabel').textContent=labels[state];
+
+function setRobotStatus(data) {
+  const colors = {
+    0: 'gray',
+    1: 'idle',
+    2: 'yellow',
+    3: 'stopped'
+  };
+
+  const colorClass =
+    colors[Number(data?.color)] || 'gray';
+
+  const status = $('#robotState');
+  const label = $('#robotStateLabel');
+
+  if (!status || !label) {
+    return;
+  }
+
+  status.className =
+    'auto-state header-auto-state ' + colorClass;
+
+  label.textContent =
+    data?.status ?? 'Unknown';
+
+  const description =
+    $('#robotStatusDescription');
+
+  if (description) {
+    description.textContent =
+      data?.description ?? '-';
+  }
+
+  const serial =
+    $('#robotStatusSerial');
+
+  if (serial) {
+    serial.textContent =
+      data?.sernum ?? '-';
+  }
 }
-setRobotStatus('idle');
+
+async function fetchMainIndicator() {
+  try {
+    const response = await fetch('/api/v1/MainIndicator');
+
+    if (!response.ok) {
+      throw new Error(
+        'MainIndicator request failed: ' + response.status
+      );
+    }
+
+    const data = await response.json();
+
+    console.log('MainIndicator:', data);
+
+    setRobotStatus(data);
+
+  } catch (error) {
+    console.error(
+      'Failed to update MainIndicator:',
+      error
+    );
+  }
+}
+
+fetchMainIndicator();
+
+let mainIndicatorTimer = setInterval(
+  fetchMainIndicator,
+  1000
+);
+
 $('#logoutBtn').addEventListener('click',()=>{
   // Add server-side logout / token cleanup here.
   window.location.replace(new URL('Login/index.html',window.RGSRoot).href);

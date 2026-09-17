@@ -76,23 +76,26 @@
       <div class="ownership">
 
         <span
-          id="autoState"
-          class="auto-state stopped header-auto-state"
-          role="status"
-          aria-live="polite"
-        >
+            id="robotState"
+            class="auto-state gray header-auto-state"
+            role="status"
+            aria-live="polite"
+          >
+            <i aria-hidden="true"></i>
 
-          <i aria-hidden="true"></i>
+            <span>
+              <b id="robotStateLabel">Unknown</b>
 
-          <span>
-            <b>Stopped</b>
-            <small>Auto mode</small>
-            <small class="rgs-serial">
-              RGS sn: 2534-26
-            </small>
+              <small id="robotStatusDescription">-</small>
+
+              <small
+                id="robotStatusSerial"
+                class="rgs-serial"
+              >
+                -
+              </small>
+            </span>
           </span>
-
-        </span>
 
 
         <span

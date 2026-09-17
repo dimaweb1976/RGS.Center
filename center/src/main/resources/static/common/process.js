@@ -5,6 +5,7 @@ function syncProcessControls(){
   const blocked=!!processCondition;
   const status=processCondition||(paused?'paused':auto?'auto':manual?'manual':'idle');
   setRobotStatus(status);
+  
   $('#conditionNotice').hidden=!blocked&&!recoveryHold;
   $('#conditionNotice').className='condition-notice '+status;
   $('#conditionTitle').textContent=processCondition==='critical'?'CRITICAL':processCondition==='fault'?'FAULT':'PAUSED';
