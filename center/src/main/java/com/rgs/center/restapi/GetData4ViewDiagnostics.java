@@ -76,27 +76,34 @@ public class GetData4ViewDiagnostics {
                 strCoolerStatus = "OFFLINE";       break;
         }
         
-
+        String strDetectorTemperature = "-170";
+        try {
+            strDetectorTemperature = String.format( "%.2f", spshot.equipment().shp().ambientTemperatureCelsius());
+        }
+        catch( Exception ex) {
+            
+        }
+        
         return ResponseEntity.ok( 
                 Map.ofEntries(
-                    Map.entry("plc", "OFFLINE"),
-                    Map.entry("gripper", "Online"),
-                    Map.entry("7axis", "Online"),
-                    Map.entry("gammapro", "OFFLINE"),
-                    Map.entry("shield", "Unknown"),
-                    Map.entry("detector_hv", "HV OFF"),
-                    Map.entry("detector_leakage", "-"),
-                    Map.entry("detector_temperature", "−168"),
-                    Map.entry("TurnHvOn", "true"),
-                    Map.entry("TurnHvOff", "true"),
-                    Map.entry("mca", "Unknown"),
-                    Map.entry("cooling_system", "Unknown"),
-                    Map.entry("ln2_lev", "" + 50 + ( int) (Math.random()*25.)),
-                    Map.entry("ups", "" + 90 + ( int) (Math.random()*10.)),
-                    Map.entry("camera1", "Online"),
-                    Map.entry("camera2", "Online"),
-                    Map.entry("scales", "Online"),
-                    Map.entry("scanner", "Online")
+                    Map.entry( "plc", "OFFLINE"),
+                    Map.entry( "gripper", "Online"),
+                    Map.entry( "7axis", "Online"),
+                    Map.entry( "gammapro", "OFFLINE"),
+                    Map.entry( "shield", "Unknown"),
+                    Map.entry( "detector_hv", "HV OFF"),
+                    Map.entry( "detector_leakage", "-"),
+                    Map.entry( "detector_temperature", strDetectorTemperature),
+                    Map.entry( "TurnHvOn", "true"),
+                    Map.entry( "TurnHvOff", "true"),
+                    Map.entry( "mca", "Unknown"),
+                    Map.entry( "cooling_system", "Unknown"),
+                    Map.entry( "ln2_lev", "" + 50 + ( int) (Math.random()*25.)),
+                    Map.entry( "ups", "" + 90 + ( int) (Math.random()*10.)),
+                    Map.entry( "camera1", "Online"),
+                    Map.entry( "camera2", "Online"),
+                    Map.entry( "scales", "Online"),
+                    Map.entry( "scanner", "Online")
                 )
             );
     }
