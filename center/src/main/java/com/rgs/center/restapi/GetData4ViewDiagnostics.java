@@ -25,7 +25,6 @@ public class GetData4ViewDiagnostics {
         
         
         
-        
         String strPlcStatus = "UNKNOWN";
         switch( spshot.equipment().manipulator().health().connection()) {
             case ConnectionState.DISABLED:
@@ -92,8 +91,8 @@ public class GetData4ViewDiagnostics {
                     Map.entry("TurnHvOff", "true"),
                     Map.entry("mca", "Unknown"),
                     Map.entry("cooling_system", "Unknown"),
-                    Map.entry("ln2_lev", "78"),
-                    Map.entry("ups", "100"),
+                    Map.entry("ln2_lev", "" + 50 + ( int) (Math.random()*25.)),
+                    Map.entry("ups", "" + 90 + ( int) (Math.random()*10.)),
                     Map.entry("camera1", "Online"),
                     Map.entry("camera2", "Online"),
                     Map.entry("scales", "Online"),
