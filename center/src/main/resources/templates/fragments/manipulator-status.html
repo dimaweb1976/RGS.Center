@@ -20,7 +20,7 @@
             </div>
             <div class="summary-item">
                 <span class="label">Controller</span>
-                <strong th:text="${manipulator.host + ':' + manipulator.commandPort}">192.168.5.1:29999</strong>
+                <strong th:text="${manipulator.feedbackOnly ? 'Dashboard disabled' : manipulator.host + ':' + manipulator.commandPort}">192.168.5.1:29999</strong>
             </div>
             <div class="summary-item">
                 <span class="label">Feedback stream</span>
@@ -35,6 +35,7 @@
                 <strong th:text="${manipulator.telemetry.ageMillis != null ? manipulator.telemetry.ageMillis + ' ms' : '-'}">-</strong>
             </div>
         </div>
+        <p th:text="${manipulator.feedbackOnly ? 'Mode: Feedback-only (telemetry only; commands unavailable)' : 'Mode: Dashboard + Feedback'}">Mode</p>
         <ul class="reason-list" th:if="${!manipulator.statusReasons.isEmpty()}">
             <li th:each="reason : ${manipulator.statusReasons}"
                 th:text="${reason}">Reason</li>
@@ -82,7 +83,7 @@
                     <td><strong th:text="${manipulator.hatch.status}">UNKNOWN</strong></td>
                     <td th:text="${'DI' + manipulator.hatch.closedInputBit + ': ' + (manipulator.hatch.closedLimit != null ? manipulator.hatch.closedLimit : '-')}">-</td>
                     <td th:text="${'DI' + manipulator.hatch.openInputBit + ': ' + (manipulator.hatch.openLimit != null ? manipulator.hatch.openLimit : '-')}">-</td>
-                    <td th:text="${manipulator.hatch.analogEnabled ? 'AI(' + manipulator.hatch.analogInputIndex + ')' : 'Disabled'}">Disabled</td>
+                    <td th:text="${manipulator.feedbackOnly ? 'Unavailable (feedback-only)' : manipulator.hatch.analogEnabled ? 'AI(' + manipulator.hatch.analogInputIndex + ')' : 'Disabled'}">Disabled</td>
                     <td th:text="${manipulator.hatch.analogValue != null ? manipulator.hatch.analogValue : '-'}">-</td>
                 </tr></tbody>
             </table>

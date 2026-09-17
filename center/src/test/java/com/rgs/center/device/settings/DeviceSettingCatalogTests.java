@@ -13,7 +13,7 @@ class DeviceSettingCatalogTests {
 
     @Test
     void exposesOnlyRuntimeConnectionSettings() {
-        assertEquals(36, catalog.definitions().size());
+        assertEquals(37, catalog.definitions().size());
         assertEquals(
                 SettingType.STRING,
                 catalog.require(SettingsService.SCALES_PORT).type()
@@ -51,5 +51,15 @@ class DeviceSettingCatalogTests {
                 IllegalArgumentException.class,
                 () -> catalog.convertAndValidate(definition, "192.168.1.999")
         );
+    }
+
+    @Test
+    void feedbackOnlyIsAnEditableBoolean() {
+        var definition = catalog.require(SettingsService.MANIPULATOR_FEEDBACK_ONLY);
+        assertEquals(SettingType.BOOLEAN, definition.type());
+        assertEquals(true, catalog.convertAndValidate(definition, true));
+        assertEquals(false, catalog.convertAndValidate(definition, false));
+        assertThrows(IllegalArgumentException.class,
+                () -> catalog.convertAndValidate(definition, "true"));
     }
 }

@@ -56,6 +56,25 @@ class ManipulatorStatusEvaluatorTests {
     }
 
     @Test
+    void feedbackOnlyIgnoresFailedDashboardButRequiresFreshFeedback() {
+        var initial = snapshot(feedback(1L, false, true, false, false, 0xFF), NOW, "");
+        var only = new RoboticManipulatorSnapshot(true, worker(PeripheralWorkerState.FAILED),
+                initial.feedbackChannel(), null, initial.latestFeedback(), NOW,
+                initial.hatchAnalogInput(), "", true);
+        var status = evaluator.evaluate(true, only);
+        assertThat(status.connectionStatus()).isEqualTo(ManipulatorConnectionStatus.ONLINE);
+        assertThat(status.readiness()).isEqualTo(ManipulatorReadinessStatus.READY);
+        var stale = new RoboticManipulatorSnapshot(true, only.commandChannel(), only.feedbackChannel(),
+                null, only.latestFeedback(), 7_000L, only.hatchAnalogInput(), "", true);
+        assertThat(evaluator.evaluate(true, stale).connectionStatus())
+                .isEqualTo(ManipulatorConnectionStatus.OFFLINE);
+        var waiting = new RoboticManipulatorSnapshot(true, only.commandChannel(), only.feedbackChannel(),
+                null, null, 0L, only.hatchAnalogInput(), "", true);
+        assertThat(evaluator.evaluate(true, waiting).connectionStatus())
+                .isEqualTo(ManipulatorConnectionStatus.CONNECTING);
+    }
+
+    @Test
     void runningChannelsWithoutFeedbackAreConnectingWithNoData() {
         ManipulatorStatusView status = evaluator.evaluate(
                 true,

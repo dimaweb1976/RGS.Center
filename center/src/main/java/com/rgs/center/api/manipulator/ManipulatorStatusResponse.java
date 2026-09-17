@@ -23,7 +23,8 @@ public record ManipulatorStatusResponse(
         Hatch hatch,
         Safety safety,
         Telemetry telemetry,
-        String lastError
+        String lastError,
+        boolean feedbackOnly
 ) {
     public ManipulatorStatusResponse {
         statusReasons = List.copyOf(statusReasons);

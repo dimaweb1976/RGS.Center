@@ -85,6 +85,8 @@ public class RoboticManipulatorStreamService
     private DeviceEnablementService deviceEnablementService;
 
     private ExecutorService routerExecutor;
+    /** Applied mode; changes take effect on reconnect/Apply, not mid-stream. */
+    private volatile boolean feedbackOnly;
 
     /** Builds both physical channels from centrally managed settings. */
     public RoboticManipulatorStreamService(
@@ -166,22 +168,30 @@ public class RoboticManipulatorStreamService
         stopWorkerIfNecessary(commandWorker);
         stopWorkerIfNecessary(feedbackWorker);
         router.clear();
+        feedbackOnly = settingBoolean(SettingsService.MANIPULATOR_FEEDBACK_ONLY);
         try {
             latestFeedback.set(null);
             latestFeedbackAt.set(0L);
-            commandWorker.start();
+            latestHatchAnalogInput.set(null);
+            latestHatchAnalogInputAt.set(0L);
+            lastAnalogInputError.set("");
+            if (!feedbackOnly) {
+                commandWorker.start();
+            }
             feedbackWorker.start();
             connectionStartedAt.set(System.currentTimeMillis());
             started.set(true);
             routerExecutor = Executors.newFixedThreadPool(
-                    3,
+                    feedbackOnly ? 2 : 3,
                     new ManipulatorThreadFactory()
             );
-            routerExecutor.submit(() -> pump(COMMAND_SOURCE, commandWorker));
+            if (!feedbackOnly) {
+                routerExecutor.submit(() -> pump(COMMAND_SOURCE, commandWorker));
+            }
             routerExecutor.submit(() -> pump(FEEDBACK_SOURCE, feedbackWorker));
             routerExecutor.submit(this::consumeTelemetry);
             lastError.set("");
-            log.info("Dobot command and feedback channels started");
+            log.info("Dobot communication started (feedbackOnly={})", feedbackOnly);
         } catch (RuntimeException exception) {
             started.set(false);
             lastError.set(message(exception));
@@ -221,7 +231,7 @@ public class RoboticManipulatorStreamService
                 latestFeedback.get(),
                 latestFeedbackAt.get(),
                 new ManipulatorAnalogInputSnapshot(
-                        settingBoolean(
+                        !feedbackOnly && settingBoolean(
                                 SettingsService.MANIPULATOR_HATCH_AI_ENABLED
                         ),
                         settingInt(SettingsService.MANIPULATOR_HATCH_AI_INDEX),
@@ -229,7 +239,8 @@ public class RoboticManipulatorStreamService
                         latestHatchAnalogInputAt.get(),
                         lastAnalogInputError.get()
                 ),
-                lastError.get()
+                lastError.get(),
+                feedbackOnly
         );
     }
 
@@ -253,6 +264,7 @@ public class RoboticManipulatorStreamService
         requirePositive(timeout);
         commandLock.lock();
         try {
+            requireDashboard();
             requireStarted();
             router.clear(IncomingFrameRoute.COMMAND_RESPONSE);
             currentData.setValue(
@@ -275,7 +287,7 @@ public class RoboticManipulatorStreamService
             }
             return response;
         } catch (RuntimeException exception) {
-            if (affectsConnectionStatus) {
+            if (affectsConnectionStatus && !feedbackOnly) {
                 recordError(exception);
             }
             throw exception;
@@ -458,7 +470,7 @@ public class RoboticManipulatorStreamService
             stopCommunication();
             return;
         }
-        if (commandWorker.snapshot().state() == PeripheralWorkerState.FAILED
+        if ((!feedbackOnly && commandWorker.snapshot().state() == PeripheralWorkerState.FAILED)
                 || feedbackWorker.snapshot().state() == PeripheralWorkerState.FAILED) {
             started.set(false);
         }
@@ -474,6 +486,7 @@ public class RoboticManipulatorStreamService
     )
     public void pollHatchAnalogInput() {
         if (!isEnabled()
+                || feedbackOnly
                 || !settingBoolean(SettingsService.MANIPULATOR_HATCH_AI_ENABLED)
                 || !started.get()
                 || !commandLock.tryLock()) {
@@ -546,6 +559,7 @@ public class RoboticManipulatorStreamService
     }
 
     private static Duration requirePositive(Duration timeout) {
+        // Commands are separately guarded by requireDashboard().
         if (timeout == null || timeout.isZero() || timeout.isNegative()) {
             throw new IllegalArgumentException("Timeout must be positive");
         }
@@ -554,6 +568,12 @@ public class RoboticManipulatorStreamService
 
     private int settingInt(String code) {
         return Math.toIntExact(settingLong(code));
+    }
+
+    private void requireDashboard() {
+        if (feedbackOnly) {
+            throw new IllegalStateException("Dashboard commands are unavailable in feedback-only mode");
+        }
     }
 
     private long settingLong(String code) {

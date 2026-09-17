@@ -63,7 +63,8 @@ public class ManipulatorStatusQueryService {
                 hatch(snapshot.hatchAnalogInput(), feedback, status, closedBit, openBit),
                 safety(feedback),
                 telemetry(snapshot, feedback),
-                snapshot.lastError() == null ? "" : snapshot.lastError()
+                snapshot.lastError() == null ? "" : snapshot.lastError(),
+                snapshot.feedbackOnly()
         );
     }
 
@@ -167,7 +168,7 @@ public class ManipulatorStatusQueryService {
         PeripheralWorkerSnapshot stream = snapshot.feedbackChannel();
         long receivedAt = snapshot.latestFeedbackReceivedAtEpochMillis();
         return new ManipulatorStatusResponse.Telemetry(
-                state(command),
+                snapshot.feedbackOnly() ? "DISABLED" : state(command),
                 state(stream),
                 feedback == null ? null : feedback.controllerTimestampMillis(),
                 instant(receivedAt),

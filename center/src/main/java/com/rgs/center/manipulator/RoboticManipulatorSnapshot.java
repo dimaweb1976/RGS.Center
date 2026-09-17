@@ -12,6 +12,16 @@ public record RoboticManipulatorSnapshot(
         DobotFeedbackFrame latestFeedback,
         long latestFeedbackReceivedAtEpochMillis,
         ManipulatorAnalogInputSnapshot hatchAnalogInput,
-        String lastError
+        String lastError,
+        boolean feedbackOnly
 ) {
+    public RoboticManipulatorSnapshot(
+            boolean started, PeripheralWorkerSnapshot commandChannel,
+            PeripheralWorkerSnapshot feedbackChannel, IncomingFrameRouterSnapshot router,
+            DobotFeedbackFrame latestFeedback, long latestFeedbackReceivedAtEpochMillis,
+            ManipulatorAnalogInputSnapshot hatchAnalogInput, String lastError
+    ) {
+        this(started, commandChannel, feedbackChannel, router, latestFeedback,
+                latestFeedbackReceivedAtEpochMillis, hatchAnalogInput, lastError, false);
+    }
 }

@@ -6,6 +6,7 @@ import com.rgs.center.device.settings.DeviceSettingsApplyTracker;
 import com.rgs.center.device.settings.DeviceSettingsService;
 import com.rgs.center.objects.DeviceCode;
 import com.rgs.center.objects.SettingType;
+import com.rgs.center.service.SettingsService;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -152,6 +153,7 @@ public class WizardSettingsViewFactory {
             case "port" -> type == SettingType.STRING ? "COM port" : "TCP port";
             case "command-port" -> "Dobot command port";
             case "feedback-port" -> "Dobot feedback port";
+            case "feedback-only" -> "Feedback-only - telemetry only";
             case "initial-baud-rate" -> "Initial baud rate";
             case "baud-rate" -> "Baud rate";
             case "connect-timeout-millis" -> "Connection timeout";
@@ -169,6 +171,9 @@ public class WizardSettingsViewFactory {
     }
 
     private static String hint(String id, SettingType type) {
+        if (id.equals(SettingsService.MANIPULATOR_FEEDBACK_ONLY)) {
+            return "Connect only to feedback. Commands and analogue polling disabled. Save, then Apply to device.";
+        }
         if (id.endsWith(".ip")) return "IPv4 address, for example 192.168.1.13";
         if (id.endsWith(".port") && type == SettingType.STRING) {
             return "Windows serial port, for example COM7";

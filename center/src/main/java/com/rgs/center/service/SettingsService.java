@@ -43,6 +43,7 @@ public class SettingsService {
     public static final String BOSON_STATUS_STALE_MILLIS =
             "device.boson.status-stale-millis";
     public static final String MANIPULATOR_HOST = "device.manipulator.host";
+    public static final String MANIPULATOR_FEEDBACK_ONLY = "device.manipulator.feedback-only";
     public static final String MANIPULATOR_COMMAND_PORT = "device.manipulator.command-port";
     public static final String MANIPULATOR_FEEDBACK_PORT = "device.manipulator.feedback-port";
     public static final String MANIPULATOR_CONNECT_TIMEOUT_MILLIS = "device.manipulator.connect-timeout-millis";
@@ -146,6 +147,9 @@ public class SettingsService {
 
     @Value("${rgs.device.manipulator.host:192.168.5.1}")
     private String manipulatorHost = "192.168.5.1";
+
+    @Value("${rgs.device.manipulator.feedback-only:false}")
+    private boolean manipulatorFeedbackOnly;
 
     @Value("${rgs.device.manipulator.command-port:29999}")
     private long manipulatorCommandPort = 29999L;
@@ -299,6 +303,7 @@ public class SettingsService {
                 bosonStatusStaleMillis
         );
         registerDefault(MANIPULATOR_HOST, SettingType.STRING, manipulatorHost);
+        registerDefault(MANIPULATOR_FEEDBACK_ONLY, SettingType.BOOLEAN, manipulatorFeedbackOnly);
         registerDefault(MANIPULATOR_COMMAND_PORT, SettingType.LONG, manipulatorCommandPort);
         registerDefault(MANIPULATOR_FEEDBACK_PORT, SettingType.LONG, manipulatorFeedbackPort);
         registerDefault(MANIPULATOR_CONNECT_TIMEOUT_MILLIS, SettingType.LONG, manipulatorConnectTimeoutMillis);

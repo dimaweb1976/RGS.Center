@@ -94,6 +94,7 @@ public record RoboticManipulatorViewModel(
     }
 
     private static String analogInput(RoboticManipulatorSnapshot snapshot) {
+        if (snapshot != null && snapshot.feedbackOnly()) return "Unavailable (feedback-only)";
         if (snapshot == null || snapshot.hatchAnalogInput() == null) {
             return EMPTY;
         }
