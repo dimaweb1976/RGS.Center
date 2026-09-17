@@ -144,8 +144,9 @@ public class SettingsService {
     @Value("${rgs.device.boson.status-stale-millis:30000}")
     private long bosonStatusStaleMillis = 30000L;
 
-    @Value("${rgs.device.manipulator.host:192.168.5.1}")
-    private String manipulatorHost = "192.168.5.1";
+    //@Value("${rgs.device.manipulator.host:192.168.5.1}")
+    @Value("${rgs.device.manipulator.host:127.0.0.1}")
+    private String manipulatorHost = "127.0.0.1";
 
     @Value("${rgs.device.manipulator.command-port:29999}")
     private long manipulatorCommandPort = 29999L;
