@@ -283,6 +283,7 @@ public class EquipmentSnapshotAssembler {
         return new ShpEquipmentSnapshot(
                 health,
                 values == null ? null : values.ambientTemperatureCelsius(),
+                values == null ? null : values.detectorTemperatureCelsius(),
                 values == null ? null : values.humidityPercent(),
                 values == null ? null : values.atmosphericPressureHpa(),
                 values == null ? null : values.detectorCurrent(),

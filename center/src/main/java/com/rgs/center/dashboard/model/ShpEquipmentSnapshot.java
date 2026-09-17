@@ -7,6 +7,7 @@ import java.util.Objects;
 public record ShpEquipmentSnapshot(
         DeviceHealth health,
         Double ambientTemperatureCelsius,
+        Double detectorTemperatureCelsius,
         Double humidityPercent,
         Double atmosphericPressureHpa,
         Double leakageCurrent,
