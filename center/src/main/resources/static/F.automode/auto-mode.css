@@ -273,3 +273,6 @@ body.theme-dark .auto-progress-track { background: rgb(28, 43, 61); }
 body.theme-dark .auto-progress-track i { box-shadow: 0 0 12px #27c5e855; }
 
 body.theme-dark .topbar .product-title strong,body.theme-dark .header-auto-state b,body.theme-dark .measurement-metric>b,body.theme-dark .measurement-progress-label strong { color: var(--ink); }
+
+.camera-state.offline { color: var(--red); }
+.camera-state.offline span { background: var(--red); box-shadow: 0 0 7px var(--red); }

@@ -248,12 +248,12 @@ public class ScalesService extends AbstractQueuedDeviceService {
         if (failures >= FAILURES_BEFORE_RECONNECT) {
             consecutiveFailures.set(0);
             stopCommunication();
-            log.error(
+            /*log.error(
                     "Scales communication failed {} times; reconnecting: {}",
                     failures,
                     message,
                     exception
-            );
+            );*/
         } else if (failures == 1) {
             log.warn("Scales communication failed: {}", message);
         } else {

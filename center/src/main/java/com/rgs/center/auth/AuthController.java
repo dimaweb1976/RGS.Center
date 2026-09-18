@@ -98,7 +98,20 @@ class AuthController {
     @ResponseBody
     Map<String, Object> connectionStatus(Authentication authentication) {
         int connected = sessionService.countConnected();
-        AuthPrincipal principal = (AuthPrincipal) authentication.getPrincipal();
+        //AuthPrincipal principal = (AuthPrincipal) authentication.getPrincipal();
+        
+        if (authentication == null || !(authentication.getPrincipal() instanceof AuthPrincipal principal)) {
+            return Map.of(
+                    "authenticated", false,
+                    "username", "anonymous",
+                    "role", "ANONYMOUS",
+                    "connected", connected,
+                    "warning", connected > 1
+            );
+        }
+        
+        
+        
         return Map.of(
                 "username", principal.login(),
                 "role", principal.roleName(),

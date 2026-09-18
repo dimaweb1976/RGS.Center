@@ -43,7 +43,7 @@ public class ActionRunButtonsState {
         bDeviceAllModulesConnected  = ( spshot.equipment().manipulator().health().connection() == ConnectionState.ONLINE);
         
         bDeviceAllModulesConnected &= ( spshot.equipment().cameras().get( 0).health().connection() == ConnectionState.ONLINE);
-        bDeviceAllModulesConnected &= ( spshot.equipment().cameras().get( 1).health().connection() == ConnectionState.ONLINE);
+        //bDeviceAllModulesConnected &= ( spshot.equipment().cameras().get( 1).health().connection() == ConnectionState.ONLINE);
             
         bDeviceAllModulesConnected &= ( spshot.equipment().gammaPro().health().connection() == ConnectionState.ONLINE);
         bDeviceAllModulesConnected &= ( spshot.equipment().nicole().health().connection() == ConnectionState.ONLINE);

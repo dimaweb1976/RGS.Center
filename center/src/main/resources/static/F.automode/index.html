@@ -35,7 +35,44 @@
               <div id="queueProgress" class="auto-progress-track" role="progressbar" aria-label="Batch measurement progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="autoProgressBar"></i></div>
             </section>
           </div>
-          <div class="auto-grid"><article class="panel workfield"><div class="workfield-head"><div><p class="eyebrow">Machine vision</p><h2>Sample workfield</h2><small>Last scan: <span id="lastScanTime">not scanned</span></small></div><div class="camera-state"><span></span>Camera online</div><button id="scanWorkfield" class="secondary">Scan workfield</button></div><div class="field-map" aria-label="Workfield sample map"></div><div class="workfield-legend"><span><i class="ready"></i>Ready</span><span><i class="selected"></i>Selected</span><span><i class="processing"></i>Processing</span><span><i class="complete"></i>Completed</span><span><i class="error"></i>Error</span></div></article><article class="panel queue-panel"><div class="panel-title"><div><p class="eyebrow">Measurement plan</p><h2 id="selectedSamplesTitle">30 samples selected</h2><small id="queueSummary">Ready 30 · Completed 0 · Errors 0</small></div></div><div class="queue-table-scroll"><table><thead><tr><th>#</th><th class="select-column"><input id="selectAllSamples" type="checkbox" checked="" aria-label="Select all samples"></th><th>Sample ID</th><th>Mass</th><th>Status</th></tr></thead><tbody id="sampleRows"></tbody></table></div></article></div>
+          <div class="auto-grid">
+                <article class="panel workfield">
+                <div class="workfield-head">
+                    <div>
+                        <p class="eyebrow">Machine vision</p>
+                        <h2>Sample workfield</h2>
+                        <small>Last scan: <span id="lastScanTime">not scanned</span></small>
+                    </div>
+                    <div id="camera_ready_label" class="camera-state">
+                        <span></span>Camera online
+                    </div>
+                    <button id="scanWorkfield" class="secondary">Scan workfield</button>
+                </div>
+                <div class="field-map" aria-label="Workfield sample map"></div>
+                <div class="workfield-legend">
+                    <span><i class="ready"></i>Ready</span>
+                    <span><i class="selected"></i>Selected</span>
+                    <span><i class="processing"></i>Processing</span>
+                    <span><i class="complete"></i>Completed</span>
+                    <span><i class="error"></i>Error</span>
+                </div>
+                </article>
+            <article class="panel queue-panel">
+                <div class="panel-title">
+                    <div>
+                        <p class="eyebrow">Measurement plan</p>
+                        <h2 id="selectedSamplesTitle">30 samples selected</h2>
+                        <small id="queueSummary">Ready 30 · Completed 0 · Errors 0</small>
+                    </div>
+                </div>
+                <div class="queue-table-scroll">
+                    <table>
+                        <thead><tr><th>#</th><th class="select-column"><input id="selectAllSamples" type="checkbox" checked="" aria-label="Select all samples"></th><th>Sample ID</th><th>Mass</th><th>Status</th></tr></thead>
+                        <tbody id="sampleRows"></tbody>
+                    </table>
+                </div>
+            </article>
+          </div>
         </div>
 <div id="autoParamsModal" class="modal" hidden="">
     <form id="autoParamsForm" class="modal-card parameters-modal" aria-labelledby="autoParamsTitle">
