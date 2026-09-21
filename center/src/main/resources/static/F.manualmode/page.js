@@ -105,3 +105,170 @@ saveServiceParameters.addEventListener('click',()=>{serviceParametersStatus.text
 $('#cancelModal').onclick=()=>modal.hidden=true;
 $('#confirmStart').onclick=()=>{modal.hidden=true;startServiceMeasurement(pendingServiceKind)};
 modal.addEventListener('click',e=>{if(e.target===modal)modal.hidden=true});
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  const scanBtn = document.getElementById('scanBarcodeBtn');
+  const sampleIdInput = document.getElementById('sampleIdInput');
+  let pollInterval = null;
+
+  if (!scanBtn || !sampleIdInput) {
+    return;
+  }
+
+  scanBtn.addEventListener('click', async () => {
+    try {
+      scanBtn.disabled = true;
+      const initialText = scanBtn.textContent;
+      scanBtn.textContent = 'Scanning...';
+
+      // 1. Запуск операции сканирования
+      const triggerResponse = await fetch('/api/barcode/scan', { method: 'POST' });
+      if (!triggerResponse.ok) {
+        throw new Error('Failed to trigger barcode scan');
+      }
+
+      // 2. Поллинг результата каждые 300 мс
+      pollInterval = setInterval(async () => {
+        try {
+          const res = await fetch('/api/barcode/value');
+          if (!res.ok) return;
+
+          const data = await res.json();
+
+          // Если чтение завершилось
+          if (!data.active) {
+            clearInterval(pollInterval);
+            pollInterval = null;
+            scanBtn.disabled = false;
+            scanBtn.textContent = initialText;
+
+            if (data.barcode && data.barcode.trim().length > 0) {
+              sampleIdInput.value = data.barcode.trim();
+            }
+          }
+        } catch (pollErr) {
+          clearInterval(pollInterval);
+          pollInterval = null;
+          scanBtn.disabled = false;
+          scanBtn.textContent = initialText;
+        }
+      }, 300);
+
+    } catch (err) {
+      scanBtn.disabled = false;
+      scanBtn.textContent = 'Scan';
+    }
+  });
+}); 
+
+// Generic handler for scales measurement
+async function triggerWeighing( buttonElement, inputElement, unitElement) {
+    if( !buttonElement || !inputElement) return;
+
+    const originalText = buttonElement.textContent;
+    try {
+        buttonElement.disabled = true;
+        buttonElement.textContent = 'Weighing...';
+
+        const response = await fetch('/api/scales/weigh', { method: 'POST' });
+        if( !response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.error || 'Weighing failed');
+        }
+
+        const data = await response.json();
+        if( data.success) {
+            inputElement.value = data.mass;
+            if( unitElement && data.unit) {
+                unitElement.value = data.unit.toLowerCase();
+            }
+        }
+    } catch( error) {
+        alert( 'Error measuring mass: ' + error.message);
+    } finally {
+        buttonElement.disabled = false;
+        buttonElement.textContent = originalText;
+    }
+}
+
+// Bind both buttons inside DOMContentLoaded
+const weighTareBtn =  document.getElementById( 'weighTareBtn');
+const tareMassInput = document.getElementById( 'tareMassInput');
+const tareMassUnit =  document.getElementById( 'tareMassUnit');
+
+const weighGrossBtn =  document.getElementById( 'weighGrossBtn');
+const grossMassInput = document.getElementById( 'grossMassInput');
+const grossMassUnit =  document.getElementById( 'grossMassUnit');
+
+if( weighTareBtn) {
+    weighTareBtn.addEventListener( 'click', () => {
+        triggerWeighing(weighTareBtn, tareMassInput, tareMassUnit);
+    });
+}
+
+if( weighGrossBtn) {
+    weighGrossBtn.addEventListener( 'click', () => {
+        triggerWeighing(weighGrossBtn, grossMassInput, grossMassUnit);
+    });
+}
+
+// Check scales hardware connection and update button states
+async function updateScalesAvailability() {
+  const weighTareBtn = document.getElementById('weighTareBtn');
+  const weighGrossBtn = document.getElementById('weighGrossBtn');
+
+  try {
+    const response = await fetch('/api/scales/availability');
+    if (!response.ok) {
+      throw new Error('Availability endpoint unreachable');
+    }
+
+    const data = await response.json();
+    const isAvailable = Boolean(data.available);
+
+    if (weighTareBtn) {
+      weighTareBtn.disabled = !isAvailable;
+      weighTareBtn.title = isAvailable ? 'Trigger tare weighing' : 'Scales disconnected';
+    }
+    if (weighGrossBtn) {
+      weighGrossBtn.disabled = !isAvailable;
+      weighGrossBtn.title = isAvailable ? 'Trigger gross weighing' : 'Scales disconnected';
+    }
+  } catch (error) {
+    if (weighTareBtn) weighTareBtn.disabled = true;
+    if (weighGrossBtn) weighGrossBtn.disabled = true;
+  }
+}
+
+// Initial check and periodic polling every 3 seconds
+updateScalesAvailability();
+setInterval( updateScalesAvailability, 3000);
+
+
+
+// Check scanner hardware connection and update button state
+async function updateBarcodeAvailability() {
+  const scanBarcodeBtn = document.getElementById('scanBarcodeBtn');
+  if (!scanBarcodeBtn) return;
+
+  try {
+    const response = await fetch('/api/barcode/availability');
+    if (!response.ok) {
+      throw new Error('Barcode availability unreachable');
+    }
+
+    const data = await response.json();
+    const isAvailable = Boolean(data.available);
+
+    scanBarcodeBtn.disabled = !isAvailable;
+    scanBarcodeBtn.title = isAvailable ? 'Scan barcode' : 'Scanner disconnected';
+  } catch (error) {
+    scanBarcodeBtn.disabled = true;
+    scanBarcodeBtn.title = 'Scanner unavailable';
+  }
+}
+
+// Initial check and periodic polling every 3 seconds
+updateBarcodeAvailability();
+setInterval(updateBarcodeAvailability, 3000);

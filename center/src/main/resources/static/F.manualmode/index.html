@@ -8,40 +8,98 @@
 <link rel="stylesheet" href="/F.manualmode/manual-mode.css">
 </head>
 <body data-page="manual">
-<div id="pageContent">
-<div id="view-manual" class="view active">
-          <div class="page-head service-mode-head"><div><p class="eyebrow">Manual mode</p></div></div>
-          <section id="service-measure" class="service-panel active">
-            <div class="service-command-bar" aria-label="Manual measurement controls">
-              <div class="service-controls">
-                <button id="openShield" class="shield-open" type="button">Open shield</button>
-                <button id="closeShield" class="shield-close" type="button" disabled="">Close shield</button>
-                <button id="startMeasure" class="service-start" type="button"><span>▶</span> Start measurement</button>
-                <button id="manualPause" class="service-pause" type="button" disabled=""><span>Ⅱ</span> Pause</button>
-                <button id="manualStop" class="service-stop" type="button" disabled=""><span>■</span> Stop</button>
-              </div>
+    <div id="pageContent">
+        <div id="view-manual" class="view active">
+            <div class="page-head service-mode-head">
+                <div>
+                    <p class="eyebrow">Manual mode</p>
+                </div>
             </div>
-            <section class="service-progress panel manual-spectrum-progress" aria-label="Spectrum acquisition progress">
-              <div class="service-progress-head"><span><b>Spectrum acquisition progress</b><small id="serviceProgressState">Ready</small></span><strong id="serviceProgressPercent">0%</strong></div>
-              <progress id="serviceProgressBar" max="100" value="0" aria-label="Spectrum acquisition progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></progress>
-              <div class="service-progress-time"><span>Time remaining</span><strong id="serviceTimeRemaining">00:30:00</strong></div>
+            <section id="service-measure" class="service-panel active">
+                <div class="service-command-bar" aria-label="Manual measurement controls">
+                    <div class="service-controls">
+                        <button id="openShield" class="shield-open" type="button">Open shield</button>
+                        <button id="closeShield" class="shield-close" type="button" disabled="">Close shield</button>
+                        <button id="startMeasure" class="service-start" type="button"><span>▶</span> Start measurement</button>
+                        <button id="manualPause" class="service-pause" type="button" disabled=""><span>Ⅱ</span> Pause</button>
+                        <button id="manualStop" class="service-stop" type="button" disabled=""><span>■</span> Stop</button>
+                    </div>
+                </div>
+                <section class="service-progress panel manual-spectrum-progress" aria-label="Spectrum acquisition progress">
+                    <div class="service-progress-head"><span><b>Spectrum acquisition progress</b><small id="serviceProgressState">Ready</small></span><strong id="serviceProgressPercent">0%</strong>
+                    </div>
+                    <progress id="serviceProgressBar" max="100" value="0" aria-label="Spectrum acquisition progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                    </progress>
+                    <div class="service-progress-time">
+                        <span>Time remaining</span><strong id="serviceTimeRemaining">00:30:00</strong>
+                    </div>
+                </section>
+                <div class="service-grid">
+                    <article class="panel"><div class="panel-title"><div><h2>Measuring parameters</h2></div></div>
+                        <div class="measurement-type" role="group" aria-label="Measurement type">
+                            <span>Measurement type</span>
+                            <div>
+                                <button id="sampleMeasurementType" class="active" type="button" aria-pressed="true">Sample</button>
+                                <button id="backgroundMeasurementType" type="button" aria-pressed="false">Background</button>
+                            </div>
+                        </div>
+                        <div id="serviceParameters" class="form-grid">
+                            <label class="sample-only">Batch ID<input value="M-2026-00418"></label>
+                            <label class="sample-only">Activity<div class="value-unit"><input type="number" placeholder="Optional"><select aria-label="Activity unit"><option value="Bq" selected="">Bq</option><option value="Ku">Ku</option></select></div></label>
+                            <label class="sample-only">Sample ID
+                                <div class="input-action">
+                                    <input id="sampleIdInput" value="LAB-418">
+                                    <button id="scanBarcodeBtn" type="button">Scan</button>
+                                </div>
+                            </label>
+                            <label>Preset time<div class="value-unit"><input id="manualDuration" type="number" value="30" min="0.01" step="any"><select id="manualDurationUnit" aria-label="Preset time unit"><option value="seconds">seconds</option><option value="minutes" selected="">minutes</option><option value="hours">hours</option></select></div></label>
+                            <label class="sample-only">Tare mass<div class="value-unit-action">
+                                    <input value="32.4" type="number" min="0" step="any">
+                                    <select aria-label="Tare mass unit">
+                                        <option value="mg">mg</option>
+                                        <option value="g" selected="">g</option>
+                                        <option value="kg">kg</option>
+                                        </select>
+                                        <button id="weighTareBtn" type="button">Weigh</button></div>
+                            </label>
+                            <label class="sample-only">Geometry<select><option>Bottle 0.5 L</option><option>Marinelli 1 L</option><option>Petri dish</option></select></label>
+                            <label class="sample-only">Gross mass
+                                <div class="value-unit-action">
+                                    <input value="548.7" type="number" min="0" step="any">
+                                    <select aria-label="Gross mass unit">
+                                        <option value="mg">mg</option>
+                                        <option value="g" selected="">g</option>
+                                        <option value="kg">kg</option>
+                                    </select>
+                                    <button id="weighGrossBtn" type="button">Weigh</button>
+                                </div>
+                            </label>
+                            <label class="sample-only">Volume<div class="value-unit"><input type="number" value="500" min="0" step="any"><select aria-label="Volume unit"><option value="ml" selected="">ml</option><option value="l">l</option><option value="cm3">cm³</option></select></div></label>
+                            <label class="wide">Comment<textarea rows="2" placeholder="Optional operator note"></textarea></label>
+                        </div>
+                        <div class="service-parameter-actions"><span id="serviceParametersStatus" role="status" aria-live="polite"></span><button id="saveServiceParameters" class="primary" type="button">Save parameters</button></div>
+                    </article>
+                </div>
             </section>
-            <div class="service-grid">
-              <article class="panel"><div class="panel-title"><div><h2>Measuring parameters</h2></div></div>
-                <div class="measurement-type" role="group" aria-label="Measurement type"><span>Measurement type</span><div><button id="sampleMeasurementType" class="active" type="button" aria-pressed="true">Sample</button><button id="backgroundMeasurementType" type="button" aria-pressed="false">Background</button></div></div>
-                <div id="serviceParameters" class="form-grid"><label class="sample-only">Batch ID<input value="M-2026-00418"></label><label class="sample-only">Activity<div class="value-unit"><input type="number" placeholder="Optional"><select aria-label="Activity unit"><option value="Bq" selected="">Bq</option><option value="Ku">Ku</option></select></div></label><label class="sample-only">Sample ID<div class="input-action"><input value="LAB-418"><button type="button">Scan</button></div></label><label>Preset time<div class="value-unit"><input id="manualDuration" type="number" value="30" min="0.01" step="any"><select id="manualDurationUnit" aria-label="Preset time unit"><option value="seconds">seconds</option><option value="minutes" selected="">minutes</option><option value="hours">hours</option></select></div></label><label class="sample-only">Tare mass<div class="value-unit-action"><input value="32.4" type="number" min="0" step="any"><select aria-label="Tare mass unit"><option value="mg">mg</option><option value="g" selected="">g</option><option value="kg">kg</option></select><button type="button">Weigh</button></div></label><label class="sample-only">Geometry<select><option>Bottle 0.5 L</option><option>Marinelli 1 L</option><option>Petri dish</option></select></label><label class="sample-only">Gross mass<div class="value-unit-action"><input value="548.7" type="number" min="0" step="any"><select aria-label="Gross mass unit"><option value="mg">mg</option><option value="g" selected="">g</option><option value="kg">kg</option></select><button type="button">Weigh</button></div></label><label class="sample-only">Volume<div class="value-unit"><input type="number" value="500" min="0" step="any"><select aria-label="Volume unit"><option value="ml" selected="">ml</option><option value="l">l</option><option value="cm3">cm³</option></select></div></label><label class="wide">Comment<textarea rows="2" placeholder="Optional operator note"></textarea></label></div>
-                <div class="service-parameter-actions"><span id="serviceParametersStatus" role="status" aria-live="polite"></span><button id="saveServiceParameters" class="primary" type="button">Save parameters</button></div>
-              </article>
-            </div>
-          </section>
         </div>
-<div id="confirmModal" class="modal" hidden=""><div class="modal-card"><p class="eyebrow">Confirmation</p><h2 id="modalTitle">Start process?</h2><p id="modalText"></p><div class="button-row"><button id="cancelModal" class="secondary">Cancel</button><button id="confirmStart" class="primary">Confirm and start</button></div></div></div>
-</div>
-<script src="common/components.js"></script>
-<script src="common/core.js"></script>
-<script src="/F.manualmode/page.js"></script>
-<script src="common/process.js"></script>
-<script src="common/page-init.js"></script>
-<script src="common/init.js"></script>
+        <div id="confirmModal" class="modal" hidden="">
+            <div class="modal-card">
+                <p class="eyebrow">Confirmation</p>
+                <h2 id="modalTitle">Start process?</h2>
+                <p id="modalText"></p>
+                <div class="button-row">
+                    <button id="cancelModal" class="secondary">Cancel</button>
+                    <button id="confirmStart" class="primary">Confirm and start</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="common/components.js"></script>
+    <script src="common/core.js"></script>
+    <script src="/F.manualmode/page.js"></script>
+    <script src="common/process.js"></script>
+    <script src="common/page-init.js"></script>
+    <script src="common/init.js"></script>
 </body>
 </html>
