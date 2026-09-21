@@ -88,7 +88,9 @@ class SecurityConfiguration {
                         .ignoringRequestMatchers(
                                 "/auth/logout",
                                 "/api/onlyOne/**",
-                                "/gammapro-boson/**"
+                                "/gammapro-boson/**",
+                                "/api/barcode/**",
+                                "/api/scales/**"
                         ))
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))

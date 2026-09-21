@@ -34,6 +34,12 @@ class OnlyOneLockInterceptor implements HandlerInterceptor {
             HttpServletResponse response,
             Object handler
     ) throws IOException {
+        
+        String uri = request.getRequestURI();
+        if (uri.startsWith("/api/barcode/") || uri.startsWith("/api/scales/")) {
+            return true;
+        }
+
         if (isReadOnly(request.getMethod())) {
             // Monitoring and page-loading GET requests must remain available to
             // clients that do not own the exclusive lease.
