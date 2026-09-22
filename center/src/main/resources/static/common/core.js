@@ -13,18 +13,34 @@ removeItem(key){memory.delete(key);
 try{window[name].removeItem(key)}
 catch{}
 }}}
-const safeSession=browserStorage('sessionStorage'),safeLocal=browserStorage('localStorage');
+const safeSession=browserStorage('sessionStorage'),
+safeLocal=browserStorage('localStorage');
 // Shared state, session demonstration, navigation and notifications.
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const params=new URLSearchParams(location.search);
-function showToast(message){const toast=document.createElement('div');toast.className='toast';toast.textContent=message;document.body.append(toast);setTimeout(()=>toast.remove(),3200)}
+function showToast(message){
+  const toast=document.createElement('div');
+  toast.className='toast';
+  toast.textContent=message;
+  document.body.append(toast);
+  setTimeout(()=>toast.remove(),3200)
+}
 const currentView=document.body.dataset.page;
-const serviceMeasurement={active:false,paused:false,kind:'manual',elapsed:0,duration:1800,timer:null};
+const serviceMeasurement={
+  active:false,
+  paused:false,
+  kind:'manual',
+  elapsed:0,
+  duration:1800,
+  timer:null
+};
 let pendingServiceKind='manual';
 const complexState=['idle','auto','manual','background','paused','fault','critical'].includes(params.get('state'))?params.get('state'):'idle';
 let processCondition=null,conditionReason='',recoveryHold=false;
 let hvState='off',hvRenderedState=null,hvRampTimer=null,hvLeakTimer=null,hvLeakageCurrent=0;
-function hvIsReady(){return hvState==='ready'}
+function hvIsReady(){
+  return hvState==='ready'
+}
 
 function setRobotStatus(data) {
   const colors = {

@@ -46,7 +46,7 @@ autoRemaining=$('#autoRemaining'),
 autoStep=$('#autoStep');
 
 // Sample workfield, queue, sequence and measurement parameters.
-let samples=Array.from({length:30},(_,i)=>({x:12+(i%6)*15.2,y:14+Math.floor(i/6)*18,id:`S-${String(i+1).padStart(3,'0')}`,mass:`${(512.4+i*7.3).toFixed(1)} g`,enabled:true}));
+let samples=[];
 const map=$('.field-map'), rows=$('#sampleRows');
 
 function selectSample( index) {
@@ -181,6 +181,7 @@ buttonsTimer = setInterval(() => {
 const camReadyLbl=$('#camera_ready_label');
 const scanWorkfieldBtn = $('#scanWorkfield');
 let camersReadyTimer = null;
+
 async function updateCamerasReadyState() {
   const data = await fetchCameras();
   if (!data) return;
@@ -196,6 +197,7 @@ async function updateCamerasReadyState() {
     scanWorkfieldBtn.disabled = !isReady;
   }
 }
+
 updateCamerasReadyState();
 camersReadyTimer = setInterval(() => { updateCamerasReadyState(); }, 1000);
 

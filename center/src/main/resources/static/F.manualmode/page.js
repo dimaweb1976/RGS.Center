@@ -1,4 +1,6 @@
 let buttonsTimer = null;
+let barcodeAvailabilityTimer = null;
+let scalesAvailabilityTimer = null;
 
 async function fetchButton() {
   try {
@@ -163,8 +165,11 @@ document.addEventListener('DOMContentLoaded', () => {
 }); 
 
 // Generic handler for scales measurement
-async function triggerWeighing( buttonElement, inputElement, unitElement) {
-    if( !buttonElement || !inputElement) return;
+async function triggerWeighing( buttonElement, inputElement) {
+  console.log("weighting");
+  console.log(buttonElement, inputElement);
+
+  if( !buttonElement && !inputElement ) return;
 
     const originalText = buttonElement.textContent;
     try {
@@ -179,9 +184,9 @@ async function triggerWeighing( buttonElement, inputElement, unitElement) {
 
         const data = await response.json();
         if( data.success) {
-            inputElement.value = data.mass;
-            if( unitElement && data.unit) {
-                unitElement.value = data.unit.toLowerCase();
+            // inputElement.value = data.mass;
+            if( inputElement && data.unit) {
+                inputElement.value = data?.mass;
             }
         }
     } catch( error) {
@@ -242,8 +247,13 @@ async function updateScalesAvailability() {
 }
 
 // Initial check and periodic polling every 3 seconds
+
 updateScalesAvailability();
-setInterval( updateScalesAvailability, 3000);
+
+scalesAvailabilityTimer = setInterval(
+  updateScalesAvailability,
+  3000
+);
 
 
 
@@ -270,5 +280,10 @@ async function updateBarcodeAvailability() {
 }
 
 // Initial check and periodic polling every 3 seconds
+
 updateBarcodeAvailability();
-setInterval(updateBarcodeAvailability, 3000);
+
+barcodeAvailabilityTimer = setInterval(
+  updateBarcodeAvailability,
+  3000
+);

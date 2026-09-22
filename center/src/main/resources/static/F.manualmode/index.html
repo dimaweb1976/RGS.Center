@@ -54,7 +54,7 @@
                             </label>
                             <label>Preset time<div class="value-unit"><input id="manualDuration" type="number" value="30" min="0.01" step="any"><select id="manualDurationUnit" aria-label="Preset time unit"><option value="seconds">seconds</option><option value="minutes" selected="">minutes</option><option value="hours">hours</option></select></div></label>
                             <label class="sample-only">Tare mass<div class="value-unit-action">
-                                    <input value="32.4" type="number" min="0" step="any">
+                                    <input value="0.0" type="number" min="0" step="any" id="tareMassInput">
                                     <select aria-label="Tare mass unit">
                                         <option value="mg">mg</option>
                                         <option value="g" selected="">g</option>
@@ -65,7 +65,7 @@
                             <label class="sample-only">Geometry<select><option>Bottle 0.5 L</option><option>Marinelli 1 L</option><option>Petri dish</option></select></label>
                             <label class="sample-only">Gross mass
                                 <div class="value-unit-action">
-                                    <input value="548.7" type="number" min="0" step="any">
+                                    <input value="0.0" type="number" min="0" step="any" id="grossMassInput">
                                     <select aria-label="Gross mass unit">
                                         <option value="mg">mg</option>
                                         <option value="g" selected="">g</option>

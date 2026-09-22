@@ -396,6 +396,19 @@ function destroyPageTimers() {
     clearInterval(mainIndicatorTimer);
     mainIndicatorTimer = null;
   }
+  if (typeof barcodeAvailabilityTimer !== 'undefined' && barcodeAvailabilityTimer !== null) {
+    clearInterval(barcodeAvailabilityTimer);
+    barcodeAvailabilityTimer = null;
+  }
+  if (typeof scalesAvailabilityTimer !== 'undefined' && scalesAvailabilityTimer !== null) {
+    clearInterval(scalesAvailabilityTimer);
+    scalesAvailabilityTimer = null;
+  }
+
+  if (typeof camersReadyTimer !== 'undefined' && camersReadyTimer !== null) {
+    clearInterval(camersReadyTimer);
+    camersReadyTimer = null;
+  }
 }
 
 function showApiError() {
