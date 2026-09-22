@@ -34,6 +34,22 @@ class BoofCvBottleRecognitionEngine implements BottleRecognitionEngine {
 
     private final DetectorConfig config;
 
+    private static BufferedImage rotateClockwise90(BufferedImage img) {
+        int w = img.getHeight();
+        int h = img.getWidth();
+        int type = img.getType() == BufferedImage.TYPE_CUSTOM ? BufferedImage.TYPE_INT_RGB : img.getType();
+        BufferedImage rotated = new BufferedImage(w, h, type);
+        Graphics2D graphic = rotated.createGraphics();
+        try {
+            graphic.rotate(Math.PI / 2, w / 2d, h / 2d);
+            int offset = (w - h) / 2;
+            graphic.drawImage(img, null, offset, -offset);
+        } finally {
+            graphic.dispose();
+        }
+        return rotated;
+    }
+    
     BoofCvBottleRecognitionEngine(
             @Value("${rgs.camera.detection.initial-threshold:40}") int initialThreshold,
             @Value("${rgs.camera.detection.blur-radius:5}") int blurRadius,
@@ -77,7 +93,8 @@ class BoofCvBottleRecognitionEngine implements BottleRecognitionEngine {
 
     @Override
     public BottleRecognitionResult recognize(BufferedImage source) {
-        GrayU8 input = grayscale(source);
+        BufferedImage rotatedSource = rotateClockwise90(source);
+        GrayU8 input = grayscale( rotatedSource);
         GrayU8 filtered = input.createNew(input.width, input.height);
         filtered.setTo(input);
         GrayU8 binary = input.createNew(input.width, input.height);
@@ -119,11 +136,11 @@ class BoofCvBottleRecognitionEngine implements BottleRecognitionEngine {
                 ConnectRule.EIGHT,
                 null
         );
-        List<Candidate> candidates = candidates(contours);
-        List<Candidate> rings = concentricRings(candidates);
-        List<DetectedBottle> detected = new ArrayList<>(rings.size());
-        for (Candidate value : rings) {
-            detected.add(new DetectedBottle(
+        List < Candidate> candidates = candidates( contours);
+        List < Candidate> rings = concentricRings( candidates);
+        List < DetectedBottle> detected = new ArrayList<>( rings.size());
+        for( Candidate value : rings) {
+            detected.add( new DetectedBottle(
                     0,
                     value.centerX,
                     value.centerY,
@@ -133,18 +150,18 @@ class BoofCvBottleRecognitionEngine implements BottleRecognitionEngine {
                     value.circularity
             ));
         }
-        List<DetectedBottle> bottles = numberByRows(detected);
+        List<DetectedBottle> bottles = numberByRows( detected);
         return new BottleRecognitionResult(
-                annotate(source, bottles),
-                List.copyOf(bottles)
-        );
+                annotate( rotatedSource, bottles),
+                List.copyOf( bottles)
+                );
     }
 
-    private List<Candidate> candidates(List<Contour> contours) {
-        List<Candidate> result = new ArrayList<>();
-        for (Contour contour : contours) {
-            addCandidate(result, contour.external);
-            for (List<Point2D_I32> internal : contour.internal) {
+    private List < Candidate> candidates( List < Contour> contours) {
+        List < Candidate> result = new ArrayList<>();
+        for( Contour contour : contours) {
+            addCandidate( result, contour.external);
+            for( List<Point2D_I32> internal : contour.internal) {
                 addCandidate(result, internal);
             }
         }
