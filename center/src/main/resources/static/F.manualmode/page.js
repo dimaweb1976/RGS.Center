@@ -110,58 +110,58 @@ modal.addEventListener('click',e=>{if(e.target===modal)modal.hidden=true});
 
 
 document.addEventListener('DOMContentLoaded', () => {
-  const scanBtn = document.getElementById('scanBarcodeBtn');
-  const sampleIdInput = document.getElementById('sampleIdInput');
-  let pollInterval = null;
+    const scanBtn = document.getElementById('scanBarcodeBtn');
+    const sampleIdInput = document.getElementById('sampleIdInput');
+    let pollInterval = null;
 
-  if (!scanBtn || !sampleIdInput) {
-    return;
-  }
-
-  scanBtn.addEventListener('click', async () => {
-    try {
-      scanBtn.disabled = true;
-      const initialText = scanBtn.textContent;
-      scanBtn.textContent = 'Scanning...';
-
-      // 1. Запуск операции сканирования
-      const triggerResponse = await fetch('/api/barcode/read', { method: 'POST' });
-      if (!triggerResponse.ok) {
-        throw new Error('Failed to trigger barcode read');
-      }
-
-      // 2. Поллинг результата каждые 300 мс
-      pollInterval = setInterval(async () => {
-        try {
-          const res = await fetch('/api/barcode/status');
-          if (!res.ok) return;
-
-          const data = await res.json();
-          
-          // Если чтение завершилось
-          if (data & !data.scanning) {
-            clearInterval(pollInterval);
-            pollInterval = null;
-            scanBtn.disabled = false;
-            scanBtn.textContent = initialText;
-
-            if (data?.lastBarcode && data?.lastBarcode.trim().length > 0) {
-              sampleIdInput.value = data?.lastBarcode.trim();
-            }
-          }
-        } catch (pollErr) {
-          clearInterval(pollInterval);
-          pollInterval = null;
-          scanBtn.disabled = false;
-          scanBtn.textContent = initialText;
-        }
-      }, 300);
-
-    } catch (err) {
-      scanBtn.disabled = false;
-      scanBtn.textContent = 'Scan';
+    if (!scanBtn || !sampleIdInput) {
+        return;
     }
-  });
+
+    scanBtn.addEventListener('click', async () => {
+        try {
+            scanBtn.disabled = true;
+            const initialText = scanBtn.textContent;
+            scanBtn.textContent = 'Scanning...';
+
+            // 1. Запуск операции сканирования
+            const triggerResponse = await fetch('/api/barcode/read', { method: 'POST' });
+            if (!triggerResponse.ok) {
+                throw new Error('Failed to trigger barcode read');
+            }
+
+            // 2. Поллинг результата каждые 300 мс
+            pollInterval = setInterval(async () => {
+                try {
+                    const res = await fetch('/api/barcode/status');
+                    if( !res.ok) return;
+
+                    const data = await res.json();
+
+                    // Если чтение завершилось
+                    if( data && !data.scanning) {
+                        clearInterval(pollInterval);
+                        pollInterval = null;
+                        scanBtn.disabled = false;
+                        scanBtn.textContent = initialText;
+
+                        if( data?.lastBarcode && data?.lastBarcode.trim().length > 0) {
+                            sampleIdInput.value = data?.lastBarcode.trim();
+                        }
+                    }
+                } catch (pollErr) {
+                    clearInterval(pollInterval);
+                    pollInterval = null;
+                    scanBtn.disabled = false;
+                    scanBtn.textContent = initialText;
+                }
+            }, 300);
+
+        } catch (err) {
+            scanBtn.disabled = false;
+            scanBtn.textContent = 'Scan';
+        }
+    });
 }); 
 
 // Generic handler for scales measurement

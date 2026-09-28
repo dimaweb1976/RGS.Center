@@ -60,7 +60,17 @@ public class RGSCenterWarehouse {
     public static final String DEVICES_NICOLE_TIME_Y = "device.nicole.date.year";
     public static final String DEVICES_NICOLE_COOLER_ERR_CODE = "device.nicole.cooler.error.code";
     public static final String DEVICES_NICOLE_COOLER_WARNINGS = "device.nicole.cooler.warnings";
-                        
+
+    public static final String DEVICES_BOSON_HV_IS_APPLIED = "device.boson.hv.is.applied";
+    public static final String DEVICES_BOSON_HV_ACTUAL = "device.boson.hv.actual";
+    public static final String DEVICES_BOSON_HV_PRESET = "device.boson.hv.preset";
+    public static final String DEVICES_BOSON_MODIFICATION = "device.boson.modification";
+    public static final String DEVICES_BOSON_VERSION = "device.boson.version";
+    public static final String DEVICES_BOSON_PHYS_MANUFACTURE = "device.boson.phys.manufacture";
+    public static final String DEVICES_BOSON_DEVICE_CODE = "device.boson.device.code";
+    public static final String DEVICES_BOSON_SERIAL = "device.boson.serial";
+    public static final String DEVICES_BOSON_ID = "device.boson.id";
+    
     public static final List <String> lstShps = List.of(
                 DEVICES_SHP_AMBIENT_TEMPERATURE,
                 DEVICES_SHP_DETECTOR_TEMPERATURE,
