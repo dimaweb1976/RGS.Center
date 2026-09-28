@@ -1,10 +1,6 @@
 package com.rgs.center.restapi;
 
-import com.rgs.center.CenterWarehouse;
-import com.rgs.center.dashboard.DashboardSnapshotService;
-import com.rgs.center.dashboard.model.ConnectionState;
-import com.rgs.center.dashboard.model.DashboardSnapshot;
-import com.rgs.center.dashboard.model.OperationalState;
+import com.rgs.center.warehouse.RGSCenterWarehouse;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,20 +14,18 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/")
 public class HeaderStateIndicator {
     
-    private final DashboardSnapshotService dashboardSnapshotService;
-    
     private static final Logger log = LoggerFactory.getLogger( ActionRunButtonsState.class);
     
     @Autowired
-    private CenterWarehouse warehouse;
+    private RGSCenterWarehouse warehouse;
     
-    public HeaderStateIndicator( DashboardSnapshotService dashboardSnapshotService) {
-        this.dashboardSnapshotService = dashboardSnapshotService;
+    public HeaderStateIndicator( ) {
     }
+    
     @GetMapping("/v1/MainIndicator")
     public ResponseEntity<?> aboutLines() {
         
-        Object runState = warehouse.getWareHouseItem( "isRunning");
+        Object runState = warehouse.getItem( "device.run.state");
         
         int nColor = 3;
         String strStatus = "FAULT";
@@ -39,26 +33,26 @@ public class HeaderStateIndicator {
         String strSerialNum = "RGS sn: 2534-26";
         
         switch( runState) {
-            case CenterWarehouse.RgsDeviceRunState.RGS_CENTER_DEVICE_RUN_IDLE:
+            case RGSCenterWarehouse.DeviceComplexModes.RGS_COMPLEX_IDLE:
                 nColor = 1; strStatus = "Idle";     strDescription = "";    break;
 
-            case CenterWarehouse.RgsDeviceRunState.RGS_CENTER_DEVICE_RUN_IN_AUTOMODE:
+            case RGSCenterWarehouse.DeviceComplexModes.RGS_COMPLEX_AUTO:
                 nColor = 2; strStatus = "Auto mode";strDescription = "Running"; break;
-            case CenterWarehouse.RgsDeviceRunState.RGS_CENTER_DEVICE_RUN_IN_AUTOMODE_PAUSE:
-                nColor = 2; strStatus = "Auto mode";strDescription = "Paused";  break;
+            //case CenterWarehouse.RgsDeviceRunState.RGS_CENTER_DEVICE_RUN_IN_AUTOMODE_PAUSE:
+            //    nColor = 2; strStatus = "Auto mode";strDescription = "Paused";  break;
                 
-            case CenterWarehouse.RgsDeviceRunState.RGS_CENTER_DEVICE_RUN_IN_MANUALMODE:
+            case RGSCenterWarehouse.DeviceComplexModes.RGS_COMPLEX_MANUAL:
                 nColor = 2; strStatus = "Manual mode";strDescription = "Running";   break;
-            case CenterWarehouse.RgsDeviceRunState.RGS_CENTER_DEVICE_RUN_IN_MANUALMODE_PAUSE:
-                nColor = 2; strStatus = "Manual mode";  strDescription = "Paused";  break;
+            //case CenterWarehouse.RgsDeviceRunState.RGS_CENTER_DEVICE_RUN_IN_MANUALMODE_PAUSE:
+            //    nColor = 2; strStatus = "Manual mode";  strDescription = "Paused";  break;
 
-            case CenterWarehouse.RgsDeviceRunState.RGS_CENTER_DEVICE_RUN_IN_BG_ACQ:
+            case RGSCenterWarehouse.DeviceComplexModes.RGS_COMPLEX_BG_ACQ:
                 nColor = 2; strStatus = "Bg acquisition";   strDescription = "Paused";  break;
 
-            case CenterWarehouse.RgsDeviceRunState.RGS_CENTER_DEVICE_RUN_IN_BG_ACQ_PAUSE:
-                nColor = 2; strStatus = "Bg acquisition";   strDescription = "Paused";  break;
+            //case CenterWarehouse.RgsDeviceRunState.RGS_CENTER_DEVICE_RUN_IN_BG_ACQ_PAUSE:
+            //    nColor = 2; strStatus = "Bg acquisition";   strDescription = "Paused";  break;
             
-            case CenterWarehouse.RgsDeviceRunState.RGS_CENTER_DEVICE_RUN_IN_FAULT:
+            case RGSCenterWarehouse.DeviceComplexModes.RGS_COMPLEX_FAIL:
                 nColor = 3; strStatus = "Fault";    strDescription = "fault";   break;
                 
             default:

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Dobot Command Control</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 50px; background-color: #f4f4f9; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); max-width: 400px; }
+        .status { font-weight: bold; margin-bottom: 20px; }
+        .running { color: green; }
+        .stopped { color: red; }
+        button { padding: 10px 20px; margin-right: 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    
+    <!-- DOBOT COMMAND -->
+<div class="card">
+    <h2>Dobot Command Service</h2>
+    <div class="status">Статус: <span id="DobotCommandStatusText" class="stopped">Загрузка...</span></div>
+    
+    <button onclick="startDobotCommandService()">Запустить</button>
+    <button onclick="stopDobotCommandService()">Остановить</button>
+</div>
+
+<script>
+    function checkDobotCommandStatus() {
+        fetch('/api/dobot/command/status')
+            .then(response => response.json())
+            .then(data => {
+                const statusSpan = document.getElementById('DobotCommandStatusText');
+                if (data.running) {
+                    statusSpan.textContent = 'Запущен';
+                    statusSpan.className = 'running';
+                } else {
+                    statusSpan.textContent = 'Остановлен';
+                    statusSpan.className = 'stopped';
+                }
+            })
+            .catch(error => console.error('Ошибка получения статуса:', error));
+    }
+
+    function startDobotCommandService() {
+        fetch('/api/dobot/command/start', { method: 'POST' })
+            .then(() => checkDobotCommandStatus());
+    }
+
+    function stopDobotCommandService() {
+        fetch('/api/dobot/command/stop', { method: 'POST' })
+            .then(() => checkDobotCommandStatus());
+    }
+
+    // Проверяем статус при загрузке и каждые 2 секунды
+    checkDobotCommandStatus();
+    setInterval(checkDobotCommandStatus, 2000);
+</script>
+
+
+<!-- DOBOT STREAM -->
+<div class="card">
+    <h2>Dobot Stream Service</h2>
+    <div class="status">Статус: <span id="DobotStreamStatusText" class="stopped">Загрузка...</span></div>
+    
+    <button onclick="startStreamService()">Запустить</button>
+    <button onclick="stopStreamService()">Остановить</button>
+</div>
+
+<script>
+    function checkDobotStreamStatus() {
+        fetch('/api/dobot/stream/status')
+            .then(response => response.json())
+            .then(data => {
+                const statusSpan = document.getElementById('DobotStreamStatusText');
+                if (data.running) {
+                    statusSpan.textContent = 'Запущен';
+                    statusSpan.className = 'running';
+                } else {
+                    statusSpan.textContent = 'Остановлен';
+                    statusSpan.className = 'stopped';
+                }
+            })
+            .catch(error => console.error('Ошибка получения статуса:', error));
+    }
+
+    function startStreamService() {
+        fetch('/api/dobot/stream/start', { method: 'POST' })
+            .then(() => checkDobotStreamStatus());
+    }
+
+    function stopStreamService() {
+        fetch('/api/dobot/stream/stop', { method: 'POST' })
+            .then(() => checkDobotStreamStatus());
+    }
+
+    // Проверяем статус при загрузке и каждые 2 секунды
+    checkDobotStreamStatus();
+    setInterval( checkDobotStreamStatus, 2000);
+</script>
+
+
+<!-- SCALES CONTROL -->
+<div class="card">
+    <h2>Scales Service</h2>
+    <div class="status">Статус: <span id="ScalesStatusText" class="stopped">Загрузка...</span></div>
+    
+    <button onclick="startScalesService()">Запустить</button>
+    <button onclick="stopScalesService()">Остановить</button>
+</div>
+
+<script>
+    function checkScalesStatus() {
+        fetch('/api/scales/status')
+            .then(response => response.json())
+            .then(data => {
+                const statusSpan = document.getElementById('ScalesStatusText');
+                if (data.running) {
+                    statusSpan.textContent = 'Запущен';
+                    statusSpan.className = 'running';
+                } else {
+                    statusSpan.textContent = 'Остановлен';
+                    statusSpan.className = 'stopped';
+                }
+            })
+            .catch(error => console.error('Ошибка получения статуса весов:', error));
+    }
+
+    function startScalesService() {
+        fetch('/api/scales/start', { method: 'POST' })
+            .then(() => checkScalesStatus());
+    }
+
+    function stopScalesService() {
+        fetch('/api/scales/stop', { method: 'POST' })
+            .then(() => checkScalesStatus());
+    }
+
+    // Проверяем статус при загрузке и каждые 2 секунды
+    checkScalesStatus();
+    setInterval(checkScalesStatus, 2000);
+</script>
+
+
+</body>
+</html>

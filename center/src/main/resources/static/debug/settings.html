@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>RGS Center Settings Viewer</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; background-color: #f4f4f9; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); max-width: 800px; margin: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #28a745; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .refresh-info { color: #666; font-size: 0.9em; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>Настройки программы (Settings)</h2>
+        <div class="refresh-info">Автоматическое обновление каждые 2 секунды</div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Ключ (Parameter)</th>
+                    <th>Значение (Value)</th>
+                </tr>
+            </thead>
+            <tbody id="settingsTableBody">
+                <tr>
+                    <td colspan="2" style="text-align: center;">Загрузка данных...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+<script>
+    function fetchSettingsData() {
+        fetch('/api/settings/all')
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.getElementById('settingsTableBody');
+                tbody.innerHTML = '';
+                
+                if (Object.keys(data).length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="2" style="text-align: center;">Настройки отсутствуют</td></tr>';
+                    return;
+                }
+
+                for (const [key, value] of Object.entries(data)) {
+                    const row = document.createElement('tr');
+                    
+                    const keyCell = document.createElement('td');
+                    keyCell.textContent = key;
+                    
+                    const valCell = document.createElement('td');
+                    valCell.textContent = (value !== null && value !== undefined) ? value.toString() : 'null';
+                    
+                    row.appendChild(keyCell);
+                    row.appendChild(valCell);
+                    tbody.appendChild(row);
+                }
+            })
+            .catch(error => console.error('Ошибка получения данных настроек:', error));
+    }
+
+    fetchSettingsData();
+    setInterval(fetchSettingsData, 2000);
+</script>
+
+</body>
+</html>

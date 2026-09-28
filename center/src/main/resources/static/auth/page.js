@@ -2,14 +2,36 @@
 function initializePage() {
   document.getElementById('loginForm').addEventListener('submit', signIn);
 }
-function signIn(event) {
+async function signIn(event) {
   event.preventDefault();
-  // Add authentication, token handling and successful navigation here.
+  
+  const password = document.getElementById('password').value;
+  const message = document.getElementById('loginMessage');
 
-  // This placeholder does not accept credentials or issue a demo token.
-  //const message = document.getElementById('loginMessage');
-  //message.textContent = 'Sign-in is not configured.';
-  //message.hidden = false;
+  try {
+    const response = await fetch('/api/onlyOne/enter', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ password: password })
+    });
 
-  window.location.replace('/automode')
+    if (!response.ok) {
+      const errorData = await response.json();
+      message.textContent = errorData.error || 'Access denied';
+      message.hidden = false;
+      return;
+    }
+
+    const data = await response.json();
+    if (data.token) {
+      sessionStorage.setItem('onlyOneToken', data.token);
+      window.location.replace('/F.automode/index.html');
+    }
+  } catch (error) {
+    console.error('Sign-in error:', error);
+    message.textContent = 'Connection error';
+    message.hidden = false;
+  }
 }

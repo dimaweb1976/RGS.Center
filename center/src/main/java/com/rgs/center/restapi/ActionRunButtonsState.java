@@ -1,9 +1,10 @@
 package com.rgs.center.restapi;
 
-import com.rgs.center.CenterWarehouse;
-import com.rgs.center.dashboard.DashboardSnapshotService;
-import com.rgs.center.dashboard.model.ConnectionState;
-import com.rgs.center.dashboard.model.DashboardSnapshot;
+import com.rgs.center.dobot.ServiceTcpDobotStreamLineConnection;
+import com.rgs.center.gammapro.ServiceTcpGammaProConnection;
+import com.rgs.center.nicole.ServiceTcpNicoleConnection;
+import com.rgs.center.shp.ServiceShpConnection;
+import com.rgs.center.warehouse.RGSCenterWarehouse;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,47 +19,57 @@ public class ActionRunButtonsState {
     
     private static final Logger log = LoggerFactory.getLogger( ActionRunButtonsState.class);
     
-    @Autowired
-    private CenterWarehouse warehouse;
-            
-    private final DashboardSnapshotService dashboardSnapshotService;
     
-    public ActionRunButtonsState( DashboardSnapshotService dashboardSnapshotService) {
-        this.dashboardSnapshotService = dashboardSnapshotService;
+    @Autowired
+    ServiceTcpNicoleConnection serviceNicole;
+    
+    @Autowired
+    ServiceTcpDobotStreamLineConnection serviceDobot;
+    
+    @Autowired
+    ServiceTcpGammaProConnection serviceGammaPro;
+    
+    //@Autowired
+    //ServiceTcpCamerasConnection serviceCameras;
+    
+    @Autowired
+    ServiceShpConnection serviceShp;
+    
+    @Autowired
+    RGSCenterWarehouse warehouse;
+    
+    public ActionRunButtonsState() {
     }
     
     @GetMapping("/api/v1/buttonsState")
     public ResponseEntity<?> buttonsState() {
-        DashboardSnapshot spshot = dashboardSnapshotService.snapshot();
         
-        Object isRunning = warehouse.getWareHouseItem( "isRunning");
+        
+        Object isRunning = warehouse.getItem( "device.run.state");
         boolean deviceIsBusy = (
-                isRunning == CenterWarehouse.RgsDeviceRunState.RGS_CENTER_DEVICE_RUN_IN_AUTOMODE ||
-                isRunning == CenterWarehouse.RgsDeviceRunState.RGS_CENTER_DEVICE_RUN_IN_MANUALMODE ||
-                isRunning == CenterWarehouse.RgsDeviceRunState.RGS_CENTER_DEVICE_RUN_IN_BG_ACQ
+                isRunning == RGSCenterWarehouse.DeviceComplexModes.RGS_COMPLEX_AUTO ||
+                isRunning == RGSCenterWarehouse.DeviceComplexModes.RGS_COMPLEX_MANUAL ||
+                isRunning == RGSCenterWarehouse.DeviceComplexModes.RGS_COMPLEX_BG_ACQ
                 );
         
         boolean bDeviceAllModulesConnected;
         
-        bDeviceAllModulesConnected  = ( spshot.equipment().manipulator().health().connection() == ConnectionState.ONLINE);
+        bDeviceAllModulesConnected  = ( serviceDobot.isActive());
         
-        bDeviceAllModulesConnected &= ( spshot.equipment().cameras().get( 0).health().connection() == ConnectionState.ONLINE);
-        //bDeviceAllModulesConnected &= ( spshot.equipment().cameras().get( 1).health().connection() == ConnectionState.ONLINE);
-            
-        bDeviceAllModulesConnected &= ( spshot.equipment().gammaPro().health().connection() == ConnectionState.ONLINE);
-        bDeviceAllModulesConnected &= ( spshot.equipment().nicole().health().connection() == ConnectionState.ONLINE);
-        bDeviceAllModulesConnected &= ( spshot.equipment().shp().health().connection() == ConnectionState.ONLINE);
+        //bDeviceAllModulesConnected &= ( serviceCameras.isActive);
         
-            
+        bDeviceAllModulesConnected &= serviceGammaPro.isActive();
+        bDeviceAllModulesConnected &= serviceNicole.isActive();
+        bDeviceAllModulesConnected &= ( serviceShp.isActive() == 0);
             
         boolean bAutoStart = bDeviceAllModulesConnected & !deviceIsBusy;
-        boolean bAutoPause = bDeviceAllModulesConnected & !deviceIsBusy;
+        boolean bAutoPause = bDeviceAllModulesConnected & deviceIsBusy;
             
         return ResponseEntity.ok( 
                     Map.ofEntries(
                         Map.entry( "AutoStart", bAutoStart),
                         Map.entry( "AutoPause", bAutoPause),
-                        Map.entry( "AutoStop",      bDeviceAllModulesConnected & !deviceIsBusy),
+                        Map.entry( "AutoStop",      bDeviceAllModulesConnected & deviceIsBusy),
                         
                         Map.entry( "ManualStart",   bDeviceAllModulesConnected & !deviceIsBusy),
                         Map.entry( "ManualPause",   bDeviceAllModulesConnected),

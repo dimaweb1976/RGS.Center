@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Сканер штрих-кодов</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 600px; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h1 { font-size: 24px; margin-bottom: 20px; color: #2c3e50; }
+        .status-box { margin-bottom: 20px; padding: 15px; border-radius: 5px; background: #ecf0f1; font-size: 16px; }
+        .btn { padding: 12px 20px; font-size: 16px; cursor: pointer; border: none; border-radius: 5px; color: white; background-color: #3498db; transition: background 0.3s; }
+        .btn:hover { background-color: #2980b9; }
+        .btn:disabled { background-color: #95a5a6; cursor: not-allowed; }
+        .result-box { margin-top: 25px; padding: 15px; border: 2px dashed #bdc3c7; border-radius: 5px; background: #fafafa; }
+        .result-title { font-weight: bold; margin-bottom: 5px; color: #7f8c8d; }
+        .result-value { font-size: 20px; font-family: monospace; color: #27ae60; word-break: break-all; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Управление сканером штрих-кодов</h1>
+    
+    <div class="status-box" id="statusText">Состояние сервиса: проверка...</div>
+    
+    <button class="btn" id="readBtn" onclick="triggerRead()">Включить чтение (Сканировать)</button>
+    
+    <div class="result-box">
+        <div class="result-title">Последний прочитанный штрих-код:</div>
+        <div class="result-value" id="lastBarcode">ожидание данных...</div>
+    </div>
+</div>
+
+<script>
+    async function updateStatus() {
+        try {
+            let response = await fetch('/api/barcode/status');
+            if (response.ok) {
+                let data = await response.json();
+                
+                let statusMsg = "Сервис: " + (data.running ? "Запущен" : "Остановлен");
+                if (data.scanning) {
+                    statusMsg += " | <span style='color: #e67e22; font-weight: bold;'>Идет сканирование (подсветка активна)...</span>";
+                    document.getElementById('readBtn').disabled = true;
+                    document.getElementById('readBtn').innerText = "Сканирование...";
+                } else {
+                    statusMsg += " | Ожидание";
+                    document.getElementById('readBtn').disabled = false;
+                    document.getElementById('readBtn').innerText = "Включить чтение (Сканировать)";
+                }
+                document.getElementById('statusText').innerHTML = statusMsg;
+                
+                if (data.lastBarcode) {
+                    document.getElementById('lastBarcode').innerText = data.lastBarcode;
+                }
+            }
+        } catch (e) {
+            document.getElementById('statusText').innerText = "Ошибка соединения с сервером";
+        }
+    }
+
+    async function triggerRead() {
+        try {
+            let response = await fetch('/api/barcode/read', { method: 'POST' });
+            if (response.ok) {
+                updateStatus();
+            }
+        } catch (e) {
+            console.error("Ошибка при отправке команды чтения", e);
+        }
+    }
+
+    setInterval(updateStatus, 500);
+    updateStatus();
+</script>
+
+</body>
+</html>
