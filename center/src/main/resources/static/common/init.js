@@ -1,4 +1,6 @@
 let checkActiveSessionTimer = null;
+let updateBusyTimer = null;
+
 
 async function checkActiveSession() {
     const token = sessionStorage.getItem('onlyOneToken');
@@ -46,25 +48,37 @@ async function checkActiveSession() {
     }
 }
 
+async function updateBusy() {
+    const token = sessionStorage.getItem('onlyOneToken');
+
+    if (!token) {
+        return;
+    }
+
+    try {
+        await fetch('/api/onlyOne/updateBusy', {
+            method: 'POST',
+            headers: {
+                'X-Lock-Token': token
+            }
+        });
+    } catch (error) {
+        console.error('updateBusy failed:', error);
+    }
+}
+
 
 // Called once before all six pages loaded
 async function beforeLoad(){
   try{
     const allowed = await checkActiveSession();
     if (allowed) {
-      document.documentElement.classList.remove("page-loading");
+       document.documentElement.classList.remove("page-loading");
     }
   }catch(e){
     console.log(e);
   }
 }
-
-beforeLoad();
-
-checkActiveSessionTimer = setInterval(
-  checkActiveSession,
-  1000
-);
 
 // Called once at DOMContentLoaded on ALL six pages, including Login.
 function afterLoad() {
@@ -78,5 +92,20 @@ function afterLoad() {
   initializePage();
 }
 
+beforeLoad();
+
+checkActiveSessionTimer = setInterval(
+  checkActiveSession,
+  1000
+);
+
+updateBusy();
+
+updateBusyTimer = setInterval(
+    updateBusy,
+    60_000
+);
+
 
 window.addEventListener('DOMContentLoaded', afterLoad, { once: true });
+

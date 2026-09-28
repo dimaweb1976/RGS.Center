@@ -9,11 +9,12 @@ const settingsSchemas={
     // {id:'robot',name:'Robotic manipulator',groups:[{name:'Network connection',fields:[settingField('ip','IP address','192.168.1.12','ip'),settingField('streamPort','Parameters stream port',6875,'number',1,65535),settingField('commandPort','Dobot command port',6880,'number',1,65535)]},{name:'Safety inputs',fields:[settingField('door','Cabin door sensor DI',3)]}]},
     {id:'gripper',name:'Gripper',groups:[{name:'Digital I/O',fields:[settingField('captured','Captured sensor DI',1),settingField('released','Released sensor DI',2),settingField('openOutput','Open command DO',1),settingField('closeOutput','Close command DO',2)]}]},
     // {id:'axis7',name:'7th axis',groups:[{name:'Motion controller',fields:[settingField('homeInput','Home sensor DI',6),settingField('positiveLimit','Positive limit DI',7),settingField('negativeLimit','Negative limit DI',8),settingField('driveOutput','Drive enable DO',3)]}]},
+    {id:'bozon', name:'Bozon', groups:[{name:"Bozon",fields:networkFields('192.168.1.10',502)}]},
     {id:'shield',name:'Lead shield',groups:[{name:'Digital I/O',fields:[settingField('shieldOpen','Open sensor DI',4),settingField('shieldClosed','Closed sensor DI',5),settingField('openOutput','Open command DO',4),settingField('closeOutput','Close command DO',5)]}]},
     {id:'cooling',name:'Cooling system “Nicole”',groups:[{name:'Network connection',fields:networkFields('192.168.2.12',6875)},{name:'LN₂ monitoring',fields:[settingField('ln2Warning','Low LN₂ warning level, %',20,'number',0,100)]}]},
     {id:'detector',name:'Detector and HV',groups:[
       // {name:'Network connection',fields:[settingField('ip','IP address','192.168.1.31','ip'),settingField('streamPort','Parameters stream port',9001,'number',1,65535),settingField('commandPort','Command port',9002,'number',1,65535)]}
-      {name:'High voltage',fields:[settingField('voltage','Operating voltage, V',2600,'number',0,5000),settingField('leakage','Leakage current warning, pA',100,'number',0)]},{name:'Temperature monitoring',fields:[settingField('maxTemperature','Maximum detector temperature, °C',-160,'number',-250,50)]}]},
+    {name:'High voltage',fields:[settingField('voltage','Operating voltage, V',2600,'number',0,5000),settingField('leakage','Leakage current warning, pA',100,'number',0)]},{name:'Temperature monitoring',fields:[settingField('maxTemperature','Maximum detector temperature, °C',-160,'number',-250,50)]}]},
     {id:'preamplifier',name:'State of Health Preamplifier',groups:[{name:'Serial connection',fields:serialFields('COM3')}]},
     {id:'gammapro',name:'GammaPro software',groups:[
       {name:'Network connection',

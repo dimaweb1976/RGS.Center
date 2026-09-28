@@ -277,8 +277,13 @@ autoPause.addEventListener('click',()=>{if(processCondition||!autoIsActive())ret
 autoStop.addEventListener('click',()=>{clearInterval(automodeTimer);autoProgress=0;autoSeconds=0;setAutoState('stopped','Stopped');renderAutoProgress();autoPause.innerHTML='<span>Ⅱ</span> Pause';showToast('Automated sequence stopped')});
 const autoParamsModal=$('#autoParamsModal');
 function closeAutoParams(){autoParamsModal.hidden=true}
-function openAutoParams(){const editable=!autoState.classList.contains('running');
-  $$('#autoParamsForm select,#autoParamsForm input,#autoParamsForm textarea').forEach(control=>control.disabled=!editable);$('#saveAutoParams').hidden=!editable;$('#autoParamsAccess').innerHTML=editable?'<span>Parameters can be edited before starting or while the sequence is paused.</span>':'<span><b>View only:</b> pause or stop the sequence to edit these parameters.</span>';autoParamsModal.hidden=false;(editable?$('#autoBatchId'):$('#closeAutoParams')).focus()}
+function openAutoParams(){
+  // const editable=!autoState.classList.contains('running');
+  // $$('#autoParamsForm select,#autoParamsForm input,#autoParamsForm textarea').forEach(control=>control.disabled=!editable);
+  // $('#saveAutoParams').hidden=!editable;$('#autoParamsAccess').innerHTML=editable?'<span>Parameters can be edited before starting or while the sequence is paused.</span>':'<span><b>View only:</b> pause or stop the sequence to edit these parameters.</span>';
+  autoParamsModal.hidden=false;
+  // (editable?$('#autoBatchId'):$('#closeAutoParams')).focus()
+}
 autoParamsBtn.addEventListener('click',openAutoParams);
 $('#closeAutoParams').addEventListener('click',closeAutoParams);
 $('#cancelAutoParams').addEventListener('click',closeAutoParams);

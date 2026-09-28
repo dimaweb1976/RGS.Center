@@ -125,28 +125,28 @@ document.addEventListener('DOMContentLoaded', () => {
       scanBtn.textContent = 'Scanning...';
 
       // 1. Запуск операции сканирования
-      const triggerResponse = await fetch('/api/barcode/scan', { method: 'POST' });
+      const triggerResponse = await fetch('/api/barcode/read', { method: 'POST' });
       if (!triggerResponse.ok) {
-        throw new Error('Failed to trigger barcode scan');
+        throw new Error('Failed to trigger barcode read');
       }
 
       // 2. Поллинг результата каждые 300 мс
       pollInterval = setInterval(async () => {
         try {
-          const res = await fetch('/api/barcode/value');
+          const res = await fetch('/api/barcode/status');
           if (!res.ok) return;
 
           const data = await res.json();
-
+          
           // Если чтение завершилось
-          if (!data.active) {
+          if (data & !data.scanning) {
             clearInterval(pollInterval);
             pollInterval = null;
             scanBtn.disabled = false;
             scanBtn.textContent = initialText;
 
-            if (data.barcode && data.barcode.trim().length > 0) {
-              sampleIdInput.value = data.barcode.trim();
+            if (data?.lastBarcode && data?.lastBarcode.trim().length > 0) {
+              sampleIdInput.value = data?.lastBarcode.trim();
             }
           }
         } catch (pollErr) {

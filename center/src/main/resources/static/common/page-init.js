@@ -1,6 +1,6 @@
 let indicatorsTimer = null;
 
-// Initialize the current instrument page after the shared init hook.
+// Initialize the current instrument page after the shared afterLoad hook.
 function initializePage() {
 
   // Each HTML document owns just its page controller. No router or HTML loader.
@@ -413,6 +413,10 @@ function destroyPageTimers() {
   if (typeof checkActiveSessionTimer !== 'undefined' && checkActiveSessionTimer !== null) {
     clearInterval(checkActiveSessionTimer);
     checkActiveSessionTimer = null;
+  }
+   if (typeof updateBusyTimer !== 'undefined' && updateBusyTimer !== null) {
+    clearInterval(updateBusyTimer);
+    updateBusyTimer = null;
   }
 }
 
