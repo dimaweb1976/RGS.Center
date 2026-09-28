@@ -123,7 +123,12 @@ function updateSampleSelection(){
 
 
 
-$('#selectAllSamples').addEventListener('change',event=>{if(autoIsActive())return;samples.forEach(sample=>sample.enabled=event.target.checked);$$('.sample-enabled').forEach(checkbox=>checkbox.checked=event.target.checked);updateSampleSelection()});
+$('#selectAllSamples').addEventListener('change',event=>{
+  if(autoIsActive())return;
+  samples.forEach(sample=>sample.enabled=event.target.checked);
+  $$('.sample-enabled').forEach(checkbox=>checkbox.checked=event.target.checked);
+  updateSampleSelection()
+});
 
 $('#scanWorkfield').addEventListener( 'click',
     async ()=> {
@@ -203,27 +208,48 @@ camersReadyTimer = setInterval(() => { updateCamerasReadyState(); }, 1000);
 
 
 
-function formatTime(seconds){seconds=Math.max(0,Math.ceil(seconds));const h=String(Math.floor(seconds/3600)).padStart(2,'0'),m=String(Math.floor(seconds%3600/60)).padStart(2,'0'),s=String(seconds%60).padStart(2,'0');return `${h}:${m}:${s}`}
+function formatTime(seconds){
+  seconds=Math.max(0,Math.ceil(seconds));
+  const h=String(Math.floor(seconds/3600)).padStart(2,'0'),
+  m=String(Math.floor(seconds%3600/60)).padStart(2,'0'),
+  s=String(seconds%60).padStart(2,'0');
+  return `${h}:${m}:${s}`
+}
 function renderAutoProgress(){
-  const selectedIndices=samples.map((sample,index)=>sample.enabled?index:-1).filter(index=>index>=0),selectedCount=selectedIndices.length;
-  const duration=scanningSeconds+weighingSeconds+acquisitionSeconds,total=duration*selectedCount;
-  autoSeconds=Math.min(autoSeconds,total);autoProgress=total?autoSeconds/total*100:0;
-  const finished=selectedCount>0&&autoSeconds>=total,completed=Math.min(selectedCount,Math.floor(autoSeconds/duration)),elapsed=finished?duration:autoSeconds%duration;
+  const selectedIndices=samples.map((sample,index)=>sample.enabled?index:-1).filter(index=>index>=0),
+  selectedCount=selectedIndices.length;
+  const duration=scanningSeconds+weighingSeconds+acquisitionSeconds,
+  total=duration*selectedCount;
+  autoSeconds=Math.min(autoSeconds,total);
+  autoProgress=total?autoSeconds/total*100:0;
+  const finished=selectedCount>0&&autoSeconds>=total,
+  completed=Math.min(selectedCount,Math.floor(autoSeconds/duration)),
+  elapsed=finished?duration:autoSeconds%duration;
   
     //const started = autoState.classList.contains('running') || autoState.classList.contains('paused') || autoSeconds > 0;
     const started = autoState?.classList?.contains('running') || autoState?.classList?.contains('paused') || autoSeconds > 0;
   
     //const stageMetric=$('.stage-metric'),running=autoState.classList.contains('running');stageMetric.classList.toggle('active-stage',running);stageMetric.classList.toggle('stopped-stage',!running);
-    const stageMetric=$('.stage-metric'),running=Boolean(autoState?.classList?.contains('running'));if(stageMetric){stageMetric.classList.toggle('active-stage',running);stageMetric.classList.toggle('stopped-stage',!running);}
+    const stageMetric=$('.stage-metric'),
+    running=Boolean(autoState?.classList?.contains('running'));
+    if(stageMetric){
+      stageMetric.classList.toggle('active-stage',running);
+      stageMetric.classList.toggle('stopped-stage',!running);
+    }
     
   const stage=elapsed<scanningSeconds?'scanning':elapsed<scanningSeconds+weighingSeconds?'weighing':'spectrum';
   const names={scanning:'Scanning',weighing:'Weighing',spectrum:'Spectrum acquisition'};
   const percent=Math.floor(autoProgress);
   const sampleProgress=finished?100:Math.floor(elapsed/duration*100);
-  autoProgressBar.style.width=`${autoProgress}%`;sampleProgressBar.style.width=`${sampleProgress}%`;autoPercent.textContent=`${percent}%`;samplePercent.textContent=`${sampleProgress}%`;autoRemaining.textContent=formatTime(total-autoSeconds);
+  autoProgressBar.style.width=`${autoProgress}%`;
+  sampleProgressBar.style.width=`${sampleProgress}%`;
+  autoPercent.textContent=`${percent}%`;
+  samplePercent.textContent=`${sampleProgress}%`;
+  autoRemaining.textContent=formatTime(total-autoSeconds);
   $('#queueProgress').setAttribute('aria-valuenow',percent);
   $('#sampleProgress').setAttribute('aria-valuenow',sampleProgress);
-  const currentIndex=selectedCount?selectedIndices[Math.min(completed,selectedCount-1)]:-1;$('#currentSample').textContent=currentIndex>=0?`Sample ${Math.min(completed+1,selectedCount)} of ${selectedCount} · ${samples[currentIndex].id}`:'No samples selected';
+  const currentIndex=selectedCount?selectedIndices[Math.min(completed,selectedCount-1)]:-1;
+  $('#currentSample').textContent=currentIndex>=0?`Sample ${Math.min(completed+1,selectedCount)} of ${selectedCount} · ${samples[currentIndex].id}`:'No samples selected';
   $('#sampleElapsed').textContent=formatTime(elapsed);
   $('#sampleRemaining').textContent=formatTime(duration-elapsed);
   const steps=[['Sample pickup',3],['Scan',5],['Weigh',5],['Open Lead Shield',2],['Place in Lead Shield',3],['Close Lead Shield',2],['Spectrum acquisition',acquisitionSeconds],['Open shield',2],['Return sample',3]];
@@ -243,8 +269,14 @@ function renderAutoProgress(){
     //syncProcessControls();
     if (typeof syncProcessControls === 'function') syncProcessControls();
   
-    $$('#sampleRows tr').forEach((row,i)=>{const order=selectedIndices.indexOf(i),isCurrent=i===currentIndex&&started&&!finished;const status=!samples[i].enabled?'Excluded':order>=0&&order<completed?'Complete':isCurrent?(autoState.classList.contains('paused')?'Paused':stepName):'Ready';row.cells[4].textContent=status;row.classList.toggle('processing',isCurrent);row.classList.toggle('excluded',!samples[i].enabled);row.querySelector('.sample-enabled').disabled=autoIsActive()});
-  $$('.sample-dot').forEach((dot,i)=>{const order=selectedIndices.indexOf(i);dot.classList.toggle('complete',order>=0&&order<completed);dot.classList.toggle('processing',i===currentIndex&&started&&!finished)});
+    $$('#sampleRows tr').forEach((row,i)=>{
+      const order=selectedIndices.indexOf(i),
+      isCurrent=i===currentIndex&&started&&!finished;
+      const status=!samples[i].enabled?'Excluded':order>=0&&order<completed?'Complete':isCurrent?(autoState.classList.contains('paused')?'Paused':stepName):'Ready';row.cells[4].textContent=status;row.classList.toggle('processing',isCurrent);row.classList.toggle('excluded',!samples[i].enabled);row.querySelector('.sample-enabled').disabled=autoIsActive()});
+  $$('.sample-dot').forEach((dot,i)=>{
+    const order=selectedIndices.indexOf(i);
+    dot.classList.toggle('complete',order>=0&&order<completed);
+    dot.classList.toggle('processing',i===currentIndex&&started&&!finished)});
   $('#selectAllSamples').disabled=autoIsActive();
   if(started&&!finished&&currentIndex>=0)selectSample(currentIndex);
 }
@@ -272,9 +304,40 @@ setAutoState('idle','Complete');
 }},
 1000)}
 
-autoStart.addEventListener('click',()=>{if(!samples.some(sample=>sample.enabled)){showToast('Select at least one sample');return}if(!hvIsReady()||processCondition||recoveryHold||serviceMeasurement.active||autoIsActive())return;if(autoProgress>=100){autoProgress=0;autoSeconds=0}setAutoState('running','Measuring');runAutoSequence();showToast('Automated sequence started')});
-autoPause.addEventListener('click',()=>{if(processCondition||!autoIsActive())return;const paused=autoState.classList.contains('paused');if(paused){if(!hvIsReady())return;setAutoState('running','Measuring');autoPause.innerHTML='<span>Ⅱ</span> Pause';runAutoSequence();showToast('Automated sequence resumed')}else{clearInterval(automodeTimer);setAutoState('paused','Paused');autoPause.innerHTML='<span>▶</span> Resume';renderAutoProgress();showToast('Automated sequence paused')}});
-autoStop.addEventListener('click',()=>{clearInterval(automodeTimer);autoProgress=0;autoSeconds=0;setAutoState('stopped','Stopped');renderAutoProgress();autoPause.innerHTML='<span>Ⅱ</span> Pause';showToast('Automated sequence stopped')});
+autoStart.addEventListener('click',()=>{
+  if(!samples.some(sample=>sample.enabled)){
+    showToast('Select at least one sample');
+    return
+  }if(!hvIsReady()||processCondition||recoveryHold||serviceMeasurement.active||autoIsActive())return;
+  if(autoProgress>=100){autoProgress=0;autoSeconds=0}setAutoState('running','Measuring');
+  runAutoSequence();
+  showToast('Automated sequence started')
+});
+autoPause.addEventListener('click',()=>{
+  if(processCondition||!autoIsActive())return;
+  const paused=autoState.classList.contains('paused');
+  if(paused){
+    if(!hvIsReady())return;
+    setAutoState('running','Measuring');
+    autoPause.innerHTML='<span>Ⅱ</span> Pause';
+    runAutoSequence();
+    showToast('Automated sequence resumed')}
+    else{
+      clearInterval(automodeTimer);
+      setAutoState('paused','Paused');
+      autoPause.innerHTML='<span>▶</span> Resume';
+      renderAutoProgress();
+      showToast('Automated sequence paused')
+    }});
+autoStop.addEventListener('click',()=>{
+  clearInterval(automodeTimer);
+  autoProgress=0;
+  autoSeconds=0;
+  setAutoState('stopped','Stopped');
+  renderAutoProgress();
+  autoPause.innerHTML='<span>Ⅱ</span> Pause';
+  showToast('Automated sequence stopped')
+});
 const autoParamsModal=$('#autoParamsModal');
 function closeAutoParams(){autoParamsModal.hidden=true}
 function openAutoParams(){
@@ -287,8 +350,26 @@ function openAutoParams(){
 autoParamsBtn.addEventListener('click',openAutoParams);
 $('#closeAutoParams').addEventListener('click',closeAutoParams);
 $('#cancelAutoParams').addEventListener('click',closeAutoParams);
-autoParamsModal.addEventListener('click',event=>{if(event.target===autoParamsModal)closeAutoParams()});
-$('#autoParamsForm').addEventListener('submit',event=>{event.preventDefault();const value=Number($('#autoPresetTime').value),unit=$('#autoPresetUnit').value,multiplier=unit==='hours'?3600:unit==='minutes'?60:1;if(!Number.isFinite(value)||value<=0){showToast('Enter a preset time greater than zero');return}const oldDuration=scanningSeconds+weighingSeconds+acquisitionSeconds,completed=Math.floor(autoSeconds/oldDuration),elapsed=autoSeconds%oldDuration;acquisitionSeconds=value*multiplier;const newDuration=scanningSeconds+weighingSeconds+acquisitionSeconds;autoSeconds=completed*newDuration+Math.min(elapsed,newDuration);renderAutoProgress();closeAutoParams();showToast('Measurement parameters saved for Auto mode')});
+autoParamsModal.addEventListener('click',event=>{
+  if(event.target===autoParamsModal)closeAutoParams()
+});
+
+$('#autoParamsForm').addEventListener('submit',event=>{
+  event.preventDefault();
+  const value=Number($('#autoPresetTime').value),
+  unit=$('#autoPresetUnit').value,
+  multiplier=unit==='hours'?3600:unit==='minutes'?60:1;
+  if(!Number.isFinite(value)||value<=0){
+    showToast('Enter a preset time greater than zero');
+    return
+  }
+    const oldDuration=scanningSeconds+weighingSeconds+acquisitionSeconds,completed=Math.floor(autoSeconds/oldDuration),elapsed=autoSeconds%oldDuration;
+    acquisitionSeconds=value*multiplier;
+    const newDuration=scanningSeconds+weighingSeconds+acquisitionSeconds;
+    autoSeconds=completed*newDuration+Math.min(elapsed,newDuration);
+    renderAutoProgress();
+    closeAutoParams();
+    showToast('Measurement parameters saved for Auto mode')});
 
 function autoIsActive(){
     return Boolean(autoState?.classList?.contains('running') || autoState?.classList?.contains('paused'));

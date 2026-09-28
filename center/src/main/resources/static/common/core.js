@@ -146,9 +146,23 @@ document.addEventListener('click', (e) => {
 });
 
 const settingsStorageKey='try2-settings-v1';
-let storedSettings={};try{storedSettings=JSON.parse(safeLocal.getItem(settingsStorageKey)||'{}')||{}}catch{}
-function applyInterfaceTheme(theme){const selected=theme==='dark'?'dark':'light';document.body.classList.toggle('theme-dark',selected==='dark');document.documentElement.style.colorScheme=selected}
+let storedSettings={};
+try{
+  storedSettings=JSON.parse(safeLocal.getItem(settingsStorageKey)||'{}')||{}
+}catch{}
+
+function applyInterfaceTheme(theme){
+  const selected=theme==='dark'?'dark':'light';
+  document.body.classList.toggle('theme-dark',selected==='dark');
+  document.documentElement.style.colorScheme=selected
+}
+
 applyInterfaceTheme(storedSettings['interface.appearance']?.theme||'light');
-function autoIsActive(){return currentView==='auto'&&($('#autoState').classList.contains('running')||$('#autoState').classList.contains('paused'))}
-function formatTime(seconds){seconds=Math.max(0,Math.ceil(seconds));return [Math.floor(seconds/3600),Math.floor(seconds%3600/60),seconds%60].map(n=>String(n).padStart(2,'0')).join(':')}
-$$('.nav-item').forEach(link=>{const selected=link.dataset.view===currentView;link.classList.toggle('active',selected);if(selected)link.setAttribute('aria-current','page')});
+function autoIsActive(){
+  return currentView==='auto'&&($('#autoState').classList.contains('running')||$('#autoState').classList.contains('paused'))}
+function formatTime(seconds){
+  seconds=Math.max(0,Math.ceil(seconds));
+  return [Math.floor(seconds/3600),Math.floor(seconds%3600/60),seconds%60].map(n=>String(n).padStart(2,'0')).join(':')}
+  $$('.nav-item').forEach(link=>{const selected=link.dataset.view===currentView;
+  link.classList.toggle('active',selected);
+  if(selected)link.setAttribute('aria-current','page')});

@@ -28,19 +28,31 @@ function syncProcessControls(){
   $('#headerProgressText').textContent=percent+'%'+(paused?' · Paused':'');
   $('#headerProcess').classList.toggle('paused',paused);
   $('#headerProcess').title=mode;
-  if(currentView==='manual'){$('#sampleMeasurementType').disabled=active;$('#backgroundMeasurementType').disabled=active;}
+  if(currentView==='manual'){
+    $('#sampleMeasurementType').disabled=active;
+    $('#backgroundMeasurementType').disabled=active;
+  }
   if(currentView==='auto')autoStart.disabled=active||blocked||recoveryHold||!hvIsReady()||!samples.some(sample=>sample.enabled);
   for(const button of [$('#autoStart'),$('#startMeasure'),$('#headerPause'),$('#autoPause'),$('#manualPause')].filter(Boolean))button.title=!hvIsReady()?'Detector HV must be READY to start or resume a measurement':'';
   renderHvControls();
   if(currentView==='manual'){
-  $('#manualPause').textContent=manual&&paused?'Resume':'Pause';
-  renderServiceSpectrumProgress(manual,paused);
+    $('#manualPause').textContent=manual&&paused?'Resume':'Pause';
+    renderServiceSpectrumProgress(manual,paused);
+  }
 }
-}
-$('#headerPause').addEventListener('click',()=>{if(autoIsActive())autoPause.click();else pauseServiceMeasurement()});
-$('#headerStop').addEventListener('click',()=>{if(autoIsActive())autoStop.click();else if(serviceMeasurement.active)finishServiceMeasurement()});
+$('#headerPause').addEventListener('click',()=>{
+  if(autoIsActive())autoPause.click();
+  else pauseServiceMeasurement()
+});
+$('#headerStop').addEventListener('click',()=>{
+  if(autoIsActive())autoStop.click();
+  else if(serviceMeasurement.active)finishServiceMeasurement()
+  });
 function pauseForHvChange(){
-  if(currentView==='auto'&&autoState.classList.contains('running')){setAutoState('paused','Paused');autoPause.innerHTML='<span>▶</span> Resume';}
+  if(currentView==='auto' && autoState.classList.contains('running')){
+    setAutoState('paused','Paused');
+    autoPause.innerHTML='<span>▶</span> Resume';
+  }
   if(serviceMeasurement.active)serviceMeasurement.paused=true;
 }
 function renderHvControls(data = null) {
@@ -157,7 +169,9 @@ async function turnHvOff(){
   //hvRampTimer=setTimeout(()=>{hvState='off';syncProcessControls()},10000);
 }
 // Demo input for a future detector-current feed; normal demo current is zero.
-window.addEventListener('rgs:leakage-current',event=>{const current=Number(event.detail?.current);if(Number.isFinite(current)&&current>=0)hvLeakageCurrent=current});
+window.addEventListener('rgs:leakage-current',event=>{
+  const current=Number(event.detail?.current);
+  if(Number.isFinite(current)&&current>=0)hvLeakageCurrent=current});
 // Faults pause the existing process. A critical condition is latched for this session.
 function reportProcessCondition(state,reason=''){
   if(!['fault','critical'].includes(state)||processCondition==='critical')return;
@@ -174,8 +188,15 @@ function acknowledgeProcessFault(){
   showToast('Issue confirmed resolved. Process paused.');
 }
 $('#acknowledgeFault').addEventListener('click',acknowledgeProcessFault);
-$('#endRecoveryHold').addEventListener('click',()=>{if(processCondition)return;recoveryHold=false;syncProcessControls()});
-window.addEventListener('rgs:condition',event=>{const detail=event.detail||{};reportProcessCondition(detail.state,typeof detail.reason==='string'?detail.reason:'')});
+$('#endRecoveryHold').addEventListener('click',()=>{
+  if(processCondition)return;
+  recoveryHold=false;
+  syncProcessControls()
+});
+
+window.addEventListener('rgs:condition',event=>{
+  const detail=event.detail||{};
+  reportProcessCondition(detail.state,typeof detail.reason==='string'?detail.reason:'')});
 const diagnosticsDialog=$('#diagnosticsDialog');
 
 async function fetchDiagnostics() {
@@ -280,7 +301,11 @@ async function openDiagnostics(event) {
 
   diagnosticsDialog.showModal();
   renderHvControls(data); 
-  if(event?.currentTarget?.id==='indicator_detector'){const row=$('#detectorHvDiagnostics');row.classList.add('focused');row.scrollIntoView({block:'center'})}
+  if(event?.currentTarget?.id==='indicator_detector'){
+    const row=$('#detectorHvDiagnostics');
+    row.classList.add('focused');
+    row.scrollIntoView({block:'center'})
+  }
 }
 $('#viewDiagnostics').addEventListener('click',openDiagnostics);
 $$('.system-strip .module').forEach(module=>module.addEventListener('click',openDiagnostics));
