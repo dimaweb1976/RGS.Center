@@ -230,7 +230,7 @@ async function triggerWeighing(buttonElement, inputElement) {
 
         const data = await response.json();
             // inputElement.value = data.mass;
-            if( inputElement && data?.unit) {
+            if( inputElement && data?.mass) {
                 inputElement.value = data?.mass;
             }
     } catch( error) {
