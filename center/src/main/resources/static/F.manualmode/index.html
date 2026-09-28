@@ -4,6 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>RGS Center</title>
+<style>
+        html.page-loading::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background: white;
+            z-index: 2147483647;
+        }
+    </style>
+
+    <script>
+        document.documentElement.classList.add("page-loading");
+    </script>
 <link rel="stylesheet" href="/common/common.css">
 <link rel="stylesheet" href="/F.manualmode/manual-mode.css">
 <script src="/common/only-one.js"></script>

@@ -409,6 +409,11 @@ function destroyPageTimers() {
     clearInterval(camersReadyTimer);
     camersReadyTimer = null;
   }
+
+  if (typeof checkActiveSessionTimer !== 'undefined' && checkActiveSessionTimer !== null) {
+    clearInterval(checkActiveSessionTimer);
+    checkActiveSessionTimer = null;
+  }
 }
 
 function showApiError() {

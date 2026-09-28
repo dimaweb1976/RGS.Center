@@ -1,5 +1,73 @@
+let checkActiveSessionTimer = null;
+
+async function checkActiveSession() {
+    const token = sessionStorage.getItem('onlyOneToken');
+    const currentPath = window.location.pathname;
+    const isLoginPage = currentPath.includes('/auth/');
+
+    if (!token) {
+        if (!isLoginPage) {
+            window.location.replace('/auth/index.html');
+            return false;
+        }
+
+        return true;
+    }
+
+    try {
+        const response = await fetch('/api/onlyOne/checkMe', {
+            method: 'GET',
+            headers: {
+                'X-Lock-Token': token
+            }
+        });
+
+        if (!response.ok) {
+            sessionStorage.removeItem('onlyOneToken');
+
+            if (!isLoginPage) {
+                window.location.replace('/auth/index.html');
+                return false;
+            }
+
+            return true;
+        }
+
+        if (isLoginPage) {
+            window.location.replace('/F.automode/index.html');
+            return false;
+        }
+
+        return true;
+
+    } catch (error) {
+        console.error('Session check failed:', error);
+        return false;
+    }
+}
+
+
+// Called once before all six pages loaded
+async function beforeLoad(){
+  try{
+    const allowed = await checkActiveSession();
+    if (allowed) {
+      document.documentElement.classList.remove("page-loading");
+    }
+  }catch(e){
+    console.log(e);
+  }
+}
+
+beforeLoad();
+
+checkActiveSessionTimer = setInterval(
+  checkActiveSession,
+  1000
+);
+
 // Called once at DOMContentLoaded on ALL six pages, including Login.
-function init() {
+function afterLoad() {
   const isLoginPage = document.body.dataset.page === 'login';
 
   // Add your token check and REST initialization here.
@@ -9,4 +77,6 @@ function init() {
 
   initializePage();
 }
-window.addEventListener('DOMContentLoaded', init, { once: true });
+
+
+window.addEventListener('DOMContentLoaded', afterLoad, { once: true });

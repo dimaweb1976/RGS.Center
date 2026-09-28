@@ -114,9 +114,35 @@ let mainIndicatorTimer = setInterval(
   1000
 );
 
-$('#logoutBtn').addEventListener('click',()=>{
-  // Add server-side logout / token cleanup here.
-  window.location.replace(new URL('Login/index.html',window.RGSRoot).href);
+// $('#logoutBtn').addEventListener('click',()=>{
+//   // Add server-side logout / token cleanup here.
+//   window.location.replace(new URL('Login/index.html',window.RGSRoot).href);
+// });
+
+async function performLogout() {
+  const token = sessionStorage.getItem('onlyOneToken');
+  if (token) {
+    try {
+      await fetch('/api/onlyOne/exit', {
+        method: 'POST',
+        headers: {
+          'X-Lock-Token': token
+        }
+      });
+    } catch (error) {
+      console.error('Logout request failed:', error);
+    }
+    sessionStorage.removeItem('onlyOneToken');
+  }
+  window.location.href = '/auth/index.html';
+}
+
+document.addEventListener('click', (e) => {
+  const logoutBtn = e.target.closest('#logoutBtn');
+  if (logoutBtn) {
+    e.preventDefault();
+    performLogout();
+  }
 });
 
 const settingsStorageKey='try2-settings-v1';
