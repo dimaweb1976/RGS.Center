@@ -61,6 +61,9 @@ public class ServiceShpConnection {
     @Autowired
     ServiceShpProcessor shpProcessor;
             
+    @Autowired
+    ShpIoLogger ioLogger;
+    
     private final ConcurrentLinkedQueue<byte[]> queue;
     public void AddCommandToSend( byte[] abt) {
         queue.add(abt);
@@ -154,6 +157,9 @@ public class ServiceShpConnection {
                 byte [] abtRespond = new byte[ nLen];
                 shpReader.GetCb().getAnswer( nLen, abtRespond);
                 
+                // Логируем ответ от SHP
+                ioLogger.logRespond(abtRespond);
+                
                 ShpRespondedUnit unit2 = new ShpRespondedUnit(sent, abtRespond);
                 shpProcessor.submit(unit2);
                 sent = null;
@@ -178,6 +184,9 @@ public class ServiceShpConnection {
                     port.writeBytes( abtPack);
                     queue.remove();
                     sent = new ShpSentUnit( abtPack);
+                    
+                    // Логируем отправку пакета SHP
+                    ioLogger.logSent(abtPack);
                 }
                 catch( Exception ex) {
                     logger.error( "", ex);

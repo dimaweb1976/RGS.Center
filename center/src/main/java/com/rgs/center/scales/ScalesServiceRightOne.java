@@ -26,7 +26,10 @@ public class ScalesServiceRightOne {
     
     @Autowired
     ScalesProcessor scalesProcessor;
-            
+    
+    @Autowired
+    ScalesIoLogger ioLogger;
+    
     private final ConcurrentLinkedQueue<byte[]> queue;
     
     public void AddCommandToSend(byte[] abt) {
@@ -100,6 +103,9 @@ public class ScalesServiceRightOne {
                     byte[] abtRespond = new byte[nLen];
                     scalesReader.GetCb().getAnswer(nLen, abtRespond);
 
+                    // Логируем ответ
+                    ioLogger.logRespond(abtRespond);
+                    
                     ScalesRespondedUnit unit2 = new ScalesRespondedUnit(sent, abtRespond);
                     scalesProcessor.submit(unit2);
                     sent = null;
@@ -120,6 +126,9 @@ public class ScalesServiceRightOne {
                         port.writeBytes(abtPack);
                         queue.remove();
                         sent = new ScalesSentUnit(abtPack);
+                        
+                        // Логируем отправку
+                        ioLogger.logSent(abtPack);
                     } catch (Exception ex) {
                         logger.error("Failed to write to scales port", ex);
                     }

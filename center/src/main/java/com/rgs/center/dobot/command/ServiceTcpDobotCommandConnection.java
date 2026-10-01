@@ -24,6 +24,9 @@ public class ServiceTcpDobotCommandConnection {
     @Autowired
     private ServiceDobotCommandProcessor commandProcessor;
 
+    @Autowired
+    private DobotCommandIoLogger ioLogger;
+    
     private final ConcurrentLinkedQueue<DobotSentCommandUnit> commandQueue = new ConcurrentLinkedQueue<>();
     private final TcpBufferDobotCommandLine tcpBuffer = new TcpBufferDobotCommandLine(4096);
 
@@ -76,6 +79,11 @@ public class ServiceTcpDobotCommandConnection {
                 String response = tcpBuffer.extractPacket();
                 logger.debug("Received response for [{}]: {}", activeUnit.getCommand(), response);
                 
+                // Логируем ответ от Dobot
+                if (ioLogger != null) {
+                    ioLogger.logRespond(response);
+                }
+                
                 if (commandProcessor != null) {
                     commandProcessor.processResponse(activeUnit.getCommand(), response);
                 }
@@ -108,6 +116,12 @@ public class ServiceTcpDobotCommandConnection {
 
             activeUnit = nextUnit;
             logger.debug("Sent command to Dobot: {}", nextUnit.getCommand());
+            
+            // Логируем отправку команды Dobot
+            if (ioLogger != null) {
+                ioLogger.logSent(nextUnit.getCommand());
+            }
+            
         } catch (Exception ex) {
             logger.error("Failed to send command: " + nextUnit.getCommand(), ex);
             closeConnection();

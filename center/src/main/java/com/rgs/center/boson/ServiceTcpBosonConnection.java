@@ -166,4 +166,9 @@ public class ServiceTcpBosonConnection {
         taskScheduler.shutdown();
         bosonReader.close();
     }
+    
+    public boolean isRunning() {
+        return  ( scheduledQueue != null && !scheduledQueue.isCancelled()) || 
+                ( scheduledPoller != null && !scheduledPoller.isCancelled());
+    }
 }

@@ -56,6 +56,53 @@ public class RGSCenterSettings {
             }
         }
         
+        // Проверяем переменную окружения для логирования обмена со Scales
+        String envScalesLogFile = System.getenv("RGSCENTER_SCALES_IO_LOGGING_FILE");
+        if (envScalesLogFile != null && !envScalesLogFile.trim().isEmpty()) {
+            java.io.File logFile = new java.io.File(envScalesLogFile.trim());
+            try {
+                try (java.io.FileOutputStream fos = new java.io.FileOutputStream(logFile, false)) {
+                    // Файл успешно открыт и очищен
+                }
+                settings.put("scales.io.logging.file", logFile.getAbsolutePath());
+                log.info("Scales IO logging enabled to file: {}", logFile.getAbsolutePath());
+            } catch (Exception e) {
+                log.error("Failed to initialize Scales IO logging file at: " + envScalesLogFile, e);
+            }
+        }
+        
+        
+        // Проверяем переменную окружения для логирования обмена с SHP
+        String envShpLogFile = System.getenv("RGSCENTER_SHP_IO_LOGGING_FILE");
+        if (envShpLogFile != null && !envShpLogFile.trim().isEmpty()) {
+            java.io.File logFile = new java.io.File(envShpLogFile.trim());
+            try {
+                try (java.io.FileOutputStream fos = new java.io.FileOutputStream(logFile, false)) {
+                    // Файл успешно открыт и очищен
+                }
+                settings.put("shp.io.logging.file", logFile.getAbsolutePath());
+                log.info("SHP IO logging enabled to file: {}", logFile.getAbsolutePath());
+            } catch (Exception e) {
+                log.error("Failed to initialize SHP IO logging file at: " + envShpLogFile, e);
+            }
+        }
+        
+        // Проверяем переменную окружения для логирования обмена с Dobot (команды)
+        String envDobotLogFile = System.getenv("RGSCENTER_DOBOT_COMMAND_IO_LOGGING_FILE");
+        if (envDobotLogFile != null && !envDobotLogFile.trim().isEmpty()) {
+            java.io.File logFile = new java.io.File(envDobotLogFile.trim());
+            try {
+                try (java.io.FileOutputStream fos = new java.io.FileOutputStream(logFile, false)) {
+                    // Файл успешно открыт и очищен
+                }
+                settings.put("dobot.command.io.logging.file", logFile.getAbsolutePath());
+                log.info("Dobot Command IO logging enabled to file: {}", logFile.getAbsolutePath());
+            } catch (Exception e) {
+                log.error("Failed to initialize Dobot Command IO logging file at: " + envDobotLogFile, e);
+            }
+        }
+        
+        
         String sql = "SELECT string_id, type, long_value, string_value FROM public.device_settings";
         
         try {

@@ -33,7 +33,7 @@ public class ServiceTcpBosonReader {
             m_readerThread = new Thread(m_streamReader, "tcp-boson-reader-thread");
             m_readerThread.start();
         } catch (Exception ex) {
-            logger.error("BOSON TCP Connection exception", ex);
+            logger.error("BOSON TCP Connection exception", ex.getMessage());
             m_socket = null;
         }
     }
