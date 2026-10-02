@@ -216,6 +216,34 @@ async function fetchDiagnostics() {
   }
 }
 
+
+const diagnosticsSettingsTargets = {
+  'PLC': 'plc',
+  'Gripper': 'gripper',
+  'GammaPro': 'gammapro',
+  'Shield': 'shield',
+  'Detector HV': 'detector',
+  'Detector leakage current (pA)': 'detector',
+  'Detector temperature (°C)': 'detector',
+  'MCA': 'mca',
+  'Cooling system': 'cooling',
+  'LN₂ level (%)': 'cooling',
+  'UPS (%)': 'ups',
+  'Machine vision camera 1': 'camera1',
+  'Machine vision camera 2': 'camera1',
+  'Scales': 'scales',
+  'Scanner': 'scanner'
+};
+
+function openDiagnosticSettings(itemId) {
+  const url = new URL('settings', window.RGSRoot);
+
+  url.searchParams.set('section', 'hardware');
+  url.searchParams.set('item', itemId);
+
+  window.location.href = url.href;
+}
+
 let diagnosticsTimer = null;
 
 async function openDiagnostics(event) {
@@ -247,34 +275,81 @@ async function openDiagnostics(event) {
   ['Scanner', data?.scanner, '', 'diagScanner']
 ];
 
-  diagnostics.forEach(([label,value,state='', id])=>{
-    const row=document.createElement('div');
-    row.className='diagnostics-row'+(state?' '+state:'');
-    const name=document.createElement('span'),
-    status=document.createElement('b');
-    status.id = id;
-    name.textContent=label;
-    status.textContent=value;
-    if(label==='Detector HV'){
-      row.id='detectorHvDiagnostics';
-      status.id='diagHvValue'}
-    if(label==='Detector leakage current (pA)')
-      status.id='diagLeakage';
-    if(state==='inactive')
-      status.title='Available only when detector HV is switched on';
-    row.append(name,status);
-    target.append(row);
-    if(label==='Detector temperature (°C)'){
-      const controls=document.createElement('section');
-      controls.className='diagnostics-hv-controls';
-      controls.setAttribute('aria-label','Detector high voltage controls');
-      controls.innerHTML='<div><strong>Detector high voltage</strong><p id="diagHvHelp"></p></div><div class="hv-control-actions"><button id="turnHvOn" class="primary" type="button">Turn HV ON</button><button id="turnHvOff" class="danger-outline" type="button">Turn HV OFF</button></div>';
-      target.append(controls);
-      
-      $('#turnHvOn').addEventListener('click',turnHvOn);
-      $('#turnHvOff').addEventListener('click',()=>{diagnosticsDialog.close();$('#hvConfirmModal').hidden=false;$('#cancelHvOff').focus()});
-    }
-  });
+  diagnostics.forEach(([label, value, state = '', id]) => {
+  const row = document.createElement('div');
+  row.className = 'diagnostics-row' + (state ? ' ' + state : '');
+
+  const name = document.createElement('span');
+  const actions = document.createElement('div');
+  const status = document.createElement('b');
+
+  name.textContent = label;
+  status.id = id;
+  status.textContent = value ?? 'Unknown';
+
+  actions.className = 'diagnostics-row-actions';
+
+  if (label === 'Detector HV') {
+    row.id = 'detectorHvDiagnostics';
+    status.id = 'diagHvValue';
+  }
+
+  if (label === 'Detector leakage current (pA)') {
+    status.id = 'diagLeakage';
+  }
+
+  if (state === 'inactive') {
+    status.title = 'Available only when detector HV is switched on';
+  }
+
+  actions.append(status);
+
+  const settingsId = diagnosticsSettingsTargets[label];
+
+  if (settingsId) {
+    const settingsButton = document.createElement('button');
+
+    settingsButton.type = 'button';
+    settingsButton.className = 'diagnostics-settings-button';
+    settingsButton.textContent = 'Settings';
+
+    settingsButton.addEventListener('click', () => {
+      openDiagnosticSettings(settingsId);
+    });
+
+    actions.append(settingsButton);
+  }
+
+  row.append(name, actions);
+  target.append(row);
+
+  if (label === 'Detector temperature (°C)') {
+    const controls = document.createElement('section');
+
+    controls.className = 'diagnostics-hv-controls';
+    controls.setAttribute(
+      'aria-label',
+      'Detector high voltage controls'
+    );
+
+    controls.innerHTML =
+      '<div><strong>Detector high voltage</strong><p id="diagHvHelp"></p></div>' +
+      '<div class="hv-control-actions">' +
+      '<button id="turnHvOn" class="primary" type="button">Turn HV ON</button>' +
+      '<button id="turnHvOff" class="danger-outline" type="button">Turn HV OFF</button>' +
+      '</div>';
+
+    target.append(controls);
+
+    $('#turnHvOn').addEventListener('click', turnHvOn);
+
+    $('#turnHvOff').addEventListener('click', () => {
+      diagnosticsDialog.close();
+      $('#hvConfirmModal').hidden = false;
+      $('#cancelHvOff').focus();
+    });
+  }
+});
 
   diagnosticsTimer = setInterval(async () => {
     data = await fetchDiagnostics();

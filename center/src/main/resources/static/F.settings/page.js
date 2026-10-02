@@ -300,6 +300,32 @@ const settingsSelection={
   interface:'appearance',
   account:'credentials'
 };
+
+const settingsUrlParams = new URLSearchParams(window.location.search);
+
+const requestedSettingsSection =
+  settingsUrlParams.get('section');
+
+const requestedSettingsItem =
+  settingsUrlParams.get('item');
+
+if (
+  requestedSettingsSection &&
+  settingsSchemas[requestedSettingsSection]
+) {
+  settingsSection = requestedSettingsSection;
+
+  if (
+    requestedSettingsItem &&
+    settingsSchemas[requestedSettingsSection].some(
+      item => item.id === requestedSettingsItem
+    )
+  ) {
+    settingsSelection[requestedSettingsSection] =
+      requestedSettingsItem;
+  }
+}
+
 function applyInterfaceTheme(theme){
   const selected=theme==='dark'?'dark':'light';
   document.body.classList.toggle('theme-dark',selected==='dark');

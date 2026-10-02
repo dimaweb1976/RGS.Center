@@ -2483,6 +2483,35 @@ body.theme-dark .toast {
   --state-color: rgb(190, 62, 74);
 }
 
+.diagnostics-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex: 0 0 auto;
+}
+
+.diagnostics-settings-button {
+  padding: 6px 10px;
+  background: white;
+  border: 1px solid var(--line);
+  color: var(--blue);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.diagnostics-settings-button:hover {
+  border-color: var(--blue);
+  background: rgb(237, 247, 250);
+}
+
+@media (max-width: 520px) {
+  .diagnostics-row-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
 @media (max-width: 1600px) {
   .app-shell {
     box-shadow: none;
