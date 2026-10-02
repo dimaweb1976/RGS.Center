@@ -215,23 +215,40 @@
               aria-label="Module status"
             >
 
-              <button
-                id="indicator_plc"
+            <button
+                id="indicator_robotplc"
                 class="module ok hv-off"
                 type="button"
               >
-                <span>PLC</span>
-                <b>Undefined</b>
+                <span>Robot PLC</span>
+                <b>Unknown</b>
               </button>
 
+               <button
+                id="indicator_cabinsafetyinterlock"
+                class="module ok hv-off"
+                type="button"
+              >
+                <span>Cabin safety interlock</span>
+                <b>Unknown</b>
+              </button>
 
+               <button
+                id="indicator_electricalprotection"
+                class="module ok hv-off"
+                type="button"
+              >
+                <span>Electrical protection</span>
+                <b>Unknown</b>
+              </button>
+              
               <button
                 id="indicator_gammapro"
                 class="module ok hv-off"
                 type="button"
               >
                 <span>GammaPro</span>
-                <b>Online</b>
+                <b>Unknown</b>
               </button>
 
 
@@ -241,13 +258,13 @@
                 type="button"
               >
                 <span>Shield</span>
-                <b>Undefined</b>
+                <b>Unknown</b>
               </button>
 
 
               <button
                 id="indicator_detector"
-                class="module hv-off"
+                class="module ok hv-off"
                 type="button"
               >
                 <span>Detector HV</span>
@@ -257,31 +274,30 @@
                   role="status"
                   aria-live="polite"
                 >
-                  HV OFF
+                  Unknown
                 </b>
               </button>
 
 
               <button
                 id="indicator_mca"
-                class="module ok"
+                class="module ok hv-off"
                 type="button"
               >
                 <span>MCA</span>
-                <b>Online</b>
+                <b>Unknown</b>
               </button>
 
 
               <button
                 id="indicator_cooler"
-                class="module ok"
+                class="module ok hv-off"
                 type="button"
               >
                 <span>Cooling system</span>
-                <b>Online</b>
+                <b>Unknown</b>
               </button>
-
-
+              
               <button
                 id="viewDiagnostics"
                 class="diagnostics-link"

@@ -26,12 +26,35 @@
 <body data-page="settings">
 <div id="pageContent">
 <div id="view-settings" class="view active settings-view">
-          <div class="page-head">
-            <div><p class="eyebrow">Settings</p></div>
+          <div class="page-head settings-page-head">
+            <div>
+              <p class="eyebrow">Settings</p>
+            </div>
+
+            <button
+              id="downloadSettings"
+              class="settings-download-button"
+              type="button"
+            >
+              <span class="settings-download-icon">PDF</span>
+              <span>Download settings PDF</span>
+            </button>
           </div>
           <div class="settings-tabs" role="tablist" aria-label="Settings sections">
             <button id="settings-hardware-tab" class="settings-tab active" type="button" role="tab" aria-selected="true" aria-controls="settingsPanel" data-settings="hardware">System modules</button>
             <button id="settings-geometries-tab" class="settings-tab" type="button" role="tab" aria-selected="false" aria-controls="settingsPanel" data-settings="geometries" tabindex="-1">Sample geometries</button>
+            <button
+              id="settings-nuclideLibraries-tab"
+              class="settings-tab"
+              type="button"
+              role="tab"
+              aria-selected="false"
+              aria-controls="settingsPanel"
+              data-settings="nuclideLibraries"
+              tabindex="-1"
+            >
+              Nuclide libraries
+            </button>
             <button id="settings-documents-tab" class="settings-tab" type="button" role="tab" aria-selected="false" aria-controls="settingsPanel" data-settings="documents" tabindex="-1">Documents</button>
             <button id="settings-interface-tab" class="settings-tab" type="button" role="tab" aria-selected="false" aria-controls="settingsPanel" data-settings="interface" tabindex="-1">Interface</button>
             <button id="settings-account-tab" class="settings-tab" type="button" role="tab" aria-selected="false" aria-controls="settingsPanel" data-settings="account" tabindex="-1">User account</button>
@@ -39,7 +62,33 @@
           <div id="settingsPanel" class="device-settings" role="tabpanel" aria-labelledby="settings-hardware-tab">
             <aside id="settingsList" class="device-list" aria-label="Settings categories"></aside>
             <section class="device-editor" aria-labelledby="deviceEditorTitle">
-              <div class="device-editor-head"><div><p id="settingsEditorLabel" class="eyebrow">Module configuration</p><h2 id="deviceEditorTitle">PLC</h2></div><div id="geometryActions" class="geometry-actions" hidden=""><button id="addGeometry" type="button">Add geometry</button><button id="duplicateGeometry" type="button">Duplicate</button><button id="archiveGeometry" type="button">Archive</button></div></div>
+           <div class="device-editor-head">
+           <div>
+              <p id="settingsEditorLabel" class="eyebrow">Module configuration</p>
+              <h2 id="deviceEditorTitle">PLC</h2>
+            </div>
+
+            <div id="geometryActions" class="geometry-actions" hidden>
+              <button id="addGeometry" class="primary" type="button">Add geometry</button>
+              <button id="duplicateGeometry" type="button">Duplicate</button>
+              <button id="archiveGeometry" type="button">Archive</button>
+            </div>
+
+            <div id="libraryActions" class="geometry-actions" hidden>
+              <button id="addLibrary" class="primary" type="button">Add library</button>
+              <button id="duplicateLibrary" type="button">Duplicate</button>
+              <button id="deleteLibrary" class="settings-delete-button" type="button">
+                Delete
+              </button>
+            </div>
+
+            <div id="documentActions" class="geometry-actions" hidden>
+              <button id="addDocument" class="primary" type="button">Add document</button>
+              <button id="deleteDocument" class="settings-delete-button" type="button">
+                Delete
+              </button>
+            </div>
+          </div>
               <form id="deviceForm"><div id="settingsFields"></div><div class="device-actions"><span id="settingsSaveStatus" role="status" aria-live="polite"></span><button class="primary" type="submit">Save</button></div></form>
             </section>
           </div>

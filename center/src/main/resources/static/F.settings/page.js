@@ -4,6 +4,19 @@ const settingField=(key,label,value,type='number',min=0,max)=>({key,label,value,
 const networkFields=(ip,port)=>[settingField('ip','IP address',ip,'ip'),
   settingField('port','Port',port,'number',1,65535)];
 const serialFields=port=>[settingField('comPort','COM port',port,'serial')];
+
+function initializeSettingsDraft(section, item) {
+  const key = section + '.' + item.id;
+
+  settingsDrafts[key] = {};
+
+  for (const group of item.groups) {
+    for (const field of group.fields) {
+      settingsDrafts[key][field.key] = String(field.value ?? '');
+    }
+  }
+}
+
 const settingsSchemas={
   hardware:[
     {id:'plc',
@@ -101,24 +114,22 @@ const settingsSchemas={
       }
     ]},
     {id:'camera1',
-      name:'Machine vision camera 1',
+      name:'Machine vision camera',
       groups:[{
-        name:'Camera connection',
+        name:'Camera connection 1',
+        fields:[
+          settingField('ip','IP address','192.168.1.51','ip'),
+          settingField('exposure','Exposure time, ms',1000,'number',1)
+        ]
+      },
+      {
+        name:'Camera connection 2',
         fields:[
           settingField('ip','IP address','192.168.1.51','ip'),
           settingField('exposure','Exposure time, ms',1000,'number',1)
         ]
       }
     ]},
-    {id:'camera2',
-      name:'Machine vision camera 2',
-      groups:[{
-        name:'Camera connection',
-        fields:[
-          settingField('ip','IP address','192.168.1.52','ip'),
-          settingField('exposure','Exposure time, ms',1000,'number',1)
-        ]
-      }]},
     {id:'scales',
       name:'Scales',
       groups:[{
@@ -173,6 +184,37 @@ const settingsSchemas={
         ]
       }]}
   ],
+  nuclideLibraries: [
+  {
+    id: 'nuclidelibraries',
+    name: 'Nuclide Libraries',
+    groups: [
+      {
+        name: 'Calibration reference',
+        fields: [
+          settingField(
+            'name',
+            'Library name',
+            'Calibration and reference',
+            'text'
+          ),
+          settingField(
+            'nuclides',
+            'Nuclides',
+            '59Fe, 137Cs',
+            'text'
+          ),
+          settingField(
+            'description',
+            'Description',
+            'Reference sources and calibration checks.',
+            'text'
+          )
+        ]
+      }
+    ]
+  }
+],
   documents:[
     {id:'operator',
       name:'RGS Operator Manual',
@@ -180,6 +222,7 @@ const settingsSchemas={
         name:'Document details',
         fields:[
           settingField('name','Display name','RGS Operator Manual','text'),
+          settingField('description','Description','Lorem ipsum...','text'),
           settingField('language','Language','English','text'),
           settingField('path','PDF file path','','file')
         ]
@@ -252,6 +295,7 @@ let settingsSection='hardware';
 const settingsSelection={
   hardware:'plc',
   geometries:'cylinder100',
+  nuclideLibraries: 'nuclidelibraries',
   documents:'operator',
   interface:'appearance',
   account:'credentials'
@@ -275,25 +319,73 @@ function renderSettings(){
   $('#settingsPanel').setAttribute('aria-labelledby','settings-'+settingsSection+'-tab');
   const list=$('#settingsList');
   list.replaceChildren();
-  if(settingsSection==='geometries'||settingsSection==='documents'||settingsSection==='interface'||settingsSection==='account'){
+  if(settingsSection==='geometries'|| settingsSection === 'nuclideLibraries' || settingsSection==='documents'||settingsSection==='interface'||settingsSection==='account'){
     const head=document.createElement('div');
     head.className='device-list-head';
-    head.textContent=settingsSection==='geometries'?'Available geometries':settingsSection==='documents'?'Help documents':settingsSection==='interface'?'Interface settings':'Account settings';
+    head.textContent =
+    settingsSection === 'geometries'
+      ? 'Available geometries'
+      : settingsSection === 'nuclideLibraries'
+        ? 'Nuclide libraries'
+        : settingsSection === 'documents'
+          ? 'Help documents'
+          : settingsSection === 'interface'
+            ? 'Interface settings'
+            : 'Account settings';
     list.append(head)
   }
   for(const item of items){
     const button=document.createElement('button');
     button.type='button';
-    button.className='device-item'+(item===selected?' active':'')+(item.archived?' archived':'');
-    button.textContent=item.name+(item.archived?' · Archived':'');
+    button.className =
+  'device-item' +
+  (settingsSection === 'documents' ? ' document-item' : '') +
+  (item === selected ? ' active' : '') +
+  (item.archived ? ' archived' : '');
+
+if(settingsSection === 'documents'){
+  const draft = settingsDrafts['documents.' + item.id] || {};
+  const fileName = draft.path
+    ? draft.path.split('/').pop()
+    : 'No file selected';
+
+  const icon = document.createElement('span');
+  icon.className = 'document-item-icon';
+  icon.textContent = 'PDF';
+
+  const title = document.createElement('span');
+  title.className = 'document-item-title';
+  title.textContent = draft.name || item.name;
+
+  const meta = document.createElement('span');
+  meta.className = 'document-item-meta';
+  meta.textContent = `${draft.language || 'English'} · ${fileName}`;
+
+  button.append(icon, title, meta);
+}else{
+  button.textContent = item.name + (item.archived ? ' · Archived' : '');
+}
     button.setAttribute('aria-current',String(item===selected));
     button.onclick=()=>{settingsSelection[settingsSection]=item.id;renderSettings()};
     list.append(button)
   }
   $('#deviceEditorTitle').textContent=selected.name;
-  $('#settingsEditorLabel').textContent=settingsSection==='hardware'?'Module configuration':settingsSection==='geometries'?'Sample geometry':settingsSection==='documents'?'Download document':settingsSection==='interface'?'Interface preferences':'Security';
+  $('#settingsEditorLabel').textContent =
+    settingsSection === 'hardware'
+      ? 'Module configuration'
+      : settingsSection === 'geometries'
+        ? 'Sample geometry'
+        : settingsSection === 'nuclideLibraries'
+          ? 'Nuclide library'
+          : settingsSection === 'documents'
+            ? 'Document library'
+            : settingsSection === 'interface'
+              ? 'Interface preferences'
+              : 'Security';
   $('#settingsSaveStatus').textContent='';
-  $('#geometryActions').hidden=settingsSection!=='geometries';
+  $('#geometryActions').hidden = settingsSection !== 'geometries';
+  $('#libraryActions').hidden = settingsSection !== 'nuclideLibraries';
+  $('#documentActions').hidden = settingsSection !== 'documents';
   $('#archiveGeometry').textContent=selected.archived?'Restore':'Archive';
   const container=$('#settingsFields');
   container.replaceChildren();
@@ -378,7 +470,16 @@ function renderSettings(){
     container.append(note)
   }
   $('#deviceForm button[type="submit"]').hidden=!selected.groups.length;
-  $('#deviceForm button[type="submit"]').textContent=settingsSection==='geometries'?'Save geometry':settingsSection==='documents'?'Save document':settingsSection==='account'?'Update credentials':'Save';
+  $('#deviceForm button[type="submit"]').textContent =
+    settingsSection === 'geometries'
+      ? 'Save geometry'
+      : settingsSection === 'nuclideLibraries'
+        ? 'Save library'
+        : settingsSection === 'documents'
+          ? 'Save document'
+          : settingsSection === 'account'
+            ? 'Update credentials'
+            : 'Save';
   if(!selected.groups.length){
     const note=document.createElement('p');
     note.className='settings-empty';
@@ -401,9 +502,9 @@ $$('.settings-tab').forEach(button=>{
   button.addEventListener('keydown',event=>{
     if(['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){
       event.preventDefault();
-      const sections=['hardware','geometries','documents','interface','account'],
+      const sections=['hardware','geometries', 'nuclideLibraries', 'documents','interface','account'],
       index=sections.indexOf(settingsSection);
-      settingsSection=event.key==='Home'?sections[0]:event.key==='End'?sections.at(-1):sections[(index+(event.key==='ArrowRight'?1:-1)+sections.length)%sections.length];
+      settingsSection=event.key==='Home' ? sections[0]:event.key==='End' ? sections.at(-1):sections[(index+(event.key==='ArrowRight' ? 1:-1) + sections.length) % sections.length];
       renderSettings();
       $('.settings-tab.active').focus()
     }
@@ -436,8 +537,259 @@ function syncGeometryOptions(){
       select.append(option)}
       if([...select.options].some(option=>option.value===value))select.value=value
     }}
-$('#addGeometry').addEventListener('click',()=>{const id='geometry'+Date.now(),item={id,name:'New geometry',groups:[{name:'Geometry definition',fields:[settingField('name','Geometry name','New geometry','text'),settingField('container','Container type','','text'),settingField('volume','Nominal volume, ml',100),settingField('diameter','Inner diameter, mm',0),settingField('fillHeight','Fill height, mm',0),settingField('calibration','Efficiency calibration file','','text')]}]};settingsSchemas.geometries.push(item);initializeGeometryDraft(item);settingsSelection.geometries=id;renderSettings();$('#settingsFields input[name="name"]').select()});
-$('#duplicateGeometry').addEventListener('click',()=>{const source=settingsSchemas.geometries.find(item=>item.id===settingsSelection.geometries),id='geometry'+Date.now(),copy={id,name:source.name+' copy',groups:source.groups.map(group=>({name:group.name,fields:group.fields.map(field=>({...field}))}))};settingsSchemas.geometries.push(copy);initializeGeometryDraft(copy);Object.assign(settingsDrafts['geometries.'+id],settingsDrafts['geometries.'+source.id],{name:copy.name});settingsSelection.geometries=id;renderSettings();showToast('Geometry duplicated')});
+$('#addGeometry').addEventListener('click',()=>{
+  const id='geometry'+Date.now(),
+  item={
+    id,name:'New geometry',
+    groups:[{
+      name:'Geometry definition',
+      fields:[
+        settingField('name','Geometry name','New geometry','text'),
+        settingField('container','Container type','','text'),
+        settingField('volume','Nominal volume, ml',100),
+        settingField('diameter','Inner diameter, mm',0),
+        settingField('fillHeight','Fill height, mm',0),
+        settingField('calibration','Efficiency calibration file','','text')
+      ]
+    }]};
+    settingsSchemas.geometries.push(item);
+    initializeGeometryDraft(item);
+    settingsSelection.geometries=id;
+    renderSettings();
+    $('#settingsFields input[name="name"]').select()});
+$('#addLibrary').addEventListener('click', () => {
+  const id = 'library' + Date.now();
+
+  const item = {
+    id,
+    name: 'New library',
+    groups: [
+      {
+        name: 'Library definition',
+        fields: [
+          settingField(
+            'name',
+            'Library name',
+            'New library',
+            'text'
+          ),
+          settingField(
+            'nuclides',
+            'Nuclides',
+            '',
+            'text'
+          ),
+          settingField(
+            'description',
+            'Description',
+            '',
+            'text'
+          )
+        ]
+      }
+    ]
+  };
+
+  settingsSchemas.nuclideLibraries.push(item);
+
+  initializeSettingsDraft('nuclideLibraries', item);
+
+  settingsSelection.nuclideLibraries = id;
+
+  renderSettings();
+
+  $('#settingsFields input[name="name"]')?.select();
+});
+$('#duplicateLibrary').addEventListener('click', () => {
+  const source = settingsSchemas.nuclideLibraries.find(
+    (item) => item.id === settingsSelection.nuclideLibraries
+  );
+
+  if (!source) {
+    return;
+  }
+
+  const id = 'library' + Date.now();
+
+  const copy = {
+    id,
+    name: source.name + ' copy',
+    groups: source.groups.map((group) => ({
+      name: group.name,
+      fields: group.fields.map((field) => ({
+        ...field
+      }))
+    }))
+  };
+
+  settingsSchemas.nuclideLibraries.push(copy);
+
+  initializeSettingsDraft('nuclideLibraries', copy);
+
+  Object.assign(
+    settingsDrafts['nuclideLibraries.' + id],
+    settingsDrafts['nuclideLibraries.' + source.id],
+    {
+      name: copy.name
+    }
+  );
+
+  settingsSelection.nuclideLibraries = id;
+
+  renderSettings();
+});
+$('#deleteLibrary').addEventListener('click', () => {
+  const id = settingsSelection.nuclideLibraries;
+
+  const index = settingsSchemas.nuclideLibraries.findIndex(
+    (item) => item.id === id
+  );
+
+  if (index === -1) {
+    return;
+  }
+
+  settingsSchemas.nuclideLibraries.splice(index, 1);
+
+  delete settingsDrafts['nuclideLibraries.' + id];
+
+  const next = settingsSchemas.nuclideLibraries[0];
+
+  if (!next) {
+    return;
+  }
+
+  settingsSelection.nuclideLibraries = next.id;
+
+  renderSettings();
+});
+$('#addDocument').addEventListener('click', () => {
+  const id = 'document' + Date.now();
+
+  const item = {
+    id,
+    name: 'New document',
+    groups: [
+      {
+        name: 'Document details',
+        fields: [
+          settingField(
+            'name',
+            'Document name',
+            'New document',
+            'text'
+          ),
+          settingField(
+            'description',
+            'Description',
+            '',
+            'text'
+          ),
+          settingField(
+            'language',
+            'Language',
+            'English',
+            'text'
+          ),
+          settingField(
+            'path',
+            'PDF file path',
+            '',
+            'file'
+          )
+        ]
+      }
+    ]
+  };
+
+  settingsSchemas.documents.push(item);
+
+  initializeSettingsDraft('documents', item);
+
+  settingsSelection.documents = id;
+
+  renderSettings();
+
+  $('#settingsFields input[name="name"]')?.select();
+});
+$('#deleteDocument').addEventListener('click', () => {
+  const id = settingsSelection.documents;
+
+  const index = settingsSchemas.documents.findIndex(
+    (item) => item.id === id
+  );
+
+  if (index === -1) {
+    return;
+  }
+
+  settingsSchemas.documents.splice(index, 1);
+
+  delete settingsDrafts['documents.' + id];
+
+  const next = settingsSchemas.documents[0];
+
+  if (!next) {
+    return;
+  }
+
+  settingsSelection.documents = next.id;
+
+  renderSettings();
+});
+$('#duplicateGeometry').addEventListener('click',()=>{
+  const source=settingsSchemas.geometries.find(item=>item.id===settingsSelection.geometries),
+  id='geometry'+Date.now(),
+  copy={id,name:source.name+' copy',
+    groups:source.groups.map(group=>({
+      name:group.name,
+      fields:group.fields.map(field=>({...field}))}))};
+      settingsSchemas.geometries.push(copy);
+      initializeGeometryDraft(copy);
+      Object.assign(settingsDrafts['geometries.'+id],
+      settingsDrafts['geometries.'+source.id],
+      {
+        name:copy.name
+      });
+      settingsSelection.geometries=id;
+      renderSettings();
+      showToast('Geometry duplicated')});
 $('#archiveGeometry').addEventListener('click',()=>{const item=settingsSchemas.geometries.find(entry=>entry.id===settingsSelection.geometries);item.archived=!item.archived;syncGeometryOptions();renderSettings();showToast(item.archived?'Geometry archived':'Geometry restored')});
 $('#deviceForm').addEventListener('submit',event=>{event.preventDefault();const key=settingsSection+'.'+settingsSelection[settingsSection];try{if(settingsSection==='account'){const draft=settingsDrafts[key],current=safeSession.getItem('rgs-current-password')||($('#password')?.value||'');if(draft.currentPassword!==current){const input=$('#settingsFields input[name="currentPassword"]');input.setCustomValidity('Current password is incorrect');input.reportValidity();return}if(draft.newPassword.length<8){const input=$('#settingsFields input[name="newPassword"]');input.setCustomValidity('Use at least 8 characters');input.reportValidity();return}if(draft.newPassword!==draft.confirmPassword){const input=$('#settingsFields input[name="confirmPassword"]');input.setCustomValidity('Passwords do not match');input.reportValidity();return}safeSession.setItem('rgs-current-login',draft.username);safeSession.setItem('rgs-current-password',draft.newPassword);draft.currentPassword='';draft.newPassword='';draft.confirmPassword='';$('#settingsSaveStatus').textContent='Credentials updated';showToast('Login and password updated');renderSettings();return}const latest=JSON.parse(safeLocal.getItem(settingsStorageKey)||'{}')||{};latest[key]={...settingsDrafts[key]};safeLocal.setItem(settingsStorageKey,JSON.stringify(latest));storedSettings=latest;if(settingsSection==='geometries'){const selected=settingsSchemas.geometries.find(item=>item.id===settingsSelection.geometries);selected.name=settingsDrafts[key].name||selected.name;syncGeometryOptions();renderSettings()}if(settingsSection==='documents'){const id=settingsSelection.documents,documentItem=settingsSchemas.documents.find(item=>item.id===id),draft=settingsDrafts[key],row=$(`.document-row[data-document="${id}"]`);documentItem.name=draft.name||documentItem.name;if(row){row.querySelector('h3').textContent=documentItem.name;row.querySelector('small').textContent='PDF · '+(draft.language||'English');const link=row.querySelector('.document-download');link.dataset.manual=documentItem.name;link.href=draft.path||'#'}renderSettings()}if(settingsSection==='interface')applyInterfaceTheme(settingsDrafts[key].theme);$('#settingsSaveStatus').textContent='Saved in this browser';showToast(settingsSection==='geometries'?'Geometry saved':settingsSection==='documents'?'Document settings saved':settingsSection==='interface'?'Interface theme saved':'Settings saved in this browser')}catch{$('#settingsSaveStatus').textContent='Could not save settings. Please try again.'}});
 syncGeometryOptions();syncDocumentDownloads();renderSettings();
+
+$('#downloadSettings').addEventListener('click', () => {
+  const data = {};
+
+  for (const [section, items] of Object.entries(settingsSchemas)) {
+    data[section] = items.map((item) => {
+      const draft = settingsDrafts[section + '.' + item.id] || {};
+
+      return {
+        name: draft.name || item.name,
+        values: {
+          ...draft
+        }
+      };
+    });
+  }
+
+  const text = JSON.stringify(data, null, 2);
+
+  const blob = new Blob([text], {
+    type: 'application/json'
+  });
+
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement('a');
+
+  link.href = url;
+  link.download = 'settings.json';
+
+  document.body.append(link);
+  link.click();
+  link.remove();
+
+  URL.revokeObjectURL(url);
+});

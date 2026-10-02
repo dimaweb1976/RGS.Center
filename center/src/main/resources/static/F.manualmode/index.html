@@ -68,7 +68,15 @@
                                     <button id="scanBarcodeBtn" type="button">Scan</button>
                                 </div>
                             </label>
-                            <label>Preset time<div class="value-unit"><input id="manualDuration" type="number" value="30" min="0.01" step="any"><select id="manualDurationUnit" aria-label="Preset time unit"><option value="seconds">seconds</option><option value="minutes" selected="">minutes</option><option value="hours">hours</option></select></div></label>
+                            <label>Preset time<div class="value-unit">
+                                <input id="manualDuration" type="number" value="30" min="0.01" step="any">
+                                <select id="manualDurationUnit" aria-label="Preset time unit">
+                                    <option value="seconds">seconds</option>
+                                    <option value="minutes" selected="">minutes</option>
+                                    <option value="hours">hours</option>
+                                </select>
+                                </div>
+                            </label>
                             <label class="sample-only">Tare mass<div class="value-unit-action">
                                     <input value="0.0" type="number" min="0" step="any" id="tareMassInput">
                                     <select aria-label="Tare mass unit" id="tareMassUnit">
@@ -78,7 +86,19 @@
                                         </select>
                                         <button id="weighTareBtn" type="button">Weigh</button></div>
                             </label>
-                            <label class="sample-only">Geometry<select><option>Bottle 0.5 L</option><option>Marinelli 1 L</option><option>Petri dish</option></select></label>
+                            <label class="sample-only">Geometry
+                                <select>
+                                    <option>Bottle 0.5 L</option>
+                                    <option>Marinelli 1 L</option>
+                                    <option>Petri dish</option>
+                                </select>
+                            </label>
+                            <label class="sample-only">Nuclide library
+                                <select>
+                                    <option>Medical radionuclides</option>
+                                    <option>Calibration and references</option>
+                                </select>
+                            </label>
                             <label class="sample-only">Gross mass
                                 <div class="value-unit-action">
                                     <input value="0.0" type="number" min="0" step="any" id="grossMassInput">
