@@ -2,35 +2,125 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Dobot Command Control</title>
+    <title>RGS Center Control Dashboard</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 50px; background-color: #f4f4f9; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); max-width: 400px; }
+        body { font-family: Arial, sans-serif; margin: 30px; background-color: #f4f4f9; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .status { font-weight: bold; margin-bottom: 20px; }
         .running { color: green; }
         .stopped { color: red; }
-        button { padding: 10px 20px; margin-right: 10px; cursor: pointer; }
+        button { padding: 10px 20px; margin-right: 10px; margin-bottom: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    
+<h1>RGS Center Services Dashboard</h1>
+
+<div class="grid">
+
     <!-- DOBOT COMMAND -->
-<div class="card">
-    <h2>Dobot Command Service</h2>
-    <div class="status">Статус: <span id="DobotCommandStatusText" class="stopped">Загрузка...</span></div>
-    
-    <button onclick="startDobotCommandService()">Запустить</button>
-    <button onclick="stopDobotCommandService()">Остановить</button>
+    <div class="card">
+        <h2>Dobot Command Service</h2>
+        <div class="status">Статус: <span id="DobotCommandStatusText" class="stopped">Загрузка...</span></div>
+        <button onclick="controlService('dobot/command', 'start')">Запустить</button>
+        <button onclick="controlService('dobot/command', 'stop')">Остановить</button>
+    </div>
+
+    <!-- DOBOT STREAM -->
+    <div class="card">
+        <h2>Dobot Stream Service</h2>
+        <div class="status">Статус: <span id="DobotStreamStatusText" class="stopped">Загрузка...</span></div>
+        <button onclick="controlService('dobot/stream', 'start')">Запустить</button>
+        <button onclick="controlService('dobot/stream', 'stop')">Остановить</button>
+    </div>
+
+    <!-- DOBOT WALTER LINE (Потенциальный) -->
+    <div class="card">
+        <h2>Dobot Walter Line Service</h2>
+        <div class="status">Статус: <span id="DobotWalterStatusText" class="stopped">Загрузка...</span></div>
+        <button onclick="controlService('dobot/walter', 'start')">Запустить</button>
+        <button onclick="controlService('dobot/walter', 'stop')">Остановить</button>
+    </div>
+
+    <!-- SCALES SERVICE -->
+    <div class="card">
+        <h2>Scales Service</h2>
+        <div class="status">Статус: <span id="ScalesStatusText" class="stopped">Загрузка...</span></div>
+        <button onclick="controlService('scales', 'start')">Запустить</button>
+        <button onclick="controlService('scales', 'stop')">Остановить</button>
+    </div>
+
+    <!-- BARCODE SERVICE -->
+    <div class="card">
+        <h2>Barcode Service</h2>
+        <div class="status">Статус: <span id="BarcodeStatusText" class="stopped">Загрузка...</span></div>
+        <button onclick="controlService('barcode', 'start')">Запустить</button>
+        <button onclick="controlService('barcode', 'stop')">Остановить</button>
+    </div>
+
+    <!-- BOSON TCP SERVICE -->
+    <div class="card">
+        <h2>Boson TCP Service</h2>
+        <div class="status">Статус: <span id="BosonStatusText" class="stopped">Загрузка...</span></div>
+        <button onclick="controlService('boson', 'start')">Запустить</button>
+        <button onclick="controlService('boson', 'stop')">Остановить</button>
+    </div>
+
+    <!-- GAMMA PRO TCP SERVICE -->
+    <div class="card">
+        <h2>GammaPro TCP Service</h2>
+        <div class="status">Статус: <span id="GammaProStatusText" class="stopped">Загрузка...</span></div>
+        <button onclick="controlService('gammapro', 'start')">Запустить</button>
+        <button onclick="controlService('gammapro', 'stop')">Остановить</button>
+    </div>
+
+    <!-- NICOLE TCP SERVICE -->
+    <div class="card">
+        <h2>Nicole TCP Service</h2>
+        <div class="status">Статус: <span id="NicoleStatusText" class="stopped">Загрузка...</span></div>
+        <button onclick="controlService('nicole', 'start')">Запустить</button>
+        <button onclick="controlService('nicole', 'stop')">Остановить</button>
+    </div>
+
+    <!-- SHP SERVICE -->
+    <div class="card">
+        <h2>SHP Service</h2>
+        <div class="status">Статус: <span id="ShpStatusText" class="stopped">Загрузка...</span></div>
+        <button onclick="controlService('shp', 'start')">Запустить</button>
+        <button onclick="controlService('shp', 'stop')">Остановить</button>
+    </div>
+
+    <!-- UPS SERVICE -->
+    <div class="card">
+        <h2>UPS Service</h2>
+        <div class="status">Статус: <span id="UpsStatusText" class="stopped">Загрузка...</span></div>
+        <button onclick="controlService('ups', 'start')">Запустить</button>
+        <button onclick="controlService('ups', 'stop')">Остановить</button>
+    </div>
 </div>
 
 <script>
-    function checkDobotCommandStatus() {
-        fetch('/api/dobot/command/status')
+    const services = [
+        { id: 'DobotCommandStatusText', endpoint: 'dobot/command' },
+        { id: 'DobotStreamStatusText', endpoint: 'dobot/stream' },
+        { id: 'DobotWalterStatusText', endpoint: 'dobot/walter' },
+        { id: 'ScalesStatusText', endpoint: 'scales' },
+        { id: 'BarcodeStatusText', endpoint: 'barcode' },
+        { id: 'BosonStatusText', endpoint: 'boson' },
+        { id: 'GammaProStatusText', endpoint: 'gammapro' },
+        { id: 'NicoleStatusText', endpoint: 'nicole' },
+        { id: 'ShpStatusText', endpoint: 'shp' },
+        { id: 'UpsStatusText', endpoint: 'ups' }
+    ];
+
+    function checkStatus(endpoint, elementId) {
+        fetch(`/api/${endpoint}/status`)
             .then(response => response.json())
             .then(data => {
-                const statusSpan = document.getElementById('DobotCommandStatusText');
-                if (data.running) {
+                const statusSpan = document.getElementById(elementId);
+                const isRunning = typeof data === 'boolean' ? data : data.running;
+                if (isRunning) {
                     statusSpan.textContent = 'Запущен';
                     statusSpan.className = 'running';
                 } else {
@@ -38,108 +128,23 @@
                     statusSpan.className = 'stopped';
                 }
             })
-            .catch(error => console.error('Ошибка получения статуса:', error));
+            .catch(error => console.error(`Ошибка получения статуса для ${endpoint}:`, error));
     }
 
-    function startDobotCommandService() {
-        fetch('/api/dobot/command/start', { method: 'POST' })
-            .then(() => checkDobotCommandStatus());
+    function controlService(endpoint, action) {
+        fetch(`/api/${endpoint}/${action}`, { method: 'POST' })
+            .then(() => updateAllStatuses())
+            .catch(error => console.error(`Ошибка управления сервисом ${endpoint} (${action}):`, error));
     }
 
-    function stopDobotCommandService() {
-        fetch('/api/dobot/command/stop', { method: 'POST' })
-            .then(() => checkDobotCommandStatus());
+    function updateAllStatuses() {
+        services.forEach(s => checkStatus(s.endpoint, s.id));
     }
 
-    // Проверяем статус при загрузке и каждые 2 секунды
-    checkDobotCommandStatus();
-    setInterval(checkDobotCommandStatus, 2000);
+    // Проверяем статусы при загрузке и каждые 2 секунды
+    updateAllStatuses();
+    setInterval(updateAllStatuses, 2000);
 </script>
-
-
-<!-- DOBOT STREAM -->
-<div class="card">
-    <h2>Dobot Stream Service</h2>
-    <div class="status">Статус: <span id="DobotStreamStatusText" class="stopped">Загрузка...</span></div>
-    
-    <button onclick="startStreamService()">Запустить</button>
-    <button onclick="stopStreamService()">Остановить</button>
-</div>
-
-<script>
-    function checkDobotStreamStatus() {
-        fetch('/api/dobot/stream/status')
-            .then(response => response.json())
-            .then(data => {
-                const statusSpan = document.getElementById('DobotStreamStatusText');
-                if (data.running) {
-                    statusSpan.textContent = 'Запущен';
-                    statusSpan.className = 'running';
-                } else {
-                    statusSpan.textContent = 'Остановлен';
-                    statusSpan.className = 'stopped';
-                }
-            })
-            .catch(error => console.error('Ошибка получения статуса:', error));
-    }
-
-    function startStreamService() {
-        fetch('/api/dobot/stream/start', { method: 'POST' })
-            .then(() => checkDobotStreamStatus());
-    }
-
-    function stopStreamService() {
-        fetch('/api/dobot/stream/stop', { method: 'POST' })
-            .then(() => checkDobotStreamStatus());
-    }
-
-    // Проверяем статус при загрузке и каждые 2 секунды
-    checkDobotStreamStatus();
-    setInterval( checkDobotStreamStatus, 2000);
-</script>
-
-
-<!-- SCALES CONTROL -->
-<div class="card">
-    <h2>Scales Service</h2>
-    <div class="status">Статус: <span id="ScalesStatusText" class="stopped">Загрузка...</span></div>
-    
-    <button onclick="startScalesService()">Запустить</button>
-    <button onclick="stopScalesService()">Остановить</button>
-</div>
-
-<script>
-    function checkScalesStatus() {
-        fetch('/api/scales/status')
-            .then(response => response.json())
-            .then(data => {
-                const statusSpan = document.getElementById('ScalesStatusText');
-                if (data.running) {
-                    statusSpan.textContent = 'Запущен';
-                    statusSpan.className = 'running';
-                } else {
-                    statusSpan.textContent = 'Остановлен';
-                    statusSpan.className = 'stopped';
-                }
-            })
-            .catch(error => console.error('Ошибка получения статуса весов:', error));
-    }
-
-    function startScalesService() {
-        fetch('/api/scales/start', { method: 'POST' })
-            .then(() => checkScalesStatus());
-    }
-
-    function stopScalesService() {
-        fetch('/api/scales/stop', { method: 'POST' })
-            .then(() => checkScalesStatus());
-    }
-
-    // Проверяем статус при загрузке и каждые 2 секунды
-    checkScalesStatus();
-    setInterval(checkScalesStatus, 2000);
-</script>
-
 
 </body>
 </html>
