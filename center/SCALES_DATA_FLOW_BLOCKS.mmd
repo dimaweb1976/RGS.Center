@@ -1,0 +1,100 @@
+flowchart TB
+    Start["Spring Boot приложение RGSCenter"]
+
+    subgraph Polling["Периодический опрос весов — поток планировщика Spring"]
+        direction TB
+        Timer["@Scheduled<br/>каждые 1000 мс"]
+        Poll["ScalesService.poll()<br/>запускает один цикл опроса"]
+        Timer --> Poll
+    end
+
+    subgraph Request["Формирование и передача запроса"]
+        direction TB
+        Build["ScalesProtocol.immediateMassCommand()<br/>формирует ASCII-команду SI + CR/LF"]
+        Exchange["exchangeQueued(command, 700 ms)<br/>последовательный обмен запрос → ответ"]
+        TxQueue["PeripheralDeviceWorker<br/>помещает команду в TX-очередь"]
+        TxLoop["TX-поток worker<br/>извлекает команду из очереди"]
+        Write["SerialDeviceConnection.write()<br/>записывает байты в COM7"]
+
+        Build -->|"байты команды"| Exchange
+        Exchange --> TxQueue
+        TxQueue --> TxLoop
+        TxLoop --> Write
+    end
+
+    Port["COM7<br/>USB-B / виртуальный RS-232<br/>9600 baud, 8N1"]
+    Device["Весы RADWAG WTC"]
+
+    subgraph Receive["Приём и сборка ответа"]
+        direction TB
+        Read["RX-поток PeripheralDeviceWorker<br/>SerialDeviceConnection.read()"]
+        Buffer["ByteRingBuffer<br/>накапливает принятые байты"]
+        Decoder["LineFrameDecoder<br/>выделяет строку до CR/LF"]
+        FrameQueue["RX-очередь<br/>хранит готовый кадр"]
+        Await["awaitFrame(700 ms)<br/>возвращает кадр в exchangeQueued()"]
+
+        Read -->|"порция байтов"| Buffer
+        Buffer --> Decoder
+        Decoder -->|"готовый кадр без CR/LF"| FrameQueue
+        FrameQueue --> Await
+    end
+
+    subgraph Processing["Разбор и хранение данных"]
+        direction TB
+        Parse["ScalesProtocol.parseImmediateMass(frame)<br/>проверяет формат ответа SI"]
+        Reading["ScalesReading<br/>масса, единица, стабильность, время"]
+        Normalize["massGrams()<br/>переводит результат в граммы"]
+        Store["ScalesService<br/>lastReading + ONLINE + время обмена"]
+        Current["CurrentDataService<br/>последние данные и состояние связи"]
+        Failure["registerFailure()<br/>OFFLINE + текст ошибки"]
+
+        Parse --> Reading
+        Reading --> Normalize
+        Normalize --> Store
+        Store --> Current
+        Failure --> Current
+    end
+
+    subgraph Web["Формирование и обновление Thymeleaf-формы"]
+        direction TB
+        Page["scales.html<br/>страница весов в браузере"]
+        JsTimer["JavaScript setInterval()<br/>раз в 1000 мс"]
+        Http["GET /scales/status<br/>fetch без кэширования"]
+        Controller["ScalesController.getScalesStatus()"]
+        Snapshot["ScalesService.snapshot()<br/>снимок без обращения к COM-порту"]
+        Model["ScalesViewModel.from(snapshot)<br/>текст, вес и CSS-классы"]
+        Fragment["fragments/scales-status :: status<br/>рендер HTML-фрагмента"]
+        Form["Таблица на форме<br/>ping • ноль • стабильность • вес • время"]
+        Indicator["Индикаторы<br/>0 g и ONLINE — зелёный<br/>не 0 g или OFFLINE — красный"]
+
+        Page --> JsTimer
+        JsTimer --> Http
+        Http --> Controller
+        Controller --> Snapshot
+        Snapshot --> Model
+        Model --> Fragment
+        Fragment -->|"замена #scales-status"| Form
+        Model --> Indicator
+        Indicator --> Form
+    end
+
+    Start --> Timer
+    Poll --> Build
+    Write -->|"SI + CR/LF"| Port
+    Port --> Device
+    Device -->|"байты ответа SI через COM7"| Read
+    Await --> Parse
+    Await -.->|"тайм-аут / ошибка COM"| Failure
+    Parse -.->|"неверный ответ"| Failure
+    Store --> Snapshot
+    Current --> Snapshot
+
+    classDef physical fill:#fff7df,stroke:#8a6d1d,stroke-width:1.5px,color:#222;
+    classDef data fill:#eaf4ff,stroke:#356b9a,stroke-width:1.5px,color:#222;
+    classDef error fill:#fff0f0,stroke:#b52b2b,stroke-width:1.5px,color:#222;
+    classDef output fill:#edf9ef,stroke:#25823d,stroke-width:1.5px,color:#222;
+
+    class Port,Device physical;
+    class Reading,Store,Current,Snapshot,Model data;
+    class Failure error;
+    class Form,Indicator output;

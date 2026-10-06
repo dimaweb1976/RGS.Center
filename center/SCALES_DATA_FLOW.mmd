@@ -1,0 +1,48 @@
+sequenceDiagram
+    autonumber
+
+    participant UI as "Браузер / scales.html"
+    participant Controller as "ScalesController"
+    participant ViewModel as "ScalesViewModel"
+    participant Service as "ScalesService"
+    participant Protocol as "ScalesProtocol"
+    participant Worker as "AbstractQueuedDeviceService"
+    participant Serial as "SerialDeviceConnection"
+    participant Port as "COM7 / RS-232 / 9600 8N1"
+    participant Scales as "Весы RADWAG WTC"
+
+    Note over Service,Scales: Фоновое чтение веса раз в секунду
+    loop @Scheduled: poll каждые 1000 мс
+        Service->>Protocol: immediateMassCommand()
+        Protocol-->>Service: ASCII-команда "SI\\r\\n"
+        Service->>Worker: exchangeQueued(command, 700 ms)
+        Worker->>Serial: Записать команду и ожидать строку
+        Serial->>Port: Передать байты через виртуальный COM по USB-B
+        Port->>Scales: Команда SI
+
+        alt Получен корректный ответ
+            Scales-->>Port: Ответ SI: стабильность, масса и единица измерения
+            Port-->>Serial: Байты ответа с окончанием CR/LF
+            Serial-->>Worker: Полный кадр ответа
+            Worker-->>Service: byte[] frame
+            Service->>Protocol: parseImmediateMass(frame)
+            Protocol-->>Service: ScalesReading(mass, unit, stability)
+            Service->>Service: Сохранить lastReading, ONLINE и время обмена
+        else Тайм-аут, неверный ответ или ошибка COM
+            Worker-->>Service: RuntimeException
+            Service->>Service: Сохранить OFFLINE и lastError
+            Note over Service,Serial: После 3 ошибок переподключить COM-транспорт
+        end
+    end
+
+    Note over UI,Service: Обновление формы раз в секунду
+    UI->>Controller: GET /scales/status (fetch, no-store)
+    Controller->>Service: snapshot()
+    Service-->>Controller: ScalesSnapshot
+    Controller->>ViewModel: from(snapshot)
+    ViewModel->>ViewModel: Рассчитать подписи, вес и CSS-классы
+    Note right of ViewModel: Ноль и есть связь: зелёный<br/>Не ноль или нет связи: красный
+    ViewModel-->>Controller: ScalesViewModel
+    Controller-->>UI: Рендер fragments/scales-status :: status
+    UI->>UI: Заменить HTML внутри #scales-status
+    Note over UI: Таблица показывает ping, индикатор нуля,<br/>стабильность, вес образца и время

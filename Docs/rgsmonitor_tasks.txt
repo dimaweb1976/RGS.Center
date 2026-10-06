@@ -1,0 +1,267 @@
+Пояснение: изначально была задумка --  
+  // GrayU8 background = UtilImageIO.loadImage("c:\\camera\\background.bmp", GrayU8.class);
+ // 2. ВЫЧИТАНИЕ ФОНА (Absolute Difference)
+        // Результат: там где пиксели совпали, будет 0 (черно). 
+        // Где появилась банка — будет светлое пятно.
+        PixelMath.diffAbs(input, background, diff); 
+       // diff = input;
+
+ТЗ:
+1. Изучи camera_frame.jpg в приложении
+2. Надо усовершенствовать окно показа снимка камеры в проекте C:\Projects\RgsCenter - надо делать новый снимок по нажатии кнопки "Сделать снимок" , смотри рисунок camera_frame.jpg 
+3. При нажатии кнопки "Распознать" - выполнить распознание , изображение с нанесёнными окружностями и номерами вывести в окно показа снимка камеры, 
+   вывести список бутылок в окно показа результата с пояснением и сохранить в файл C:\camera\bottles_detected_<data>_<time>.jpeg, 
+   при этом оригинальный снимок сохранить в C:\camera\bottles_<data>_<time>.jpeg   
+4. Журнал событий показывать ниже
+5. Алгоритм распознания и механизм снимка камеры взять из проекта C:\SilouttesDetection, который рассматривался и тестировался ранее
+6. Jar файл будет запускаться на другом ПК Nuvo, адрес камеры IP=192.168.1.13 , во время теста снимок с камеры на локалке не делать , просто брать готовый файл - C:\camera\bottles.bmp
+7. Изучить задание , дать оценку на понимание , не выполнять 
+
+set RGS_CAMERA_CAPTURE_MODE=live
+set RGS_CAMERA_CAPTURE_TIMEOUT_MILLIS=20000
+
+java -jar center-0.0.1-SNAPSHOT.jar 
+
+ТЗ:
+1. надо продумать эмиграцию авторизации из проекта C:\bsicenter\bsi.centre в проект C:\projects\rgscenter
+2. использовать токен , сохранять в куках на броузере пользователя , форма авторизации простая, проверять количество подключённых, если больше одного - выводить предупреждение 
+3. база даных db_name=rgscenter superuser=rgscenter password=rgscenter находяться на хосте=localhost:5432 , можно вносить изменения
+
+ТЗ:
+1. изучить содержимое папки C:\bsicenter\bsi.centre\dbscripts
+2. надо сделать в папке C:\Projects\RGSCenter\dbscripts скрипты, шаблоны для разворачивания базы данных , аналогично , как в папке C:\bsicenter\bsi.centre\dbscripts
+3. показать результат и можно сохранить в папке C:\Projects\RGSCenter\dbscripts
+
+ТЗ:
+1. надо переделать структуру таблиц в базе даных , информация о сущностях в файле rgscenter_tables.docx 
+2. надо переделать логику в java скриптах , с учётом изменений в базе данных
+3. надо переделать скрипты развёртывания в C:\Projects\RGSCenter\dbscripts
+4. после каждого пункта 1.,2.,3. показывать результат, файлы исходников на локальном ПК можно изменять
+
+ТЗ:
+1. надо переделать скрипты в папке C:\Projects\RGSCenter\dbscripts
+   -- для примера можно использовать скрипты из папки C:\bsicenter\bsi.centre\dbscripts
+2. в скрипте 000.dev_rgscenter.sh : 
+   -- надо добавить пользователя и пароль:
+      DEDICATED_APP_USER_NAME="${DEDICATED_APP_USER_NAME:-rgscenter1}"
+      DEDICATED_APP_USER_PASSWORD="${DEDICATED_APP_USER_PASSWORD:-rgscenter1}"
+   -- убрать RECREATE_DATABASE="${RECREATE_DATABASE:-false}"
+   -- пример можно смотреть в 000.dev_bsi_kdb.sh
+3. анологично с 000.dev_rgscenter.sh поменять в 000.dev_rgscenter.ps1
+4. в скрипте 000.rgscenter.tpl :
+   -- надо создать пользователя 'dedicated_app_user_name' и дать привелегии 
+   -- пример можно смотреть в 000.bsi_kdb.tpl  
+5. из скрипта 050.rgscenter_grants.sql все привелегии и настройки пользователей перенести в 000.rgscenter.tpl  
+6. создать файл .env , по аналогии с C:\bsicenter\bsi.centre\.env
+7. изучить пункты с 1. - 5. и выполнить, показать результат , ничего не менять в оригиналах
+
+ТЗ:
+1.  надо переделать скрипты 000.dev_rgscenter.ps1 , 000.dev_rgscenter.sh , 000.rgscenter.tpl
+2.  переменные надо брать из файла .env
+3. "dedicated_user_name" надо создать в скрипте 000.rgscenter.tpl 
+4. оптимизировать код , убрать избыточность , комментарий на английском
+
+Пояснение:
+1. RGS Center дает команду Gamma Pro на установку НV на Boson
+2. Boson подключен через LAN , работает через Gamma Pro
+
+ТЗ:
+1. надо сделать эмулятор SHP на python в папке C:\Projects\py.emu.SHP , который будет отправлять информацию о температуре  , влажности, давлении:
+   1.1. 25 C , рандом разброс +/- 2 С
+   1.2. 35 % , рандом разброс +/- 10 %
+   1.3. 750  , рандом разброс +/- 50
+2. информация о протоколе обмена даных в файле C:\Projects\py.emu.SHP\docs\SHP_protocol_fv2.4.pdf , 
+   полезная информация в файле C:\Projects\py.emu.SHP\docs\hpge_tester_manual.v.2026.04.10.pdf и в папке C:\HpGECenter\HPGeCenter.main
+3. эмулятор будет слушать команды на порту COM3 , порт можно указывать в CLI  
+4. в программе com0com будут зарегистрированы пара связанных портов: COM3 и COM4, информация в файле C:\Program Files (x86)\com0com\ReadMe.txt
+5. дать рекомендацию настройки программы com0com
+6. программа RGSCenter будет отправлять команды с COM4 на COM3
+7. дать оценку понимания ТЗ
+
+Дополнительные условия:
+8. надо добавить параметры SENSORS_SHP
+Параметр:
+-- 1 - напряжение положительного питания модуля = 2500 +/- 1
+-- 2 — напряжение отрицательно питания модуля = 0
+-- 3 — температура детектора -180 +/- 1
+-- 4 — напряжение на выходе зарядовой цепи = 0
+-- 5 — ток детектора = 0 
+-- 6 — постоянное напряжение на аналоговом выходе модуля = 0 
+-- 7 — калибровочный уровень тока детектора = 0 
+-- 8 — калибровочный уровень температуры детектора = 0
+-- 9 – калибровка измерителя уровня постоянного напряжения на выходе предусилителя = 0
+9. сделать графическую оболочку , где можно выставлять параметры , сохранять не надо , рандом оставить
+10. сгенерировать exe файл
+
+на в проекте RGSCenter в папке C:\Projects\RGSCenter добавить 
+
+ТЗ:
+1. надо минимально модифицировать эмулятор , чтобы SHP_Center могла корректно работать , предложи diff
+
+ТЗ:
+1. надо добавить в главное меню ссылку на страничку GammaPro_BOSON
+2. на страничке надо показывать статус подключения к сокету
+3. добавить кнопку SET_TRACK(BOSOSN , Ch1) 
+4. ниже добавить две кнопки - BTN_ON = SET_HV(1 , 1000 , 0) , BTN_OFF = SET_HV(0, 1000 , 0)
+5. сделать проверку процесса на BOSON, логирование , комментарий
+6. дать план реализации , не выполнять 
+
+ТЗ:
+1. надо изучить задание из файла ./Docs/mexanizm-monopolnogo-dostupa-one-client-at-a-time.txt
+2. информация о БД находиться в папке ./dbscripts/
+3. показать план реализации , ничего пока не менять
+
+Дополнительные условия:
+1. ещё раз изучить ТЗ в ./Docs/mexanizm-monopolnogo-dostupa-one-client-at-a-time.txt
+2. мастер пароль "RGS_MASTER_PASSWORD_BCRYPT" надо хранить в .env , RGS_MASTER_PASSWORD_BCRYPT=<master_pass_hash>
+3. TTL_MINUTES=5 надо хранить в .env
+4. данные для подключение к БД взять из .env
+5. создать в БД таблицу onlyone_lock и сделать одну запись
+CREATE TABLE onlyone_lock (
+    id INT PRIMARY KEY CHECK (id = 1),
+    token VARCHAR(256) NULL,
+    client_ip VARCHAR(45) NULL,
+    expires_at TIMESTAMP WITHOUT TIME ZONE NULL
+);
+
+INSERT INTO onlyone_lock (id, token, client_ip, expires_at) 
+VALUES (1, NULL, NULL, NULL);
+6. ничего не добавлять в скрипты развёртывания
+7. одно из обязательных правил аренды -- активна при expires_at >= LOCALTIMESTAMP, истекла при expires_at < LOCALTIMESTAMP
+8. условие для /api/onlyOne/checkBusy -- (token != null && expires_at >= LOCALTIMESTAMP) -> 200 OK (система занята)
+9. выявить противоречия, если найдуться
+10. дать рекомендации на поправки 
+11. максимально придерживаться ТЗ и дополнительных условий
+12. дать план реализации , ничего не менять
+
+13. устанвить в start-rgs.cmd -  SET RGS_MASTER_PASSWORD_BCRYPT=<master_pass_hash> 
+14. TTL_MINUTES записать в application.properties
+15. таблицу onlyone_lock и сделать одну запись только во время выполнения ТЗ
+
+ТЗ:
+1. надо разработать device.settings , где будут указаны параметры подключения IP address , COM port , возможно ещё дополнительные, в зависимости от прибора 
+2. параметры подключения будут браться из таблицы device.settings , также предусмотреть механизм сохранения из броузера
+3. изучить задачу, показать план реализации , допускаются поправки , ничего не менять
+
+таблица настроек;
+repository для PostgreSQL;
+автоматическая загрузка из БД;
+
+ТЗ:
+1. Создать dbscripts/050.rgscenter_onlyone_lock.sql с таблицей
+2. Подключить файл в [000.rgscenter.tpl](C:/Projects/RGSCenter/dbscripts/000.rgscenter.tpl)
+3. изучи и покажи план реализации
+
+ТЗ:
+Site dashboard:
+Вариант A
+Industrial dark dashboard
+
+Вариант B
+Light laboratory UI
+
+Вариант C
+Touchscreen/operator panel
+
+GPT Sites
+   v
+быстро 2–3 варианта UI
+   v
+выбираем лучший
+   v
+Codex
+   v
+HTML/CSS/JS
+   v
+Spring Boot REST
+   v
+RGSCenter production UI
+
+Проанализируй measurement-emulator и текущий RGScenter Dashboard.
+Не изменяй код сразу. Сначала составь план:
+1) какие данные и сценарии использует реальный dashboard;
+2) что уже эмулируется;
+3) какие расхождения есть по API, состояниям устройств, ошибкам,
+временным рядам и обновлению интерфейса;
+4) предложи этапы переделки с тестами для каждого этапа.
+
+ТЗ:
+1. сначала реализовать этапы 1–3
+2. пример схемы агрегированного snapshots
+
+             -- NicoleSnapshot
+             +- ShpSnapshot
+             +- ScalesSnapshot
+             +- GammaProSnapshot
+             +- BarcodeSnapshot
+             +- ManipulatorSnapshot
+             +- CameraSnapshot
+             ¦
+             Ў
+      DashboardSnapshotService
+             ¦
+             Ў
+        DashboardSnapshot
+             ¦
+       ------+-----¬
+       Ў           Ў
+   Dashboard    Scenario
+3. предложи план реализации , пока ничего не меняй
+
+В предложенной схеме стоит разделить сбор оборудования и формирование окончательного dashboard, чтобы избежать циклической зависимости:
+NicoleSnapshot -------¬
+ShpSnapshot ----------+
+ScalesSnapshot -------+
+GammaProSnapshot -----+
+BarcodeSnapshot ------+
+ManipulatorSnapshot --+
+CameraSnapshot -------+
+Device connectivity ---
+          ¦
+          Ў
+EquipmentSnapshotCollector
+          ¦
+          Ў
+EquipmentSnapshot
+     ¦             ¦
+     ¦             Ў
+     ¦      ScenarioStateMachine
+     ¦             ¦
+     ¦             Ў
+     ¦       ScenarioSnapshot
+     ¦             ¦
+     L------T-------
+            Ў
+DashboardSnapshotService
+            ¦
+            Ў
+DashboardSnapshot
+      ------+-----¬
+      Ў           Ў
+Thymeleaf      REST / Next.js
+
+Предлагаемый порядок коммитов
+1. feat(dashboard): add normalized equipment snapshot model
+2. feat(dashboard): add aggregated dashboard snapshot API
+3. refactor(measurement): extract scenario state machine
+4. refactor(emulator): delegate to shared scenario engine
+5. feat(api): add measurement scenario REST endpoints
+6. fix(security): restore protected dashboard and API access
+7. test(dashboard): add aggregate and scenario compatibility tests
+После этапов 1–3 система ещё не будет управлять реальным измерительным циклом. Она получит стабильную модель данных, единый автомат и API, на которые затем можно безопасно подключать реальные команды устройств.
+
+поправка -- security .anyRequest().permitAll() оставить как есть , тесты 401/403 не выполнять
+
+                   DashboardSnapshotService
+                             ¦
+             ----------------+---------------¬
+             Ў                               Ў
+      Thymeleaf Dashboard            ScenarioReadinessService
+                                             ¦
+                                  -----------+----------¬
+                                  Ў                     Ў
+                              START разрешён       START запрещён
+                              все READY            OFFLINE/ALERT/stale
+                                                        ¦
+                                                        Ў
+                                                  Оповещение

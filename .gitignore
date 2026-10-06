@@ -1,33 +1,46 @@
-# Сборочные каталоги
+# Р РµР·СѓР»СЊС‚Р°С‚С‹ СЃР±РѕСЂРєРё
 **/target/
 
-# Собранные архивы и исполняемые файлы
+# РђСЂС…РёРІС‹ Рё РёСЃРїРѕР»РЅСЏРµРјС‹Рµ С„Р°Р№Р»С‹
 *.jar
 *.zip
 
-# Логи
+# Р–СѓСЂРЅР°Р»С‹
 logs/
 **/logs/
 *.log
 
-# Локальные файлы проекта/IDE
+# Р›РѕРєР°Р»СЊРЅС‹Рµ С„Р°Р№Р»С‹ РїСЂРѕРµРєС‚Р° Рё IDE
 RGSCenter.ppr
-
-# NetBeans private settings
 **/nbproject/private/
 /backup_camera*
-
-# IntelliJ IDEA
 .idea/
 *.iml
-
-# VS Code local settings
 .vscode/
 
-# Системные файлы
+# РЎРёСЃС‚РµРјРЅС‹Рµ С„Р°Р№Р»С‹
 .DS_Store
 Thumbs.db
 
-# Исключение: Maven Wrapper JAR нужен для сборки
+# Maven Wrapper JAR РЅРµРѕР±С…РѕРґРёРј РґР»СЏ СЃР±РѕСЂРєРё
 !.mvn/wrapper/maven-wrapper.jar
 !**/.mvn/wrapper/maven-wrapper.jar
+
+# РЎРµРєСЂРµС‚С‹ Рё Р»РѕРєР°Р»СЊРЅРѕРµ РѕРєСЂСѓР¶РµРЅРёРµ
+.env
+**/.env
+
+# Р“РµРЅРµСЂРёСЂСѓРµРјС‹Рµ С„Р°Р№Р»С‹ frontend
+/frontend/node_modules/
+/frontend/.next/
+/frontend/out/
+
+# Р’СЂРµРјРµРЅРЅС‹Рµ Рё СЂРµР·РµСЂРІРЅС‹Рµ РєР°С‚Р°Р»РѕРіРё
+/tmp/
+/backup_*/
+
+# Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРЅС‹Рµ РІРЅСѓС‚СЂРµРЅРЅРёРµ РґРѕРєСѓРјРµРЅС‚С‹ вЂ” РЅРµ РїСѓР±Р»РёРєРѕРІР°С‚СЊ
+/Docs/
+/Diskusion/
+/Wizard/
+/tasks/

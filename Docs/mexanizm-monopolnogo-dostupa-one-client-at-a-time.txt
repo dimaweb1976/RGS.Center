@@ -1,0 +1,474 @@
+Механизм монопольного доступа «One-client at a time»
+
+1. Назначение системы 
+ Механизм предназначен для ограничения параллельного доступа к локальному сервису: в любой момент времени с ресурсом может взаимодействовать строго один клиент. Блокировка реализуется через атомарный строчный мьютекс в реляционной базе данных с контролем времени жизни сессии (TTL) и авторизацией по мастер-паролю. 
+ 2. Схема базы данных (PostgreSQL) 
+ Для хранения состояния блокировки создается таблица, физически ограниченная ровно одной строкой ( CHECK (id = 1) ). Время фиксируется по локальным системным часам хоста без учета часовых поясов ( TIMESTAMP WITHOUT TIME ZONE ). 
+ 
+ 
+ 
+ 
+ SQL 
+ 
+ 
+ 
+ 
+ 
+ CREATE TABLE onlyone_lock (
+ id INT PRIMARY KEY CHECK (id = 1),
+ token VARCHAR(256) NULL,
+ client_ip VARCHAR(45) NULL,
+ expires_at TIMESTAMP WITHOUT TIME ZONE NULL
+);
+
+INSERT INTO onlyone_lock (id, token, client_ip, expires_at) 
+VALUES (1, NULL, NULL, NULL);
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 3. Конфигурация и безопасность 
+ 
+ 
+ Хранение секрета: Имя и значение переменной окружения не фигурируют в конфигурационных файлах ( application.properties , YAML) и кодовой базе. 
+ 
+ 
+ Получение хэша: Чтение BCrypt-хэша выполняется напрямую из контекста процесса при инициализации сервиса: 
+ 
+ 
+ 
+ Java 
+ 
+ 
+ 
+ 
+ 
+ private final String masterPasswordHash = System.getenv("RGS_MASTER_PASSWORD_BCRYPT");
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ Проверка подлинности: Валидация входящего открытого пароля выполняется через org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder.matches(...) . 
+ 
+ 
+ Параметры сессии: Время удержания блокировки задается константой или свойством приложения (по умолчанию: 5 минут). 
+ 
+ 
+ 4. Слой доступа к данным (SQL-операции) 
+ Все операции опираются на локальное время сервера СУБД ( LOCALTIMESTAMP ) и атомарную строчную блокировку строки с id = 1 . 
+ 4.1. Атомарный захват ( enter ) 
+ 
+ 
+ 
+ 
+ SQL 
+ 
+ 
+ 
+ 
+ 
+ UPDATE onlyone_lock
+SET token = :newToken,
+ client_ip = :clientIp,
+ expires_at = LOCALTIMESTAMP + (:ttlMinutes || ' minutes')::INTERVAL
+WHERE id = 1
+ AND (token IS NULL OR expires_at < LOCALTIMESTAMP);
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ Возврат 1 обновленной строки: захват успешен. 
+ 
+ 
+ Возврат 0 обновленных строк: ресурс занят другим клиентом. 
+ 
+ 
+ 4.2. Продление аренды ( updateBusy ) 
+ 
+ 
+ 
+ 
+ SQL 
+ 
+ 
+ 
+ 
+ 
+ UPDATE onlyone_lock
+SET expires_at = LOCALTIMESTAMP + (:ttlMinutes || ' minutes')::INTERVAL
+WHERE id = 1
+ AND token = :currentToken
+ AND expires_at >= LOCALTIMESTAMP;
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ Возврат 1 обновленной строки: блокировка продлена. 
+ 
+ 
+ Возврат 0 обновленных строк: токен недействителен либо время сессии истекло. 
+ 
+ 
+ 4.3. Освобождение блокировки ( exit ) 
+ 
+ 
+ 
+ 
+ SQL 
+ 
+ 
+ 
+ 
+ 
+ UPDATE onlyone_lock
+SET token = NULL,
+ client_ip = NULL,
+ expires_at = NULL
+WHERE id = 1
+ AND token = :currentToken;
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 4.4. Проверка состояния ( checkBusy , checkMe ) 
+ 
+ 
+ 
+ 
+ SQL 
+ 
+ 
+ 
+ 
+ 
+ SELECT token, client_ip, expires_at
+FROM onlyone_lock
+WHERE id = 1;
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 5. Спецификация REST API 
+ Для вызовов, требующих подтверждения прав владения блокировкой, используется HTTP-заголовок: X-Lock-Token: <token> 
+ Определение сетевого адреса клиента: извлечение из заголовка X-Forwarded-For (первый IP в списке), при его отсутствии — через HttpServletRequest.getRemoteAddr() . 
+ 5.1. POST /api/onlyOne/enter 
+ Попытка авторизации и монопольного захвата сервиса. 
+ 
+ 
+ Request Body: 
+ 
+ 
+ 
+ JSON 
+ 
+ 
+ 
+ 
+ 
+ {
+ "password": "plainTextPassword"
+}
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ Алгоритм обработки: 
+ 
+ 
+ Выполняется сверка входящего пароля с хэшем из переменной окружения через bCryptPasswordEncoder.matches(...) . Если пароль не совпадает — возврат HTTP 401 . 
+ 
+ 
+ Определяется сетевой адрес clientIp . 
+ 
+ 
+ Генерируется уникальный токен доступа ( UUID.randomUUID().toString() ). 
+ 
+ 
+ Выполняется атомарный SQL-запрос захвата слота. 
+ 
+ 
+ Если количество затронутых строк равно 0 , возвращается HTTP 423 . 
+ 
+ 
+ 
+ 
+ Responses: 
+ 
+ 
+ 200 OK : 
+ 
+ 
+ 
+ JSON 
+ 
+ 
+ 
+ 
+ 
+ {
+ "token": "d3b07384-d113-462d-9b57-640a455a13cf",
+ "expiresAt": "2026-09-08T10:15:00"
+}
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 401 Unauthorized : Неверный пароль. 
+ 
+ 
+ 423 Locked : Ресурс занят активной сессией другого клиента. 
+ 
+ 
+ 
+ JSON 
+ 
+ 
+ 
+ 
+ 
+ {
+ "error": "System is busy"
+}
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 5.2. POST /api/onlyOne/updateBusy 
+ Продление времени владения активной сессией (heartbeat). 
+ 
+ 
+ Request Headers: X-Lock-Token: <token> 
+ 
+ 
+ Алгоритм обработки: 
+ 
+ 
+ Если заголовок отсутствует — возврат HTTP 400 . 
+ 
+ 
+ Выполняется SQL-запрос продления блокировки с проверкой совпадения токена и валидности expires_at . 
+ 
+ 
+ Если обновлено 0 строк — возврат HTTP 401 . 
+ 
+ 
+ 
+ 
+ Responses: 
+ 
+ 
+ 200 OK : 
+ 
+ 
+ 
+ JSON 
+ 
+ 
+ 
+ 
+ 
+ {
+ "status": "extended",
+ "expiresAt": "2026-09-08T10:20:00"
+}
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 400 Bad Request : Заголовок не передан. 
+ 
+ 
+ 401 Unauthorized : Токен недействителен или срок аренды истек. 
+ 
+ 
+ 
+ 
+ 5.3. POST /api/onlyOne/exit 
+ Штатное добровольное освобождение ресурса. 
+ 
+ 
+ Request Headers: X-Lock-Token: <token> 
+ 
+ 
+ Алгоритм обработки: 
+ 
+ 
+ При наличии валидного заголовка выполняется SQL-запрос обнуления полей token , client_ip и expires_at . 
+ 
+ 
+ 
+ 
+ Responses: 
+ 
+ 
+ 204 No Content 
+ 
+ 
+ 
+ 
+ 5.4. GET /api/onlyOne/checkBusy 
+ Публичный опрос занятости системы для отображения статуса в интерфейсе без передачи учетных данных. 
+ 
+ 
+ Request Headers: Не требуются. 
+ 
+ 
+ Алгоритм обработки: 
+ 
+ 
+ Читается строка состояния id = 1 из таблицы onlyone_lock . 
+ 
+ 
+ Проверяется предикат: token != null && expires_at > LOCALTIMESTAMP . 
+ 
+ 
+ 
+ 
+ Responses: 
+ 
+ 
+ 200 OK (система занята): 
+ 
+ 
+ 
+ JSON 
+ 
+ 
+ 
+ 
+ 
+ {
+ "busy": true,
+ "busyUntil": "2026-09-08T10:15:00",
+ "clientIp": "192.168.1.10"
+}
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 200 OK (система свободна): 
+ 
+ 
+ 
+ JSON 
+ 
+ 
+ 
+ 
+ 
+ {
+ "busy": false,
+ "busyUntil": null,
+ "clientIp": null
+}
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 5.5. GET /api/onlyOne/checkMe 
+ Проверка актуальности текущей активной сессии клиента. 
+ 
+ 
+ Request Headers: X-Lock-Token: <token> 
+ 
+ 
+ Алгоритм обработки: 
+ 
+ 
+ Читается строка состояния id = 1 . 
+ 
+ 
+ Проверяется соответствие: переданный токен равен значению в БД и expires_at > LOCALTIMESTAMP . 
+ 
+ 
+ 
+ 
+ Responses: 
+ 
+ 
+ 200 OK : 
+ 
+ 
+ 
+ JSON 
+ 
+ 
+ 
+ 
+ 
+ {
+ "active": true,
+ "expiresAt": "2026-09-08T10:15:00"
+}
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 401 Unauthorized : 
+ 
+ 
+ 
+ JSON 
+ 
+ 
+ 
+ 
+ 
+ {
+ "active": false
+}
